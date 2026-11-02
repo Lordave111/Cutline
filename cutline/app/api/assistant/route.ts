@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { redis } from "@/lib/credits";
 
 export const maxDuration = 20;
 
@@ -10,6 +11,12 @@ const json = (error: string, status: number) =>
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return json("Sign in to use Cutline AI.", 401);
+
+  const day = new Date().toISOString().slice(0, 10);
+  const usageKey = "cutline-ai:" + userId + ":" + day;
+  const usage = await redis.incr(usageKey);
+  if (usage === 1) await redis.expire(usageKey, 86400);
+  if (usage > 25) return json("You have reached today's 25-message AI limit. Please come back tomorrow.", 429);
 
   const key = process.env.GEMINI_API_KEY;
   if (!key) return json("AI assistant is not configured yet. Add GEMINI_API_KEY in your Vercel environment variables.", 503);
