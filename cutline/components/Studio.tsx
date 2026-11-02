@@ -140,7 +140,14 @@ export default function Studio() {
 
       {preview && !base && <figure><figcaption>INPUT</figcaption><img src={preview} alt="Original" /></figure>}
       {base && <Editor base={base} flat={mode === "ai"} bg={bg} />}
-      <Assistant />
+      {isSignedIn ? <Assistant /> : (
+        <div className="ai-assistant">
+          <p className="tag">YOUR CREATIVE COPILOT</p>
+          <h2>Cutline AI</h2>
+          <p className="mute">Sign in to chat with your AI photo-editing assistant.</p>
+          <SignInButton mode="modal"><button className="go">Sign in to use AI</button></SignInButton>
+        </div>
+      )}
     </section>
   );
 }
