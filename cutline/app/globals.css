@@ -59,3 +59,25 @@ details>*+*{margin-top:8px}
 .chips button.on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
 select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
 @media(max-width:760px){.editor{grid-template-columns:1fr}}
+
+
+/* Cutline AI assistant */
+.ai-assistant{display:grid;gap:14px;margin-top:8px;padding:20px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(145deg,rgba(61,255,176,.055),transparent 45%),var(--panel)}
+.assistant-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.assistant-heading h2{font-size:clamp(24px,4vw,34px);letter-spacing:-.03em;margin:4px 0}
+.ai-status{white-space:nowrap;color:var(--accent);font:11px var(--mono),monospace;border:1px solid rgba(61,255,176,.25);padding:6px 9px;border-radius:99px}
+.assistant-suggestions{display:flex;gap:7px;flex-wrap:wrap}
+.assistant-suggestions button{background:var(--bg);color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:12px var(--mono),monospace;cursor:pointer}
+.assistant-suggestions button:hover{color:var(--accent);border-color:var(--accent)}
+.assistant-chat{display:grid;gap:10px;max-height:360px;overflow:auto;padding:12px;border:1px solid var(--line);border-radius:9px;background:rgba(0,0,0,.15)}
+.assistant-message{max-width:90%;padding:10px 12px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-message span{display:block;font:10px var(--mono),monospace;letter-spacing:.1em;color:var(--accent);margin-bottom:4px}
+.assistant-message p{font-size:14px;line-height:1.6}
+.from-ai{justify-self:start;background:#111a20;border:1px solid var(--line)}
+.from-user{justify-self:end;background:rgba(61,255,176,.09);border:1px solid rgba(61,255,176,.2)}
+.from-user span{color:var(--accent2)}
+.assistant-thinking,.assistant-note{font:11px var(--mono),monospace;color:var(--mute)}
+.assistant-form{display:grid;grid-template-columns:1fr auto;gap:8px}
+.assistant-form input{min-width:0;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit}
+.assistant-form .go{padding:10px 16px}
+@media(max-width:520px){.ai-assistant{padding:14px}.assistant-heading{flex-direction:column}.assistant-form{grid-template-columns:1fr}.assistant-form .go{width:100%}}
