@@ -75,7 +75,7 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     const t = document.createElement("canvas"); t.width = c.width; t.height = c.height;
     t.getContext("2d")!.drawImage(c, 0, 0);
     x.clearRect(0, 0, c.width, c.height);
-    x.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%) sepia(${Math.abs(s.warmth) / 100}) hue-rotate(${s.tint * 1.2}deg) blur(${s.blur}px)`;
+    x.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%) sepia(${Math.max(0, s.warmth) / 100}) hue-rotate(${s.tint * 1.2 + Math.min(0, s.warmth) * 0.8}deg) blur(${s.blur}px)`;
     x.drawImage(t, 0, 0); x.filter = "none";
   }
   if (s.fade > 0) { x.fillStyle = `rgba(235,225,205,${s.fade / 250})`; x.fillRect(0, 0, c.width, c.height); }
@@ -111,7 +111,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
   const [showOriginal, setShowOriginal] = useState(false);
-  const set = (k: keyof S, v: string | number | boolean) => setS((p) => ({ ...p, [k]: v }));
+  const set = (k: keyof S, v: string | number | boolean) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, [k]: v })); };
   const applyPreset = (values: Partial<S>) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, ...values })); };
   const undo = () => { const previous = history[history.length - 1]; if (!previous) return; setFuture((f) => [s, ...f].slice(0, 20)); setS(previous); setHistory((h) => h.slice(0, -1)); };
   const redo = () => { const next = future[0]; if (!next) return; setHistory((h) => [...h, s].slice(-20)); setS(next); setFuture((f) => f.slice(1)); };
