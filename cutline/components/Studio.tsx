@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SignInButton, useAuth } from "@clerk/nextjs";
 import { COST, CURRENCY, PACKS } from "@/lib/pricing";
 import Editor, { type Bg } from "./Editor";
+import Assistant from "./Assistant";
 
 const MAX_SIDE = 1800;
 type Mode = "cutout" | "color" | "gradient" | "image" | "ai";
@@ -139,6 +140,7 @@ export default function Studio() {
 
       {preview && !base && <figure><figcaption>INPUT</figcaption><img src={preview} alt="Original" /></figure>}
       {base && <Editor base={base} flat={mode === "ai"} bg={bg} />}
+      <Assistant />
     </section>
   );
 }
