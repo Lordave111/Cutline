@@ -112,6 +112,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [future, setFuture] = useState<S[]>([]);
   const [showOriginal, setShowOriginal] = useState(false);
   const [sourceBlob, setSourceBlob] = useState<Blob>(base);
+  const [hasAiResult, setHasAiResult] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState("");
@@ -123,8 +124,9 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   useEffect(() => {
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS); }
-    else { void render(ref.current, sourceBlob, true, { kind: "none" }, s); }
-  }, [base, sourceBlob, flat, bg, s, showOriginal]);
+    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s); }
+    else { void render(ref.current, base, flat, bg, s); }
+  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal]);
 
   async function download() {
     if (!ref.current) return;
@@ -149,7 +151,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI editing failed. Please try again.");
       const edited = await fetch(data.image).then((r) => r.blob());
-      setSourceBlob(edited); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setAiPrompt("");
+      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setAiPrompt("");
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI editing failed. Please try again."); }
     finally { setAiBusy(false); }
   }
