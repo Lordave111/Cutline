@@ -111,6 +111,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [sourceBlob, setSourceBlob] = useState<Blob>(base);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
   const set = (k: keyof S, v: string | number | boolean) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, [k]: v })); };
   const applyPreset = (values: Partial<S>) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, ...values })); };
   const undo = () => { const previous = history[history.length - 1]; if (!previous) return; setFuture((f) => [s, ...f].slice(0, 20)); setS(previous); setHistory((h) => h.slice(0, -1)); };
@@ -119,8 +123,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   useEffect(() => {
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS); }
-    else { void render(ref.current, base, flat, bg, s); }
-  }, [base, flat, bg, s, showOriginal]);
+    else { void render(ref.current, sourceBlob, true, { kind: "none" }, s); }
+  }, [base, sourceBlob, flat, bg, s, showOriginal]);
 
   async function download() {
     if (!ref.current) return;
@@ -128,6 +132,26 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = `cutline.${s.format === "jpeg" ? "jpg" : s.format}`; a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+
+  async function runAiEdit() {
+    if (!ref.current || !aiPrompt.trim() || aiBusy) return;
+    setAiBusy(true); setAiError("");
+    try {
+      const imageBlob = await new Promise<Blob>((resolve, reject) => ref.current!.toBlob((b) => b ? resolve(b) : reject(new Error("Could not prepare image.")), "image/png"));
+      if (imageBlob.size > 5 * 1024 * 1024) throw new Error("This image is over 5 MB. Reduce its size in Export settings, then try again.");
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Could not read image."));
+        reader.readAsDataURL(imageBlob);
+      });
+      const response = await fetch("/api/image-edit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: dataUrl.split(",")[1], mimeType: "image/png", prompt: aiPrompt.trim() }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "AI editing failed. Please try again.");
+      const edited = await fetch(data.image).then((r) => r.blob());
+      setSourceBlob(edited); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setAiPrompt("");
+    } catch (error) { setAiError(error instanceof Error ? error.message : "AI editing failed. Please try again."); }
+    finally { setAiBusy(false); }
   }
 
   const Range = ({ label, k, min, max, step = 1 }: { label: string; k: NumKey; min: number; max: number; step?: number }) => (
@@ -144,6 +168,13 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
+        <details open><summary>AI image editor</summary>
+          <p className="editor-hint">Describe what to add, remove or change. AI returns a new image you can continue editing.</p>
+          <textarea aria-label="AI image edit prompt" rows={3} maxLength={700} placeholder="e.g. Remove the clutter in the background and replace it with a clean warm studio backdrop. Keep the subject unchanged." value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
+          <button className="go" type="button" disabled={aiBusy || !aiPrompt.trim()} onClick={() => void runAiEdit()}>{aiBusy ? "AI is editing…" : "Apply AI edit ✨"}</button>
+          {aiError && <p role="alert" className="editor-error">{aiError}</p>}
+          <small>AI image edits use your Gemini API key and may incur Google API charges.</small>
+        </details>
         <details open><summary>Creative samples &amp; looks</summary>
           <div className="sample-grid">{PRESETS.map((p) => <button type="button" className="sample-card" key={p.name} onClick={() => applyPreset(p.values)}><i style={{ background: p.swatch }} /><b>{p.name}</b><small>{p.note}</small></button>)}</div>
         </details>
