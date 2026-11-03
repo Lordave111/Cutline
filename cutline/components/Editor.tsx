@@ -15,9 +15,9 @@ type S = {
   warmth: number; tint: number; fade: number; blur: number;
   cropLeft: number; cropTop: number; cropWidth: number; cropHeight: number;
   hue: number; grain: number; grayscale: number; sepia: number; invert: number;
-  borderWidth: number; borderColor: string;
+  borderWidth: number; borderColor: string; flipY: boolean;
 };
-type NumKey = "scale" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
+type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
   aspect: "orig", scale: 100, offX: 0, offY: 0, shadow: 0, bgBlur: 0,
@@ -27,7 +27,7 @@ const DEFAULTS: S = {
   warmth: 0, tint: 0, fade: 0, blur: 0,
   cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100,
   hue: 0, grain: 0, grayscale: 0, sepia: 0, invert: 0,
-  borderWidth: 0, borderColor: "#ffffff",
+  borderWidth: 0, borderColor: "#ffffff", flipY: false,
 };
 
 const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> }[] = [
@@ -56,6 +56,7 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
   x.translate(c.width / 2, c.height / 2);
   x.rotate((s.rotate * Math.PI) / 180);
   if (s.flip) x.scale(-1, 1);
+  if (s.flipY) x.scale(1, -1);
   x.translate(-W / 2, -H / 2);
   const cover = (img: ImageBitmap, grow = 0) => {
     const k = Math.max(W / img.width, H / img.height);
@@ -147,6 +148,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const redo = () => { const next = future[0]; if (!next) return; setHistory((h) => [...h, s].slice(-20)); setS(next); setFuture((f) => f.slice(1)); };
 
   useEffect(() => {
+    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false);
+  }, [base]);
+
+  useEffect(() => {
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS); }
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s); }
@@ -207,7 +212,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         </details>
         <details open><summary>Frame &amp; transform</summary>
           <div className="chips">{["orig", "1:1", "4:5", "16:9", "9:16"].map((a) => <button type="button" key={a} className={s.aspect === a ? "on" : ""} onClick={() => set("aspect", a)}>{a === "orig" ? "Original" : a}</button>)}</div>
-          <div className="chips"><button type="button" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className={s.flip ? "on" : ""} onClick={() => set("flip", !s.flip)}>Flip</button></div>
+          <div className="chips"><button type="button" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className={s.flip ? "on" : ""} onClick={() => set("flip", !s.flip)}>Flip horizontal</button><button type="button" className={s.flipY ? "on" : ""} onClick={() => set("flipY", !s.flipY)}>Flip vertical</button></div>
+          <Range label="Straighten" k="rotate" min={-45} max={45} step={0.5} />
         </details>
         {!flat && <details open><summary>Subject positioning</summary><Range label="Scale" k="scale" min={40} max={160} /><Range label="Horizontal position" k="offX" min={-50} max={50} /><Range label="Vertical position" k="offY" min={-50} max={50} /><Range label="Drop shadow" k="shadow" min={0} max={100} /></details>}
         {bg.kind === "image" && <details open><summary>Background controls</summary><Range label="Background blur" k="bgBlur" min={0} max={30} /></details>}
