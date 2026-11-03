@@ -13,8 +13,10 @@ type S = {
   format: string; quality: number; maxSide: number;
   caption: string; captionColor: string; captionSize: number; captionY: number; vignette: number;
   warmth: number; tint: number; fade: number; blur: number;
+  cropLeft: number; cropTop: number; cropWidth: number; cropHeight: number;
+  hue: number; grain: number; grayscale: number; sepia: number; invert: number;
 };
-type NumKey = "scale" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur";
+type NumKey = "scale" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert";
 
 const DEFAULTS: S = {
   aspect: "orig", scale: 100, offX: 0, offY: 0, shadow: 0, bgBlur: 0,
@@ -22,6 +24,8 @@ const DEFAULTS: S = {
   format: "png", quality: 0.92, maxSide: 0,
   caption: "", captionColor: "#ffffff", captionSize: 54, captionY: 82, vignette: 0,
   warmth: 0, tint: 0, fade: 0, blur: 0,
+  cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100,
+  hue: 0, grain: 0, grayscale: 0, sepia: 0, invert: 0,
 };
 
 const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> }[] = [
@@ -71,11 +75,11 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
   }
   x.restore();
 
-  if (canFilter && (s.brightness !== 100 || s.contrast !== 100 || s.saturation !== 100 || s.warmth || s.tint || s.blur)) {
+  if (canFilter && (s.brightness !== 100 || s.contrast !== 100 || s.saturation !== 100 || s.warmth || s.tint || s.blur || s.hue || s.grayscale || s.sepia || s.invert)) {
     const t = document.createElement("canvas"); t.width = c.width; t.height = c.height;
     t.getContext("2d")!.drawImage(c, 0, 0);
     x.clearRect(0, 0, c.width, c.height);
-    x.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%) sepia(${Math.max(0, s.warmth) / 100}) hue-rotate(${s.tint * 1.2 + Math.min(0, s.warmth) * 0.8}deg) blur(${s.blur}px)`;
+    x.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%) sepia(${Math.max(0, s.warmth) / 100 + s.sepia / 100}) hue-rotate(${s.hue + s.tint * 1.2 + Math.min(0, s.warmth) * 0.8}deg) grayscale(${s.grayscale}%) invert(${s.invert}%) blur(${s.blur}px)`;
     x.drawImage(t, 0, 0); x.filter = "none";
   }
   if (s.fade > 0) { x.fillStyle = `rgba(235,225,205,${s.fade / 250})`; x.fillRect(0, 0, c.width, c.height); }
@@ -83,6 +87,12 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     const g = x.createRadialGradient(c.width / 2, c.height / 2, c.width * 0.18, c.width / 2, c.height / 2, c.width * 0.72);
     g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0," + (s.vignette / 100) + ")");
     x.fillStyle = g; x.fillRect(0, 0, c.width, c.height);
+  }
+  if (s.grain > 0) {
+    const noise = document.createElement("canvas"); noise.width = Math.max(64, Math.min(256, c.width)); noise.height = Math.max(64, Math.min(256, c.height));
+    const nx = noise.getContext("2d")!; const pixels = nx.createImageData(noise.width, noise.height);
+    for (let i = 0; i < pixels.data.length; i += 4) { const n = Math.random() * 255; pixels.data[i] = n; pixels.data[i + 1] = n; pixels.data[i + 2] = n; pixels.data[i + 3] = Math.round(s.grain * 1.4); }
+    nx.putImageData(pixels, 0, 0); x.save(); x.globalCompositeOperation = "soft-light"; x.drawImage(noise, 0, 0, c.width, c.height); x.restore();
   }
   if (s.caption.trim()) {
     x.save(); x.textAlign = "center"; x.textBaseline = "middle";
@@ -93,6 +103,14 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     x.strokeText(label, c.width / 2, c.height * s.captionY / 100, c.width * 0.88);
     x.fillStyle = s.captionColor; x.fillText(label, c.width / 2, c.height * s.captionY / 100, c.width * 0.88);
     x.restore();
+  }
+  if (s.cropLeft || s.cropTop || s.cropWidth < 100 || s.cropHeight < 100) {
+    const left = Math.min(s.cropLeft, 100 - s.cropWidth), top = Math.min(s.cropTop, 100 - s.cropHeight);
+    const sx = Math.round(c.width * left / 100), sy = Math.round(c.height * top / 100);
+    const sw = Math.max(1, Math.round(c.width * s.cropWidth / 100)), sh = Math.max(1, Math.round(c.height * s.cropHeight / 100));
+    const temp = document.createElement("canvas"); temp.width = sw; temp.height = sh;
+    temp.getContext("2d")!.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
+    c.width = sw; c.height = sh; c.getContext("2d")!.drawImage(temp, 0, 0);
   }
 }
 
@@ -187,6 +205,21 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         {!flat && <details open><summary>Subject positioning</summary><Range label="Scale" k="scale" min={40} max={160} /><Range label="Horizontal position" k="offX" min={-50} max={50} /><Range label="Vertical position" k="offY" min={-50} max={50} /><Range label="Drop shadow" k="shadow" min={0} max={100} /></details>}
         {bg.kind === "image" && <details open><summary>Background controls</summary><Range label="Background blur" k="bgBlur" min={0} max={30} /></details>}
         <details open><summary>Light &amp; colour</summary><Range label="Exposure / brightness" k="brightness" min={50} max={150} /><Range label="Contrast" k="contrast" min={50} max={160} /><Range label="Saturation" k="saturation" min={0} max={200} /><Range label="Warmth" k="warmth" min={-50} max={100} /><Range label="Tint" k="tint" min={-60} max={60} /><Range label="Fade" k="fade" min={0} max={60} /><Range label="Soft focus" k="blur" min={0} max={5} step={0.5} /><Range label="Vignette" k="vignette" min={0} max={85} /></details>
+        <details><summary>Precision crop</summary>
+          <p className="editor-hint">Trim the image by adjusting the crop boundaries. These changes are included in export.</p>
+          <Range label="Crop from left" k="cropLeft" min={0} max={50} />
+          <Range label="Crop from top" k="cropTop" min={0} max={50} />
+          <Range label="Crop width" k="cropWidth" min={50} max={100} />
+          <Range label="Crop height" k="cropHeight" min={50} max={100} />
+          <button type="button" className="chip" onClick={() => applyPreset({ cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100 })}>Reset crop</button>
+        </details>
+        <details><summary>Advanced colour effects</summary>
+          <Range label="Hue shift" k="hue" min={-180} max={180} />
+          <Range label="Grayscale" k="grayscale" min={0} max={100} />
+          <Range label="Sepia tone" k="sepia" min={0} max={100} />
+          <Range label="Colour invert" k="invert" min={0} max={100} />
+          <Range label="Film grain" k="grain" min={0} max={100} />
+        </details>
         <details><summary>Text &amp; watermark</summary><input aria-label="Overlay text" placeholder="Add a title, label or watermark…" maxLength={90} value={s.caption} onChange={(e) => set("caption", e.target.value)} /><div className="chips"><label className="rng">Text colour <input aria-label="Text colour" type="color" value={s.captionColor} onChange={(e) => set("captionColor", e.target.value)} /></label></div><Range label="Text size" k="captionSize" min={18} max={120} /><Range label="Vertical position" k="captionY" min={5} max={95} /></details>
         <details><summary>Export settings</summary><select aria-label="Format" value={s.format} onChange={(e) => set("format", e.target.value)}><option value="png">PNG (transparent)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select><select aria-label="Size" value={s.maxSide} onChange={(e) => set("maxSide", Number(e.target.value))}><option value={0}>Full size</option><option value={4096}>Up to 4096 px</option><option value={2048}>Up to 2048 px</option><option value={1080}>Up to 1080 px</option></select>{s.format !== "png" && <Range label="Quality" k="quality" min={0.5} max={1} step={0.01} />}</details>
         <button className="go" type="button" onClick={() => void download()}>Export image ↗</button>
