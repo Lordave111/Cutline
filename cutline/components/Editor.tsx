@@ -15,8 +15,9 @@ type S = {
   warmth: number; tint: number; fade: number; blur: number;
   cropLeft: number; cropTop: number; cropWidth: number; cropHeight: number;
   hue: number; grain: number; grayscale: number; sepia: number; invert: number;
+  borderWidth: number; borderColor: string;
 };
-type NumKey = "scale" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert";
+type NumKey = "scale" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
   aspect: "orig", scale: 100, offX: 0, offY: 0, shadow: 0, bgBlur: 0,
@@ -26,6 +27,7 @@ const DEFAULTS: S = {
   warmth: 0, tint: 0, fade: 0, blur: 0,
   cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100,
   hue: 0, grain: 0, grayscale: 0, sepia: 0, invert: 0,
+  borderWidth: 0, borderColor: "#ffffff",
 };
 
 const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> }[] = [
@@ -111,6 +113,11 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     const temp = document.createElement("canvas"); temp.width = sw; temp.height = sh;
     temp.getContext("2d")!.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
     c.width = sw; c.height = sh; c.getContext("2d")!.drawImage(temp, 0, 0);
+  }
+  if (s.borderWidth > 0) {
+    const ctx = c.getContext("2d")!; const inset = s.borderWidth / 2;
+    ctx.strokeStyle = s.borderColor; ctx.lineWidth = s.borderWidth;
+    ctx.strokeRect(inset, inset, Math.max(0, c.width - s.borderWidth), Math.max(0, c.height - s.borderWidth));
   }
 }
 
@@ -207,10 +214,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         <details open><summary>Light &amp; colour</summary><Range label="Exposure / brightness" k="brightness" min={50} max={150} /><Range label="Contrast" k="contrast" min={50} max={160} /><Range label="Saturation" k="saturation" min={0} max={200} /><Range label="Warmth" k="warmth" min={-50} max={100} /><Range label="Tint" k="tint" min={-60} max={60} /><Range label="Fade" k="fade" min={0} max={60} /><Range label="Soft focus" k="blur" min={0} max={5} step={0.5} /><Range label="Vignette" k="vignette" min={0} max={85} /></details>
         <details><summary>Precision crop</summary>
           <p className="editor-hint">Trim the image by adjusting the crop boundaries. These changes are included in export.</p>
-          <Range label="Crop from left" k="cropLeft" min={0} max={50} />
-          <Range label="Crop from top" k="cropTop" min={0} max={50} />
-          <Range label="Crop width" k="cropWidth" min={50} max={100} />
-          <Range label="Crop height" k="cropHeight" min={50} max={100} />
+          <Range label="Crop from left" k="cropLeft" min={0} max={100 - s.cropWidth} />
+          <Range label="Crop from top" k="cropTop" min={0} max={100 - s.cropHeight} />
+          <Range label="Crop width" k="cropWidth" min={50} max={100 - s.cropLeft} />
+          <Range label="Crop height" k="cropHeight" min={50} max={100 - s.cropTop} />
           <button type="button" className="chip" onClick={() => applyPreset({ cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100 })}>Reset crop</button>
         </details>
         <details><summary>Advanced colour effects</summary>
@@ -219,6 +226,11 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <Range label="Sepia tone" k="sepia" min={0} max={100} />
           <Range label="Colour invert" k="invert" min={0} max={100} />
           <Range label="Film grain" k="grain" min={0} max={100} />
+        </details>
+        <details><summary>Frames &amp; borders</summary>
+          <Range label="Border thickness" k="borderWidth" min={0} max={80} />
+          <label className="rng">Border colour <input aria-label="Border colour" type="color" value={s.borderColor} onChange={(e) => set("borderColor", e.target.value)} /></label>
+          <button type="button" className="chip" onClick={() => applyPreset({ borderWidth: 0 })}>Remove border</button>
         </details>
         <details><summary>Text &amp; watermark</summary><input aria-label="Overlay text" placeholder="Add a title, label or watermark…" maxLength={90} value={s.caption} onChange={(e) => set("caption", e.target.value)} /><div className="chips"><label className="rng">Text colour <input aria-label="Text colour" type="color" value={s.captionColor} onChange={(e) => set("captionColor", e.target.value)} /></label></div><Range label="Text size" k="captionSize" min={18} max={120} /><Range label="Vertical position" k="captionY" min={5} max={95} /></details>
         <details><summary>Export settings</summary><select aria-label="Format" value={s.format} onChange={(e) => set("format", e.target.value)}><option value="png">PNG (transparent)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select><select aria-label="Size" value={s.maxSide} onChange={(e) => set("maxSide", Number(e.target.value))}><option value={0}>Full size</option><option value={4096}>Up to 4096 px</option><option value={2048}>Up to 2048 px</option><option value={1080}>Up to 1080 px</option></select>{s.format !== "png" && <Range label="Quality" k="quality" min={0.5} max={1} step={0.01} />}</details>
