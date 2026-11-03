@@ -219,3 +219,10 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 .layer-list label span{flex:1}
 .layer-list label small{color:var(--mute);font-size:10px}
 @media(max-width:600px){.brush-stage canvas{width:100%;height:auto}.layer-list label{padding:11px}}
+
+
+/* AI image-edit controls */
+.ctrls textarea{width:100%;min-height:88px;resize:vertical;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:13px/1.5 var(--sans),system-ui,sans-serif}
+.ctrls textarea:focus{border-color:var(--accent);outline:2px solid rgba(61,255,176,.16)}
+.editor-error{color:#ff8585;font-size:12px;line-height:1.45}
+.ctrls details small{display:block;color:var(--mute);font-size:11px;line-height:1.5}
