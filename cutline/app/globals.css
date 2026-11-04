@@ -390,3 +390,36 @@ button:disabled { cursor: not-allowed; opacity: .48; }
   html { scroll-behavior:auto; }
   *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
 }
+
+
+/* INSTALLABLE APP CHROME */
+.install-app-button {
+  position:fixed; right:22px; bottom:22px; z-index:60;
+  display:flex; align-items:center; gap:9px;
+  min-height:46px; padding:0 17px;
+  border:1px solid rgba(98,245,178,.45); border-radius:999px;
+  background:rgba(13,24,25,.94); color:#dfffee;
+  box-shadow:0 12px 34px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.06);
+  backdrop-filter:blur(16px); font:600 12px var(--sans),sans-serif;
+}
+.install-app-button span { color:var(--accent); font-size:18px; }
+.mobile-app-nav { display:none; }
+@media (max-width:680px) {
+  body { padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
+  .mobile-app-nav {
+    position:fixed; z-index:50; left:10px; right:10px; bottom:calc(8px + env(safe-area-inset-bottom));
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px;
+    padding:7px; border:1px solid rgba(136,175,166,.2); border-radius:17px;
+    background:rgba(7,13,16,.88); box-shadow:0 14px 40px rgba(0,0,0,.42);
+    backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%);
+  }
+  .mobile-app-nav a {
+    display:grid; justify-items:center; align-content:center; gap:3px;
+    min-height:48px; border-radius:11px; color:#91a69e; text-decoration:none;
+    transition:background .18s ease,color .18s ease;
+  }
+  .mobile-app-nav a:active { background:rgba(98,245,178,.1); color:var(--accent); }
+  .mobile-app-nav a span { font-size:19px; line-height:1; }
+  .mobile-app-nav a small { font:9px var(--mono),monospace; letter-spacing:.04em; }
+  .install-app-button { right:14px; bottom:calc(86px + env(safe-area-inset-bottom)); }
+}
