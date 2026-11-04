@@ -423,3 +423,40 @@ button:disabled { cursor: not-allowed; opacity: .48; }
   .mobile-app-nav a small { font:9px var(--mono),monospace; letter-spacing:.04em; }
   .install-app-button { right:14px; bottom:calc(86px + env(safe-area-inset-bottom)); }
 }
+
+/* Native-feeling install guidance and app navigation */
+html { scroll-behavior:smooth; scroll-padding-top:84px; }
+body { overscroll-behavior-y:contain; }
+.install-help-backdrop {
+  position:fixed; inset:0; z-index:100; display:grid; place-items:center;
+  padding:20px; background:rgba(0,0,0,.72); backdrop-filter:blur(12px);
+}
+.install-help-card {
+  position:relative; width:min(100%,430px); padding:28px;
+  border:1px solid rgba(98,245,178,.25); border-radius:22px;
+  background:linear-gradient(155deg,#14201f,#090f12 70%);
+  color:#eaf5ef; box-shadow:0 24px 80px rgba(0,0,0,.55);
+}
+.install-help-close {
+  position:absolute; top:12px; right:14px; width:36px; height:36px;
+  border:1px solid rgba(255,255,255,.12); border-radius:50%;
+  background:rgba(255,255,255,.05); color:#d9e8e1; font-size:23px;
+}
+.install-help-icon {
+  display:grid; place-items:center; width:48px; height:48px; margin-bottom:18px;
+  border:1px solid rgba(98,245,178,.35); border-radius:14px;
+  background:rgba(98,245,178,.1); color:#62f5b2; font-size:24px;
+}
+.install-help-kicker { color:#62f5b2; font:10px var(--mono),monospace; letter-spacing:.15em; }
+.install-help-card h2 { margin:8px 0 10px; font-size:25px; letter-spacing:-.04em; }
+.install-help-card p:not(.install-help-kicker) { color:#a8bbb3; font-size:13px; line-height:1.7; }
+.install-help-card ol { display:grid; gap:11px; padding-left:20px; color:#c6d7cf; font-size:13px; line-height:1.6; }
+.install-help-card strong { color:#f1fff7; }
+.install-help-done {
+  width:100%; min-height:46px; margin-top:12px; border:0; border-radius:12px;
+  background:#62f5b2; color:#07110d; font-weight:700;
+}
+@media (max-width:680px) {
+  .install-help-card { padding:24px 20px; }
+  .install-app-button { min-height:44px; }
+}
