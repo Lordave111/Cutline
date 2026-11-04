@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: "Cutline — Creative Studio",
   description: "A fast, app-like creative studio for background removal, photo editing and AI-powered image creation.",
   applicationName: "Cutline",
+  manifest: "/manifest.json",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Cutline" },
   other: { "google-adsense-account": "ca-pub-4249617873608629" },
 };
