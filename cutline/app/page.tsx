@@ -1,4 +1,5 @@
 import Studio from "@/components/Studio";
+import AppShell from "@/components/AppShell";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const features = [
@@ -15,7 +16,8 @@ const workflow = [
 
 export default function Home() {
   return (
-    <main className="site-shell">
+    <main className="site-shell" id="top">
+      <AppShell />
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
       <nav className="topbar">
