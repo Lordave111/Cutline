@@ -498,3 +498,53 @@ main, .workspace-intro, .studio, .editor, .editor .ctrls { overflow:visible; }
   .background-preset-grid button { grid-template-columns:42px minmax(0,1fr); align-items:center; }
   .background-preset-grid button i { height:38px; }
 }
+
+
+/* ANDROID CHROME SCROLL FIX */
+html {
+  height:auto !important;
+  min-height:100%;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  scroll-behavior:auto;
+  -webkit-overflow-scrolling:touch;
+}
+body {
+  height:auto !important;
+  min-height:100vh;
+  min-height:100svh;
+  overflow-x:hidden !important;
+  overflow-y:visible !important;
+  touch-action:auto !important;
+  overscroll-behavior-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+}
+.site-shell {
+  height:auto !important;
+  min-height:100vh;
+  min-height:100svh;
+  overflow:visible !important;
+  overflow-x:clip !important;
+}
+@media(max-width:680px) {
+  /* Keep the dock compact and prevent it from swallowing swipe gestures. */
+  .mobile-app-nav {
+    left:14px;
+    right:14px;
+    bottom:calc(5px + env(safe-area-inset-bottom));
+    padding:4px;
+    gap:2px;
+    border-radius:14px;
+    pointer-events:none;
+    touch-action:auto !important;
+  }
+  .mobile-app-nav a {
+    min-height:42px;
+    pointer-events:auto;
+    touch-action:manipulation;
+  }
+  body { padding-bottom:calc(66px + env(safe-area-inset-bottom)) !important; }
+  .install-app-button { bottom:calc(76px + env(safe-area-inset-bottom)); }
+  .editor-stage { position:static !important; }
+  .studio, .studio .ctrls, .editor .ctrls { overflow:visible !important; }
+}
