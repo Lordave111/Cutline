@@ -270,3 +270,6 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 .history-item em{font:9px var(--mono),monospace;color:var(--accent);font-style:normal}
 .history-item:not(:disabled):hover{border-color:rgba(98,245,178,.4)}
 @media(max-width:600px){.studio .drop{padding:23px 12px}.sample-entry{padding:11px}.sample-entry-grid img{height:68px}.quick-tool-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.editor .editor-stage .checker{min-height:190px}.editor .editor-stage .checker canvas{max-width:100%;height:auto}.editor .ctrls details{scroll-margin-top:14px}}
+
+/* CREDIT STORE CLICK / CHECKOUT FEEDBACK */
+.credit-store{display:grid;gap:10px}.credit-store-heading{display:grid;gap:4px}.credit-store-heading b{font-size:13px;color:#e5f2eb}.credit-store-heading small{font-size:10px;line-height:1.5;color:#8da19b}.studio .packs button{position:relative;z-index:2;min-height:86px;cursor:pointer;pointer-events:auto;touch-action:manipulation}.studio .packs button:disabled{opacity:.65;cursor:wait;transform:none;box-shadow:none}.studio .packs button small{margin-top:5px;color:var(--accent);font:9px var(--mono),monospace}.studio .packs button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
