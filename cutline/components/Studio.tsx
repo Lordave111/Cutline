@@ -9,6 +9,18 @@ const MAX_SIDE = 1800;
 type Mode = "cutout" | "color" | "gradient" | "image" | "ai";
 const MODES: [Mode, string][] = [["cutout", "Transparent"], ["color", "Color"], ["gradient", "Gradient"], ["image", "My image"], ["ai", "AI prompt"]];
 
+const BACKGROUND_PRESETS = [
+  { name: "Passport white", color: "#ffffff", note: "Clean white" },
+  { name: "Soft white", color: "#f5f5f2", note: "Warm off-white" },
+  { name: "Passport blue", color: "#dcecf7", note: "Pale blue" },
+  { name: "Studio grey", color: "#d9dde2", note: "Neutral grey" },
+  { name: "Sky blue", color: "#9dc9e8", note: "Soft blue" },
+  { name: "Classic red", color: "#c92e3b", note: "Bold red" },
+  { name: "Deep navy", color: "#172d4d", note: "Dark blue" },
+  { name: "Mint", color: "#cceee0", note: "Soft mint" },
+];
+
+
 async function shrink(file: File): Promise<File> {
   const bmp = await createImageBitmap(file);
   const s = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
@@ -158,9 +170,29 @@ export default function Studio() {
       </div>
 
       {(mode === "color" || mode === "gradient") && (
-        <div className="chips">
-          <input aria-label="Color" type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-          {mode === "gradient" && <input aria-label="Second color" type="color" value={color2} onChange={(e) => setColor2(e.target.value)} />}
+        <div className="background-picker">
+          <div className="background-picker-heading">
+            <b>Ready-made backgrounds</b>
+            <small>Choose a clean backdrop, or fine-tune the colour below.</small>
+          </div>
+          <div className="background-preset-grid">
+            {BACKGROUND_PRESETS.map((preset) => (
+              <button
+                type="button"
+                key={preset.name}
+                className={mode === "color" && color.toLowerCase() === preset.color ? "selected" : ""}
+                onClick={() => { setMode("color"); setColor(preset.color); }}
+                aria-pressed={mode === "color" && color.toLowerCase() === preset.color}
+              >
+                <i style={{ background: preset.color }} />
+                <span><b>{preset.name}</b><small>{preset.note}</small></span>
+              </button>
+            ))}
+          </div>
+          <div className="chips">
+            <label className="background-custom-label">Custom colour <input aria-label="Custom background colour" type="color" value={color} onChange={(e) => { setMode("color"); setColor(e.target.value); }} /></label>
+            {mode === "gradient" && <label className="background-custom-label">Second colour <input aria-label="Second gradient colour" type="color" value={color2} onChange={(e) => setColor2(e.target.value)} /></label>}
+          </div>
         </div>
       )}
       {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
