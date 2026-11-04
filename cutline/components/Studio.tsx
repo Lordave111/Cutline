@@ -70,6 +70,18 @@ export default function Studio() {
     catch { setError("Could not read that image."); }
   }
 
+  async function useSample(url: string, name: string) {
+    setError("");
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Could not load this sample. Try uploading your own photo.");
+      const blob = await response.blob();
+      await pick(new File([blob], name + ".jpg", { type: blob.type || "image/jpeg" }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load sample image.");
+    }
+  }
+
   async function run() {
     if (!file) return;
     setBusy(true); setError("");
@@ -115,8 +127,18 @@ export default function Studio() {
 
       <label className="drop">
         <input type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
-        {file ? "Change photo" : "Drop a photo or tap to upload"}
+        <span className="drop-icon">＋</span>
+        <b>{file ? "Change photo" : "Upload a photo to start creating"}</b>
+        <small>{file ? file.name : "Drop an image here or tap to browse · JPG, PNG, WebP"}</small>
       </label>
+      <div className="sample-entry">
+        <div><b>Want to try Cutline first?</b><small>Explore the editor with a sample photo.</small></div>
+        <div className="sample-entry-grid">
+          <button type="button" onClick={() => void useSample("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop&q=85", "portrait-sample")}><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=70" alt="" /><span>Portrait</span></button>
+          <button type="button" onClick={() => void useSample("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=85", "landscape-sample")}><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=160&auto=format&fit=crop&q=70" alt="" /><span>Landscape</span></button>
+          <button type="button" onClick={() => void useSample("https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop&q=85", "product-sample")}><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=160&auto=format&fit=crop&q=70" alt="" /><span>Product</span></button>
+        </div>
+      </div>
 
       <div className="tabs" role="tablist">
         {MODES.map(([m, label]) => (
