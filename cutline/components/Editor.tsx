@@ -200,6 +200,24 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
+        <div className="quick-tools">
+          <div><span className="tool-kicker">QUICK EDIT</span><b>Make it yours</b><small>Tap a tool to start editing</small></div>
+          <div className="quick-tool-grid">
+            <button type="button" onClick={() => applyPreset({ blur: 2 })}><span>◌</span>Blur</button>
+            <button type="button" onClick={() => applyPreset({ blur: 0, contrast: 118, brightness: 104 })}><span>✧</span>Enhance</button>
+            <button type="button" onClick={() => applyPreset({ grayscale: 100, saturation: 0 })}><span>◐</span>B&amp;W</button>
+            <button type="button" onClick={() => applyPreset({ vignette: 42 })}><span>◉</span>Focus</button>
+            <button type="button" onClick={() => applyPreset({ cropLeft: 8, cropTop: 8, cropWidth: 84, cropHeight: 84 })}><span>▣</span>Crop</button>
+            <button type="button" onClick={() => applyPreset({ borderWidth: 18, borderColor: "#ffffff" })}><span>▢</span>Frame</button>
+          </div>
+        </div>
+        <details open className="history-panel"><summary>Editing history <span className="history-count">{history.length + 1} steps</span></summary>
+          <div className="history-list">
+            <button type="button" className="history-item current" disabled><i /> <span><b>Current version</b><small>Live preview</small></span><em>NOW</em></button>
+            {[...history].reverse().map((snapshot, index) => <button type="button" className="history-item" key={history.length - index} onClick={() => { setFuture((f) => [s, ...f].slice(0, 20)); setS(snapshot); setHistory((h) => h.slice(0, history.length - index - 1)); }}><i /> <span><b>Previous edit {history.length - index}</b><small>Restore this version</small></span><em>↶</em></button>)}
+            {!history.length && <p className="editor-hint">Your changes will appear here as you edit.</p>}
+          </div>
+        </details>
         <details open><summary>AI image editor</summary>
           <p className="editor-hint">Describe what to add, remove or change. AI returns a new image you can continue editing.</p>
           <textarea aria-label="AI image edit prompt" rows={3} maxLength={700} placeholder="e.g. Remove the clutter in the background and replace it with a clean warm studio backdrop. Keep the subject unchanged." value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
