@@ -548,3 +548,58 @@ body {
   .editor-stage { position:static !important; }
   .studio, .studio .ctrls, .editor .ctrls { overflow:visible !important; }
 }
+
+
+/* FINAL MOBILE PAGE SCROLL OVERRIDE
+   Keep the document as the sole scroll surface on touch devices. */
+@media (max-width: 900px) {
+  html {
+    display: block !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: scroll !important;
+    touch-action: pan-y pinch-zoom !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body {
+    display: flow-root !important;
+    position: relative !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    touch-action: pan-y pinch-zoom !important;
+    overscroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .site-shell,
+  main.site-shell,
+  .workspace-intro,
+  .feature-section,
+  .workflow-section,
+  .studio,
+  .editor,
+  .editor .ctrls {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    touch-action: pan-y pinch-zoom !important;
+  }
+
+  /* Only the actual drawing surface captures touch for brush strokes. */
+  .brush-stage canvas {
+    touch-action: none !important;
+  }
+
+  .mobile-app-nav,
+  .install-app-button {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
