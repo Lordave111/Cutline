@@ -4,7 +4,8 @@ import { CURRENCY, PACKS } from "@/lib/pricing";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!userId) return NextResponse.json({ error: "Your session has expired. Sign in again to buy credits." }, { status: 401 });
+  if (!process.env.PAYSTACK_SECRET_KEY) return NextResponse.json({ error: "Payments are not configured yet. Add PAYSTACK_SECRET_KEY in your Vercel environment variables, then redeploy." }, { status: 503 });
   const { pack } = await req.json().catch(() => ({}));
   const p = PACKS[pack as keyof typeof PACKS];
   const email = (await currentUser())?.emailAddresses[0]?.emailAddress;
@@ -19,6 +20,9 @@ export async function POST(req: Request) {
     }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data?.data?.authorization_url) return NextResponse.json({ error: "Could not start checkout." }, { status: 502 });
+  if (!res.ok || !data?.data?.authorization_url) {
+    const reason = typeof data?.message === "string" ? data.message : "Paystack did not return a checkout link.";
+    return NextResponse.json({ error: reason }, { status: 502 });
+  }
   return NextResponse.json({ url: data.data.authorization_url });
 }
