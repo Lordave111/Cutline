@@ -84,13 +84,6 @@ export default function AppShell() {
           </section>
         </div>
       )}
-
-      <nav className="mobile-app-nav" aria-label="App navigation">
-        <a href="#top" aria-label="Home"><span>⌂</span><small>Home</small></a>
-        <a href="#studio" aria-label="Studio"><span>▧</span><small>Studio</small></a>
-        <a href="#features" aria-label="Tools"><span>✳</span><small>Tools</small></a>
-        <a href="#workflow" aria-label="Workflow"><span>◷</span><small>Guide</small></a>
-      </nav>
     </>
   );
 }
