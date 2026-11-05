@@ -1,47 +1,17 @@
-import { readImage } from "@/lib/photoroom";
-import { paid } from "@/lib/credits";
-import { COST } from "@/lib/pricing";
-import { editWithPollinations, pollinationsErrorMessage } from "@/lib/huggingface";
-
-export const maxDuration = 60;
-
 const json = (error: string, status: number) =>
   new Response(JSON.stringify({ error }), {
     status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 
-async function editBackground(image: File, prompt: string): Promise<Response> {
-  try {
-    const output = await editWithPollinations(image, [
-      "Replace the background while keeping the main subject unchanged.",
-      "Requested background:",
-      prompt,
-    ].join(" "));
-    return new Response(await output.arrayBuffer(), {
-      headers: {
-        "Content-Type": output.type || "image/png",
-        "Cache-Control": "no-store",
-      },
-    });
-  } catch (error) {
-    return json("Pollinations image editing failed: " + pollinationsErrorMessage(error), 502);
-  }
-}
-
-export async function POST(req: Request) {
-  if (!process.env.POLLINATIONS_API_KEY) {
-    return json("AI background editing is not configured. Add POLLINATIONS_API_KEY in Vercel Environment Variables, then redeploy.", 503);
-  }
-
-  const form = await req.formData();
-  const img = readImage(form.get("image"));
-  if (img instanceof Response) return img;
-
-  const prompt = String(form.get("prompt") ?? "").trim();
-  if (prompt.length < 3 || prompt.length > 200) {
-    return json("Describe the background in 3-200 characters.", 400);
-  }
-
-  return paid(COST.ai, () => editBackground(img, prompt));
+/**
+ * Background replacement previously relied on Pollinations.
+ * It is intentionally disabled until Cutline has a subject-aware
+ * background segmentation workflow that can preserve the foreground.
+ */
+export async function POST() {
+  return json(
+    "AI background replacement is being upgraded and is temporarily unavailable. Use the AI mask brush in the editor to replace a painted area with Cloudflare AI.",
+    410,
+  );
 }
