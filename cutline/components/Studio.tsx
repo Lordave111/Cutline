@@ -124,7 +124,7 @@ export default function Studio() {
     return { kind: "none" };
   }, [mode, color, color2, bgFile]);
 
-  const base = mode === "ai" ? flatBlob : cutBlob;
+  // Open the full editor as soon as a photo is selected; processed cut-out/AI results take priority when available.\n  const base = mode === "ai" ? (flatBlob ?? file) : (cutBlob ?? file);\n  const editorFlat = mode === "ai" || !cutBlob;
   const ready = mode !== "ai" && !!cutBlob && cutSrc.current === file; // cut-out done: switching backgrounds is free and instant
 
   return (
@@ -169,7 +169,7 @@ export default function Studio() {
 
       <div className="tabs" role="tablist">
         {MODES.map(([m, label]) => (
-          <button key={m} role="tab" aria-selected={mode === m} className={mode === m ? "on" : ""} onClick={() => setMode(m)}>{label}</button>
+          <button type="button" key={m} role="tab" aria-selected={mode === m} aria-disabled={!file} disabled={!file} className={mode === m ? "on" : ""} onClick={() => setMode(m)}>{label}</button>
         ))}
       </div>
 
@@ -199,7 +199,7 @@ export default function Studio() {
           </div>
         </div>
       )}
-      {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
+      {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" disabled={!file} onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
       {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
 
       <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
@@ -208,7 +208,7 @@ export default function Studio() {
       {error && <p className="err" role="alert">{error}</p>}
 
       {preview && !base && <figure><figcaption>INPUT</figcaption><img src={preview} alt="Original" /></figure>}
-      {base && <Editor base={base} flat={mode === "ai"} bg={bg} />}
+      {file && base ? <div className="studio-editor-ready"><div className="studio-editor-heading"><div><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><h3>Your editing workspace</h3><p>All tools are ready. Changes update the canvas as you work.</p></div><span className="studio-active-status"><i /> ACTIVE</span></div><Editor base={base} flat={editorFlat} bg={bg} /></div> : <div className="studio-locked-workspace" aria-disabled="true"><div className="studio-locked-heading"><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><span className="studio-locked-status">LOCKED · NO PHOTO</span></div><h3>Your creative tools, all in one place.</h3><p>Upload a photo to activate the canvas and unlock every editing function.</p><div className="studio-locked-tools"><span>✧ Enhance</span><span>▣ Crop &amp; transform</span><span>◌ Retouch &amp; blur</span><span>T Text &amp; layers</span><span>✦ AI editing</span><span>◈ Filters &amp; colour</span><span>▧ Backgrounds</span><span>↗ Export</span></div></div>}
       {isSignedIn ? <Assistant /> : (
         <div className="ai-assistant">
           <p className="tag">YOUR CREATIVE COPILOT</p>
