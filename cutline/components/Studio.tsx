@@ -49,7 +49,6 @@ export default function Studio() {
   const [color, setColor] = useState("#0d1117");
   const [color2, setColor2] = useState("#3dffb0");
   const [bgFile, setBgFile] = useState<File | null>(null);
-  const [prompt, setPrompt] = useState("");
   const [cutBlob, setCutBlob] = useState<Blob | null>(null);
   const [flatBlob, setFlatBlob] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
@@ -106,9 +105,14 @@ export default function Studio() {
     if (!file) return;
     setBusy(true); setError("");
     try {
-      const f = new FormData(); f.append("image", file);
-      if (mode === "ai") { f.append("prompt", prompt); setFlatBlob(await call("/api/background", f, setCredits)); }
-      else { setCutBlob(await call("/api/cutout", f, setCredits)); cutSrc.current = file; }
+      if (mode === "ai") {
+        // Open the original image in the editor. The user paints the exact
+        // background area and submits it to the working Cloudflare inpainting route.
+        setFlatBlob(file);
+      } else {
+        const f = new FormData(); f.append("image", file);
+        setCutBlob(await call("/api/cutout", f, setCredits)); cutSrc.current = file;
+      }
     } catch (e) { setError(e instanceof Error ? e.message : "Something went wrong."); }
     finally { setBusy(false); }
   }
@@ -129,7 +133,7 @@ export default function Studio() {
         {isSignedIn ? (
           <>
             <span>CREDITS <b>{credits ?? "…"}</b></span>
-            <span className="mute">Cut-out {COST.cutout} · AI background {COST.ai} · editing is free</span>
+            <span className="mute">Cut-out {COST.cutout} · Cloudflare AI edits use a separate daily allowance</span>
           </>
         ) : (
           <SignInButton mode="modal"><button className="go">Sign in for free credits</button></SignInButton>
@@ -196,10 +200,10 @@ export default function Studio() {
         </div>
       )}
       {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
-      {mode === "ai" && <input aria-label="Describe the background" placeholder="e.g. sunlit marble kitchen counter" maxLength={200} value={prompt} onChange={(e) => setPrompt(e.target.value)} />}
+      {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
 
       <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
-        {busy ? "Processing…" : mode === "ai" ? `Generate background (${COST.ai} credits)` : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
+        {busy ? "Opening editor…" : mode === "ai" ? "Open AI background editor" : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
       </button>
       {error && <p className="err" role="alert">{error}</p>}
 
