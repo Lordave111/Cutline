@@ -1036,3 +1036,23 @@ body:before{background:linear-gradient(180deg,rgba(16,13,22,.06),#100d16 88%);z-
 .template-editorial .template-preview{justify-content:space-between;background:linear-gradient(160deg,#8b7770,#41343a 55%,#17151a)}
 @media(max-width:760px){.design-template-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.design-template-panel{padding:14px}}
 @media(max-width:380px){.design-template-heading{flex-direction:column}.design-template-card{padding:7px}}
+
+
+/* Photo studio activation states and workspace hierarchy */
+.studio .tabs button:disabled{opacity:.38;filter:saturate(.35);cursor:not-allowed;transform:none;box-shadow:none}
+.studio .tabs button:disabled:hover{color:#ad9fb7;border-color:rgba(218,196,235,.15)}
+.studio-editor-ready{display:grid;gap:14px;margin-top:22px}
+.studio-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px;border:1px solid rgba(198,160,246,.22);border-radius:13px;background:linear-gradient(110deg,rgba(126,87,163,.16),rgba(232,201,157,.045)),rgba(18,13,25,.88)}
+.studio-editor-heading h3,.studio-locked-workspace h3{margin:5px 0 4px;color:#f3eaf7;font-size:20px;letter-spacing:-.035em}
+.studio-editor-heading p,.studio-locked-workspace>p{margin:0;color:#a99caf;font-size:12px;line-height:1.6}
+.studio-active-status,.studio-locked-status{display:inline-flex;align-items:center;gap:7px;flex:none;padding:7px 10px;border:1px solid rgba(105,230,181,.22);border-radius:99px;background:rgba(105,230,181,.07);color:#8de3bd;font:10px var(--mono),monospace;letter-spacing:.12em}
+.studio-active-status i{width:7px;height:7px;border-radius:50%;background:#70e9ba;box-shadow:0 0 12px rgba(112,233,186,.7)}
+.studio-locked-workspace{position:relative;display:grid;gap:12px;margin-top:22px;padding:22px;border:1px solid rgba(218,196,235,.13);border-radius:14px;background:linear-gradient(145deg,rgba(35,26,45,.72),rgba(15,12,21,.88));opacity:.72;filter:saturate(.55)}
+.studio-locked-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.studio-locked-status{border-color:rgba(218,196,235,.16);background:rgba(218,196,235,.045);color:#a99caf}
+.studio-locked-workspace h3{font-size:clamp(19px,3vw,25px)}
+.studio-locked-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:5px}
+.studio-locked-tools span{display:flex;align-items:center;min-height:40px;padding:9px 10px;border:1px solid rgba(218,196,235,.1);border-radius:8px;background:rgba(8,6,12,.28);color:#8f8299;font-size:11px}
+.studio .drop{position:relative}
+.studio .drop:focus-within{outline:2px solid rgba(198,160,246,.55);outline-offset:3px}
+@media(max-width:600px){.studio-editor-heading{align-items:flex-start;flex-direction:column;padding:14px}.studio-locked-workspace{padding:15px}.studio-locked-heading{align-items:flex-start;flex-direction:column}.studio-locked-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
