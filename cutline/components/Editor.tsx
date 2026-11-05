@@ -264,8 +264,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const sourceCanvas = document.createElement("canvas");
       await render(sourceCanvas, hasAiResult ? sourceBlob : base, hasAiResult ? true : flat, hasAiResult ? { kind: "none" } : bg, s, layers, [], paintStrokes, cloneStrokes);
       const resize = Math.min(1, 768 / sourceCanvas.width, 768 / sourceCanvas.height);
-      const width = Math.max(256, Math.round(sourceCanvas.width * resize));
-      const height = Math.max(256, Math.round(sourceCanvas.height * resize));
+      // Stable Diffusion's VAE requires both dimensions to be divisible by 8.
+      // Round down while keeping the image and its selection mask on the same canvas.
+      const width = Math.max(256, Math.floor((sourceCanvas.width * resize) / 8) * 8);
+      const height = Math.max(256, Math.floor((sourceCanvas.height * resize) / 8) * 8);
       const imageCanvas = document.createElement("canvas"); imageCanvas.width = width; imageCanvas.height = height;
       const imageCtx = imageCanvas.getContext("2d")!; imageCtx.drawImage(sourceCanvas, 0, 0, width, height);
       const imageDataUrl = imageCanvas.toDataURL("image/png");
