@@ -181,6 +181,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [hasAiResult, setHasAiResult] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
+  const [aiStage, setAiStage] = useState("");
   const [exportBusy, setExportBusy] = useState(false);
   const [aiError, setAiError] = useState("");
   const [layers, setLayers] = useState<DesignLayer[]>([]);
@@ -298,10 +300,11 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   async function runAiEdit() {
     if (!ref.current || !aiPrompt.trim() || aiBusy) return;
     if (!maskStrokes.length && !magicSeed) { setAiError("Tap Select background and choose a point on the background, or use the mask brush."); return; }
-    setAiBusy(true); setAiError("");
+    setAiBusy(true); setAiProgress(4); setAiStage("Preparing your image…"); setAiError("");
     try {
       const sourceCanvas = document.createElement("canvas");
       await render(sourceCanvas, hasAiResult ? sourceBlob : base, hasAiResult ? true : flat, hasAiResult ? { kind: "none" } : bg, s, layers, [], paintStrokes, cloneStrokes);
+      setAiProgress(15); setAiStage("Preparing image and selection…");
       const resize = Math.min(1, 768 / sourceCanvas.width, 768 / sourceCanvas.height);
       // Stable Diffusion's VAE requires both dimensions to be divisible by 8.
       // Round down while keeping the image and its selection mask on the same canvas.
@@ -347,13 +350,16 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         maskCanvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not prepare the AI selection mask.")), "image/png");
       });
       const maskBytes = Array.from(new Uint8Array(await maskBlob.arrayBuffer()));
-      const response = await fetch("/api/inpaint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: imageDataUrl.split(",")[1], mask: maskBytes, width, height, prompt: aiPrompt.trim() }) });
+      setAiProgress(30); setAiStage("Sending image securely to AI…");
+      const response = await fetch("/api/inpaint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: imageDataUrl.split(",")[1], mask: maskBytes, width, height, prompt: aiPrompt.trim() }), signal: AbortSignal.timeout(65_000) });
+      setAiProgress(88); setAiStage("AI finished. Applying your edit…");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI inpainting failed.");
       const edited = await fetch(data.image).then((r) => r.blob());
+      setAiProgress(98); setAiStage("Finishing your image…");
       setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI inpainting failed."); }
-    finally { setAiBusy(false); }
+    finally { setAiBusy(false); setAiProgress(0); setAiStage(""); }
   }
 
 
@@ -477,6 +483,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
           <div className="ai-step-card ai-apply-card">
             <div className="ai-step-title"><span>03</span><b>Generate your edit</b></div>
+            {aiBusy && <div className="ai-progress" role="status" aria-live="polite"><div className="ai-progress-heading"><b>{aiStage}</b><strong>{aiProgress}%</strong></div><div className="ai-progress-track"><span style={{ width: `${aiProgress}%` }} /></div><small>Stage-based progress · generation time depends on the AI service</small></div>}
             <button className={`go${aiBusy ? " is-loading" : ""}`} type="button" disabled={aiBusy || !aiPrompt.trim() || (!maskStrokes.length && !magicSeed)} onClick={() => void runAiEdit()}>{aiBusy ? <><span className="btn-spinner" aria-hidden="true" /> AI is editing…</> : "Generate AI edit ✨"}</button>
             {aiError && <p role="alert" className="editor-error">{aiError}</p>}
             <small>Cloudflare Workers AI · Up to 5 image edits per day.</small>
