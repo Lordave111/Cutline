@@ -172,6 +172,7 @@ async function exportImage(c: HTMLCanvasElement, s: S): Promise<Blob> {
 
 export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; bg: Bg }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const magicPreviewRef = useRef<HTMLCanvasElement>(null);
   const [s, setS] = useState<S>(DEFAULTS);
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
@@ -223,6 +224,44 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
     else { void render(ref.current, base, flat, bg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
   }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
+
+  useEffect(() => {
+    const source = ref.current;
+    const overlay = magicPreviewRef.current;
+    if (!source || !overlay) return;
+    overlay.width = source.width;
+    overlay.height = source.height;
+    const ctx = overlay.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!magicSeed || !source.width || !source.height) return;
+    try {
+      const pixels = source.getContext("2d")!.getImageData(0, 0, source.width, source.height).data;
+      const width = source.width, height = source.height, total = width * height;
+      const sx = Math.max(0, Math.min(width - 1, Math.round(magicSeed.x * (width - 1))));
+      const sy = Math.max(0, Math.min(height - 1, Math.round(magicSeed.y * (height - 1))));
+      const start = (sy * width + sx) * 4;
+      const sr = pixels[start], sg = pixels[start + 1], sb = pixels[start + 2];
+      const seen = new Uint8Array(total), queue = new Int32Array(total);
+      const preview = ctx.createImageData(width, height);
+      let head = 0, tail = 0, selected = 0;
+      queue[tail++] = sy * width + sx; seen[sy * width + sx] = 1;
+      const threshold = magicTolerance * 2.2;
+      while (head < tail) {
+        const index = queue[head++], p = index * 4;
+        const dr = pixels[p] - sr, dg = pixels[p + 1] - sg, db = pixels[p + 2] - sb;
+        if (Math.sqrt(dr * dr + dg * dg + db * db) > threshold) continue;
+        const out = p;
+        preview.data[out] = 80; preview.data[out + 1] = 225; preview.data[out + 2] = 185; preview.data[out + 3] = 105;
+        selected++;
+        const x = index % width, y = Math.floor(index / width);
+        const neighbors = [x > 0 ? index - 1 : -1, x < width - 1 ? index + 1 : -1, y > 0 ? index - width : -1, y < height - 1 ? index + width : -1];
+        for (const next of neighbors) if (next >= 0 && !seen[next]) { seen[next] = 1; queue[tail++] = next; }
+      }
+      ctx.putImageData(preview, 0, 0);
+      if (!selected) return;
+    } catch { /* Canvas may be temporarily unavailable while the image is rendering. */ }
+  }, [magicSeed, magicTolerance, base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
   function saveProject() {
     const payload = { app: "Cutline", version: 3, settings: s, layers, maskStrokes, paintStrokes, selection, cloneStrokes };
@@ -385,7 +424,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (magicWandMode) { setMagicSeed(canvasPoint(event)); setMagicWandMode(false); setAiError(""); } else if (selectionTool !== "off") { event.currentTarget.setPointerCapture(event.pointerId); beginSelection(event); } else if (cloneMode) { event.currentTarget.setPointerCapture(event.pointerId); setClonePoint(event); } else if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) { maskDrawing.current = true; paintMask(event); } else { paintDrawing.current = true; paintOnCanvas(event); } } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && selectionTool !== "off") extendSelection(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && cloneMode) extendClone(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} onPointerCancel={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} style={{ touchAction: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" || activeLayer ? "none" : "auto", cursor: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} />{magicSeed && <div className="magic-wand-point" style={{ left: `${magicSeed.x * 100}%`, top: `${magicSeed.y * 100}%` }} aria-label="Selected background point">✦</div>}{selection && <svg className="selection-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">{selection.kind === "rect" && selection.points.length > 1 ? <rect x={Math.min(selection.points[0].x, selection.points[1].x)*1000} y={Math.min(selection.points[0].y, selection.points[1].y)*1000} width={Math.abs(selection.points[1].x-selection.points[0].x)*1000} height={Math.abs(selection.points[1].y-selection.points[0].y)*1000} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" /> : <polygon points={selection.points.map(p => `${p.x*1000},${p.y*1000}`).join(" ")} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" />}</svg>}</div>
+        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (magicWandMode) { setMagicSeed(canvasPoint(event)); setMagicWandMode(false); setAiError(""); } else if (selectionTool !== "off") { event.currentTarget.setPointerCapture(event.pointerId); beginSelection(event); } else if (cloneMode) { event.currentTarget.setPointerCapture(event.pointerId); setClonePoint(event); } else if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) { maskDrawing.current = true; paintMask(event); } else { paintDrawing.current = true; paintOnCanvas(event); } } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && selectionTool !== "off") extendSelection(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && cloneMode) extendClone(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} onPointerCancel={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} style={{ touchAction: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" || activeLayer ? "none" : "auto", cursor: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} /><canvas ref={magicPreviewRef} className="magic-selection-preview" aria-hidden="true" />{magicSeed && <div className="magic-wand-point" style={{ left: `${magicSeed.x * 100}%`, top: `${magicSeed.y * 100}%` }} aria-label="Selected background point">✦</div>}{selection && <svg className="selection-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">{selection.kind === "rect" && selection.points.length > 1 ? <rect x={Math.min(selection.points[0].x, selection.points[1].x)*1000} y={Math.min(selection.points[0].y, selection.points[1].y)*1000} width={Math.abs(selection.points[1].x-selection.points[0].x)*1000} height={Math.abs(selection.points[1].y-selection.points[0].y)*1000} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" /> : <polygon points={selection.points.map(p => `${p.x*1000},${p.y*1000}`).join(" ")} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" />}</svg>}</div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
