@@ -23,6 +23,9 @@ export async function inpaintWithCloudflare(
       },
       body: JSON.stringify({
         prompt,
+        // Cloudflare's inpainting examples use encoded PNG byte arrays for both inputs.
+        // Keep image_b64 as a compatibility fallback while supplying the documented image array.
+        image: [...Buffer.from(imageBase64, "base64")],
         image_b64: imageBase64,
         mask_image: mask,
         mask,
@@ -39,7 +42,7 @@ export async function inpaintWithCloudflare(
   );
 
   if (!response.ok) {
-    const detail = (await response.text().catch(() => "")).replace(/[\\r\\n]+/g, " ").slice(0, 220);
+    const detail = (await response.text().catch(() => "")).replace(/[\\r\\n]+/g, " ").slice(0, 900);
     if (response.status === 401 || response.status === 403) {
       throw new Error("Cloudflare rejected the API token. Check its Workers AI Read permission and account ID.");
     }
