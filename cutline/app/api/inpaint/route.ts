@@ -33,8 +33,8 @@ export async function POST(req: Request) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 256 || height < 256 || width > 768 || height > 768) {
     return json("Image dimensions must be between 256 and 768 pixels.", 400);
   }
-  if (!Array.isArray(mask) || mask.length !== width * height || mask.some((v) => !Number.isInteger(v) || v < 0 || v > 255)) {
-    return json("Paint over the area you want AI to change first.", 400);
+  if (!Array.isArray(mask) || mask.length < 16 || mask.length > 5_000_000 || mask.some((v) => !Number.isInteger(v) || v < 0 || v > 255)) {
+    return json("The AI selection mask is invalid. Please paint the area again and retry.", 400);
   }
 
   const day = new Date().toISOString().slice(0, 10);
