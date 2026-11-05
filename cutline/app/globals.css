@@ -31,7 +31,7 @@ input[type=color]{width:64px;height:40px;background:none;border:1px solid var(--
 figure{display:grid;gap:8px}
 figcaption{font:12px var(--mono),monospace;color:var(--mute);letter-spacing:.12em}
 figure img{width:100%;border-radius:8px;display:block}
-.checker{border-radius:8px;overflow:hidden;background:conic-gradient(#1a2230 25%,#121923 0 50%,#1a2230 0 75%,#121923 0) 0 0/20px 20px}
+.checker{position:relative;border-radius:8px;overflow:hidden;background:conic-gradient(#1a2230 25%,#121923 0 50%,#1a2230 0 75%,#121923 0) 0 0/20px 20px}
 .dl{color:var(--accent);font-family:var(--mono),monospace;font-size:14px}
 .steps{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:48px 0}
 .panel p{color:var(--mute)}
@@ -839,3 +839,5 @@ body:before{background:linear-gradient(180deg,rgba(9,9,15,.02),#09090f 92%)}
 ::selection{background:rgba(196,167,255,.28);color:#fff}:focus-visible{outline-color:#e8c995}
 @media(max-width:900px){.editor-stage{position:relative;top:auto}.editor .ctrls{gap:10px}}
 @media(max-width:600px){.studio{border-radius:15px}.editor .ctrls details{padding:13px}.pro-top-actions{flex-wrap:wrap}}
+
+.magic-selection-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
