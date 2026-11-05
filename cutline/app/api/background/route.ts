@@ -21,10 +21,10 @@ async function editBackground(image: File, prompt: string): Promise<Response> {
 
   const imageData = Buffer.from(await image.arrayBuffer()).toString("base64");
   const instruction = [
-    "Edit the provided photo by replacing only its background.",
-    "Keep the main subject exactly as in the original photo: preserve their identity, face, facial features, hair, skin tone, clothing, pose, body shape, edges, and position.",
-    "Do not retouch, beautify, redraw, or change the subject. Do not add text, logos, extra people, or objects.",
-    "Create a natural, realistic background matching this description:",
+    "Replace only the background in the provided photo.",
+    "Preserve the main subject as faithfully as possible, including face, identity, hair, skin tone, clothing, pose, body shape, and position.",
+    "Do not retouch or redesign the subject. Do not add text, logos, people, or unrelated objects.",
+    "Create a realistic background matching this description:",
     prompt,
   ].join(" ");
 
@@ -38,16 +38,28 @@ async function editBackground(image: File, prompt: string): Promise<Response> {
       body: JSON.stringify({
         model: "gemini-3.1-flash-image",
         input: [
-          { type: "text", text: instruction },
           { type: "image", mime_type: image.type, data: imageData },
+          { type: "text", text: instruction },
         ],
-        response_format: { type: "image", mime_type: "image/png", image_size: "1K" },
       }),
       signal: AbortSignal.timeout(55_000),
     });
 
     if (!upstream.ok) {
-      return json(`Gemini could not edit this image (error ${upstream.status}). Check that your API key is valid and image generation is enabled for your Gemini project.`, 502);
+      let detail = "";
+      try {
+        const failure = await upstream.json();
+        detail = String(failure?.error?.message || failure?.message || "");
+      } catch {
+        // Keep a generic provider error if Google did not return JSON.
+      }
+      const safeDetail = detail.replace(/[\r\n]+/g, " ").slice(0, 240);
+      return json(
+        safeDetail
+          ? `Gemini rejected the image request: ${safeDetail}`
+          : `Gemini image service returned error ${upstream.status}. Check your Gemini API key and project access.`,
+        502,
+      );
     }
 
     const result = await upstream.json();
@@ -56,7 +68,10 @@ async function editBackground(image: File, prompt: string): Promise<Response> {
     if (!generated?.data && Array.isArray(result.steps)) {
       for (const step of result.steps) {
         if (step?.type !== "model_output" || !Array.isArray(step.content)) continue;
-        const block = step.content.find((item: { type?: string; data?: string }) => item?.type === "image" && item.data);
+        const block = step.content.find(
+          (item: { type?: string; data?: string; mime_type?: string }) =>
+            item?.type === "image" && item.data,
+        );
         if (block) {
           generated = block;
           break;
@@ -65,7 +80,7 @@ async function editBackground(image: File, prompt: string): Promise<Response> {
     }
 
     if (!generated?.data) {
-      return json("Gemini returned no edited image. Try a different prompt or another photo.", 502);
+      return json("Gemini completed the request but returned no image. Please try again with another photo or prompt.", 502);
     }
 
     return new Response(Buffer.from(generated.data, "base64"), {
