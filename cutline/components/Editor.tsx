@@ -164,6 +164,9 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [maskMode, setMaskMode] = useState(false);
   const [brushSize, setBrushSize] = useState(36);
   const [maskStrokes, setMaskStrokes] = useState<MaskStroke[]>([]);
+  const [zoom, setZoom] = useState(100);
+  const [projectNotice, setProjectNotice] = useState("");
+  const projectInput = useRef<HTMLInputElement>(null);
   const set = (k: keyof S, v: string | number | boolean) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, [k]: v })); };
   const applyPreset = (values: Partial<S>) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, ...values })); };
   const undo = () => { const previous = history[history.length - 1]; if (!previous) return; setFuture((f) => [s, ...f].slice(0, 20)); setS(previous); setHistory((h) => h.slice(0, -1)); };
@@ -179,6 +182,21 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes); }
     else { void render(ref.current, base, flat, bg, s, layers, maskStrokes); }
   }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes]);
+
+  function saveProject() {
+    const payload = { app: "Cutline", version: 1, settings: s, layers, maskStrokes };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = "cutline-project.json"; a.click(); URL.revokeObjectURL(url);
+    setProjectNotice("Project settings saved. Keep the original image separately; it is not embedded in this file.");
+  }
+  async function loadProject(file: File) {
+    try {
+      const data = JSON.parse(await file.text());
+      if (data.app !== "Cutline" || !data.settings || !Array.isArray(data.layers) || !Array.isArray(data.maskStrokes)) throw new Error("Invalid Cutline project file.");
+      setS({ ...DEFAULTS, ...data.settings }); setLayers(data.layers); setMaskStrokes(data.maskStrokes); setSelectedLayer(data.layers[0]?.id ?? null); setHistory([]); setFuture([]); setShowOriginal(false);
+      setProjectNotice("Project loaded. Open the matching original image to restore the full design.");
+    } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Could not open project."); }
+  }
 
   async function download() {
     if (!ref.current) return;
@@ -243,7 +261,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button>
           <button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button>
           <button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Compare"}</button>
-          <button type="button" className="pro-export" onClick={() => void download()}>Export ↗</button>
+          <button type="button" className="chip" onClick={saveProject}>Save project</button><button type="button" className="chip" onClick={() => projectInput.current?.click()}>Open project</button><input ref={projectInput} type="file" accept="application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void loadProject(file); e.currentTarget.value = ""; }} /><button type="button" className="pro-export" onClick={() => void download()}>Export ↗</button>
         </div>
       </div>
       <aside className="pro-tool-rail" aria-label="Editing tools">
@@ -257,7 +275,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (maskMode) { event.currentTarget.setPointerCapture(event.pointerId); paintMask(event); } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (maskMode && event.currentTarget.hasPointerCapture(event.pointerId)) paintMask(event); else moveLayerOnCanvas(event); }} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: maskMode || activeLayer ? "none" : "auto", cursor: maskMode ? "crosshair" : activeLayer ? "move" : "default" }} /></div>
+        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (maskMode) { event.currentTarget.setPointerCapture(event.pointerId); paintMask(event); } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (maskMode && event.currentTarget.hasPointerCapture(event.pointerId)) paintMask(event); else moveLayerOnCanvas(event); }} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: maskMode || activeLayer ? "none" : "auto", cursor: maskMode ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} /></div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
@@ -281,7 +299,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         </details>
 
 
-        <details open className="mask-panel"><summary>Selection &amp; mask</summary><p className="editor-hint">Paint over the canvas to erase parts of the composite into transparency. Export as PNG to preserve transparent areas.</p><button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); setSelectedLayer(null); }}>{maskMode ? "Mask brush active · tap to stop" : "Activate mask brush"}</button><label className="rng">Brush size <input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setMaskStrokes([])}>Clear mask strokes</button></details>
+        <details open className="mask-panel"><summary>Selection &amp; mask</summary><p className="editor-hint">Paint over the canvas to erase parts of the composite into transparency. Export as PNG to preserve transparent areas.</p><button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); setSelectedLayer(null); }}>{maskMode ? "Mask brush active · tap to stop" : "Activate mask brush"}</button><label className="rng">Brush size <input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setMaskStrokes([])}>Clear mask strokes</button><button type="button" className="chip" onClick={() => setMaskStrokes((old) => old.slice(0, -1))} disabled={!maskStrokes.length}>Undo last brush stroke</button></details>
         <details open className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
           <div className="layer-actions"><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
           <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
