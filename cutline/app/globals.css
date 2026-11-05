@@ -841,3 +841,6 @@ body:before{background:linear-gradient(180deg,rgba(9,9,15,.02),#09090f 92%)}
 @media(max-width:600px){.studio{border-radius:15px}.editor .ctrls details{padding:13px}.pro-top-actions{flex-wrap:wrap}}
 
 .magic-selection-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
+
+.ai-progress{display:grid;gap:9px;padding:14px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:rgba(130,100,190,.09)}
+.ai-progress-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}.ai-progress-heading strong{font-variant-numeric:tabular-nums;color:var(--accent2);font-size:16px}.ai-progress-track{height:9px;overflow:hidden;border-radius:99px;background:rgba(150,150,170,.18)}.ai-progress-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s ease}.ai-progress small{color:var(--mute);font-size:11px}
