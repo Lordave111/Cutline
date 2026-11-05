@@ -646,3 +646,7 @@ body {
 .mask-panel .go,.mask-panel .chip{width:100%;margin:6px 0}
 .pro-editor .checker canvas{user-select:none;-webkit-user-select:none}
 @media(max-width:700px){.layer-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.layer-actions button{font-size:9px;padding:5px 2px}}
+
+
+.layer-order-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.layer-order-actions .chip{min-width:0;padding:8px 5px;font-size:9px}
