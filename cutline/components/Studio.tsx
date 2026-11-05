@@ -124,7 +124,9 @@ export default function Studio() {
     return { kind: "none" };
   }, [mode, color, color2, bgFile]);
 
-  // Open the full editor as soon as a photo is selected; processed cut-out/AI results take priority when available.\n  const base = mode === "ai" ? (flatBlob ?? file) : (cutBlob ?? file);\n  const editorFlat = mode === "ai" || !cutBlob;
+  // Open the full editor as soon as a photo is selected; processed cut-out/AI results take priority when available.
+  const base = mode === "ai" ? (flatBlob ?? file) : (cutBlob ?? file);
+  const editorFlat = mode === "ai" || !cutBlob;
   const ready = mode !== "ai" && !!cutBlob && cutSrc.current === file; // cut-out done: switching backgrounds is free and instant
 
   return (
