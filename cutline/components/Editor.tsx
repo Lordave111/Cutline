@@ -17,6 +17,7 @@ type S = {
   hue: number; grain: number; grayscale: number; sepia: number; invert: number;
   borderWidth: number; borderColor: string; flipY: boolean;
 };
+type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type DesignLayer = { id: string; name: string; kind: "text" | "shape"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle" };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
@@ -40,7 +41,7 @@ const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> 
   { name: "Vibrant", note: "Punchy social-ready colour", swatch: "linear-gradient(135deg,#ffbf59,#8e57e8)", values: { brightness: 105, contrast: 118, saturation: 155, warmth: 5, vignette: 6 } },
 ];
 
-async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = []) {
+async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = [], maskStrokes: MaskStroke[] = []) {
   const fg = await createImageBitmap(base);
   const bi = bg.kind === "image" ? await createImageBitmap(bg.image) : null;
   let W = fg.width, H = fg.height;
@@ -109,6 +110,12 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     x.restore();
   }
 
+
+  if (maskStrokes.length) {
+    x.save(); x.globalCompositeOperation = "destination-out"; x.lineCap = "round"; x.lineJoin = "round";
+    for (const stroke of maskStrokes) { if (!stroke.points.length) continue; x.beginPath(); x.lineWidth = stroke.size; x.moveTo(stroke.points[0].x * c.width, stroke.points[0].y * c.height); for (const point of stroke.points.slice(1)) x.lineTo(point.x * c.width, point.y * c.height); if (stroke.points.length === 1) { x.lineTo(stroke.points[0].x * c.width + .1, stroke.points[0].y * c.height + .1); } x.stroke(); }
+    x.restore();
+  }
   for (const layer of layers) {
     if (!layer.visible) continue;
     x.save(); x.globalAlpha = Math.max(0, Math.min(1, layer.opacity / 100));
@@ -154,21 +161,24 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [layers, setLayers] = useState<DesignLayer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const [draggingLayer, setDraggingLayer] = useState(false);
+  const [maskMode, setMaskMode] = useState(false);
+  const [brushSize, setBrushSize] = useState(36);
+  const [maskStrokes, setMaskStrokes] = useState<MaskStroke[]>([]);
   const set = (k: keyof S, v: string | number | boolean) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, [k]: v })); };
   const applyPreset = (values: Partial<S>) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, ...values })); };
   const undo = () => { const previous = history[history.length - 1]; if (!previous) return; setFuture((f) => [s, ...f].slice(0, 20)); setS(previous); setHistory((h) => h.slice(0, -1)); };
   const redo = () => { const next = future[0]; if (!next) return; setHistory((h) => [...h, s].slice(-20)); setS(next); setFuture((f) => f.slice(1)); };
 
   useEffect(() => {
-    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null);
+    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setMaskStrokes([]);
   }, [base]);
 
   useEffect(() => {
     if (!ref.current) return;
-    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, []); }
-    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers); }
-    else { void render(ref.current, base, flat, bg, s, layers); }
-  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers]);
+    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], []); }
+    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes); }
+    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes); }
+  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes]);
 
   async function download() {
     if (!ref.current) return;
@@ -212,6 +222,13 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const rect = ref.current.getBoundingClientRect();
     updateLayer(activeLayer.id, { x: Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100)), y: Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100)) });
   };
+
+  const paintMask = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!maskMode || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const point = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+    setMaskStrokes((old) => { const next = [...old]; if (!next.length || !event.currentTarget.hasPointerCapture(event.pointerId)) next.push({ points: [point], size: brushSize }); else next[next.length - 1] = { ...next[next.length - 1], points: [...next[next.length - 1].points, point] }; return next; });
+  };
   const Range = ({ label, k, min, max, step = 1 }: { label: string; k: NumKey; min: number; max: number; step?: number }) => (
     <label className="rng"><span>{label} <b>{s[k]}</b></span>
       <input type="range" min={min} max={max} step={step} value={s[k]} onChange={(e) => set(k, Number(e.target.value))} />
@@ -240,7 +257,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={moveLayerOnCanvas} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: activeLayer ? "none" : "auto", cursor: activeLayer ? "move" : "default" }} /></div>
+        <div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (maskMode) { event.currentTarget.setPointerCapture(event.pointerId); paintMask(event); } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (maskMode && event.currentTarget.hasPointerCapture(event.pointerId)) paintMask(event); else moveLayerOnCanvas(event); }} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: maskMode || activeLayer ? "none" : "auto", cursor: maskMode ? "crosshair" : activeLayer ? "move" : "default" }} /></div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
@@ -263,6 +280,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
         </details>
 
+
+        <details open className="mask-panel"><summary>Selection &amp; mask</summary><p className="editor-hint">Paint over the canvas to erase parts of the composite into transparency. Export as PNG to preserve transparent areas.</p><button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); setSelectedLayer(null); }}>{maskMode ? "Mask brush active · tap to stop" : "Activate mask brush"}</button><label className="rng">Brush size <input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setMaskStrokes([])}>Clear mask strokes</button></details>
         <details open className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
           <div className="layer-actions"><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
           <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
