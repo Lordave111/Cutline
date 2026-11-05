@@ -17,6 +17,7 @@ type S = {
   hue: number; grain: number; grayscale: number; sepia: number; invert: number;
   borderWidth: number; borderColor: string; flipY: boolean;
 };
+type DesignLayer = { id: string; name: string; kind: "text" | "shape"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle" };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
@@ -39,7 +40,7 @@ const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> 
   { name: "Vibrant", note: "Punchy social-ready colour", swatch: "linear-gradient(135deg,#ffbf59,#8e57e8)", values: { brightness: 105, contrast: 118, saturation: 155, warmth: 5, vignette: 6 } },
 ];
 
-async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S) {
+async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = []) {
   const fg = await createImageBitmap(base);
   const bi = bg.kind === "image" ? await createImageBitmap(bg.image) : null;
   let W = fg.width, H = fg.height;
@@ -107,6 +108,14 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     x.fillStyle = s.captionColor; x.fillText(label, c.width / 2, c.height * s.captionY / 100, c.width * 0.88);
     x.restore();
   }
+
+  for (const layer of layers) {
+    if (!layer.visible) continue;
+    x.save(); x.globalAlpha = Math.max(0, Math.min(1, layer.opacity / 100));
+    if (layer.kind === "text") { x.font = "800 " + layer.size + "px system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = layer.color; x.fillText(layer.text.slice(0, 100), c.width * layer.x / 100, c.height * layer.y / 100, c.width * .9); }
+    else { x.fillStyle = layer.color; const w = c.width * .22, h = c.height * .14, px = c.width * layer.x / 100, py = c.height * layer.y / 100; if (layer.shape === "circle") { x.beginPath(); x.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); x.fill(); } else x.fillRect(px - w / 2, py - h / 2, w, h); }
+    x.restore();
+  }
   if (s.cropLeft || s.cropTop || s.cropWidth < 100 || s.cropHeight < 100) {
     const left = Math.min(s.cropLeft, 100 - s.cropWidth), top = Math.min(s.cropTop, 100 - s.cropHeight);
     const sx = Math.round(c.width * left / 100), sy = Math.round(c.height * top / 100);
@@ -142,21 +151,24 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [layers, setLayers] = useState<DesignLayer[]>([]);
+  const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
+  const [draggingLayer, setDraggingLayer] = useState(false);
   const set = (k: keyof S, v: string | number | boolean) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, [k]: v })); };
   const applyPreset = (values: Partial<S>) => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS((p) => ({ ...p, ...values })); };
   const undo = () => { const previous = history[history.length - 1]; if (!previous) return; setFuture((f) => [s, ...f].slice(0, 20)); setS(previous); setHistory((h) => h.slice(0, -1)); };
   const redo = () => { const next = future[0]; if (!next) return; setHistory((h) => [...h, s].slice(-20)); setS(next); setFuture((f) => f.slice(1)); };
 
   useEffect(() => {
-    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false);
+    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null);
   }, [base]);
 
   useEffect(() => {
     if (!ref.current) return;
-    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS); }
-    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s); }
-    else { void render(ref.current, base, flat, bg, s); }
-  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal]);
+    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, []); }
+    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers); }
+    else { void render(ref.current, base, flat, bg, s, layers); }
+  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers]);
 
   async function download() {
     if (!ref.current) return;
@@ -181,11 +193,25 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI editing failed. Please try again.");
       const edited = await fetch(data.image).then((r) => r.blob());
-      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setAiPrompt("");
+      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt("");
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI editing failed. Please try again."); }
     finally { setAiBusy(false); }
   }
 
+
+  const addLayer = (kind: "text" | "shape", shape: "rect" | "circle" = "rect") => {
+    const value = kind === "text" ? window.prompt("Enter text for this layer", "Your text") : "";
+    if (kind === "text" && !value?.trim()) return;
+    const layer: DesignLayer = { id: "layer-" + Date.now(), name: kind === "text" ? value!.trim().slice(0, 22) : (shape === "circle" ? "Circle shape" : "Rectangle shape"), kind, text: value?.trim().slice(0, 100) || "", color: kind === "text" ? "#ffffff" : "#70e9ba", x: 50, y: 50, size: 64, opacity: kind === "text" ? 100 : 35, visible: true, shape };
+    setLayers((old) => [...old, layer]); setSelectedLayer(layer.id);
+  };
+  const activeLayer = layers.find((layer) => layer.id === selectedLayer) ?? null;
+  const updateLayer = (id: string, patch: Partial<DesignLayer>) => setLayers((old) => old.map((layer) => layer.id === id ? { ...layer, ...patch } : layer));
+  const moveLayerOnCanvas = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!draggingLayer || !activeLayer || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    updateLayer(activeLayer.id, { x: Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100)), y: Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100)) });
+  };
   const Range = ({ label, k, min, max, step = 1 }: { label: string; k: NumKey; min: number; max: number; step?: number }) => (
     <label className="rng"><span>{label} <b>{s[k]}</b></span>
       <input type="range" min={min} max={max} step={step} value={s[k]} onChange={(e) => set(k, Number(e.target.value))} />
@@ -214,7 +240,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="checker"><canvas ref={ref} /></div>
+        <div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={moveLayerOnCanvas} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: activeLayer ? "none" : "auto", cursor: activeLayer ? "move" : "default" }} /></div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
@@ -236,6 +262,16 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
             {!history.length && <p className="editor-hint">Your changes will appear here as you edit.</p>}
           </div>
         </details>
+
+        <details open className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
+          <div className="layer-actions"><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
+          <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
+            {[...layers].reverse().map((layer) => <div className={"layer-row " + (selectedLayer === layer.id ? "selected" : "")} key={layer.id}><button type="button" className="layer-select" onClick={() => setSelectedLayer(layer.id)}><span>{layer.kind === "text" ? "T" : layer.shape === "circle" ? "◯" : "▱"}</span><b>{layer.name}</b></button><button type="button" className="layer-visibility" onClick={() => updateLayer(layer.id, { visible: !layer.visible })}>{layer.visible ? "◉" : "○"}</button></div>)}
+            {!layers.length && <p className="editor-hint">Add text or shapes, select a layer, then drag it directly on the canvas.</p>}</div>
+          {activeLayer && <div className="layer-properties"><b>Selected: {activeLayer.name}</b>
+            {activeLayer.kind === "text" && <><label className="rng">Text <input value={activeLayer.text} maxLength={100} onChange={(e) => updateLayer(activeLayer.id, { text: e.target.value, name: e.target.value.slice(0, 22) || "Text layer" })} /></label><label className="rng">Font size <input type="range" min="12" max="180" value={activeLayer.size} onChange={(e) => updateLayer(activeLayer.id, { size: Number(e.target.value) })} /></label></>}
+            <label className="rng">Colour <input type="color" value={activeLayer.color} onChange={(e) => updateLayer(activeLayer.id, { color: e.target.value })} /></label><label className="rng">Opacity <input type="range" min="0" max="100" value={activeLayer.opacity} onChange={(e) => updateLayer(activeLayer.id, { opacity: Number(e.target.value) })} /></label><label className="rng">Horizontal <input type="range" min="0" max="100" value={activeLayer.x} onChange={(e) => updateLayer(activeLayer.id, { x: Number(e.target.value) })} /></label><label className="rng">Vertical <input type="range" min="0" max="100" value={activeLayer.y} onChange={(e) => updateLayer(activeLayer.id, { y: Number(e.target.value) })} /></label>
+            <button type="button" className="chip" onClick={() => { setLayers((old) => old.filter((item) => item.id !== activeLayer.id)); setSelectedLayer(null); }}>Delete layer</button></div>}</details>
         <details open><summary>AI image editor</summary>
           <p className="editor-hint">Describe what to add, remove or change. AI returns a new image you can continue editing.</p>
           <textarea aria-label="AI image edit prompt" rows={3} maxLength={700} placeholder="e.g. Remove the clutter in the background and replace it with a clean warm studio backdrop. Keep the subject unchanged." value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
