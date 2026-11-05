@@ -18,7 +18,7 @@ type S = {
   borderWidth: number; borderColor: string; flipY: boolean;
 };
 type MaskStroke = { points: { x: number; y: number }[]; size: number };
-type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string };
+type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
 type DesignLayer = { id: string; name: string; kind: "text" | "shape"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle" };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
@@ -112,7 +112,12 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
   }
 
 
-  if (paintStrokes.length) {\n    x.save(); x.lineCap = "round"; x.lineJoin = "round";\n    for (const stroke of paintStrokes) { if (!stroke.points.length) continue; x.beginPath(); x.strokeStyle = stroke.color; x.lineWidth = stroke.size; x.moveTo(stroke.points[0].x * c.width, stroke.points[0].y * c.height); for (const point of stroke.points.slice(1)) x.lineTo(point.x * c.width, point.y * c.height); if (stroke.points.length === 1) { x.lineTo(stroke.points[0].x * c.width + .1, stroke.points[0].y * c.height + .1); } x.stroke(); }\n    x.restore();\n  }\n  if (maskStrokes.length) {
+  if (paintStrokes.length) {
+    x.save(); x.lineCap = "round"; x.lineJoin = "round";
+    for (const stroke of paintStrokes) { if (!stroke.points.length) continue; x.save(); x.shadowColor = stroke.color; x.shadowBlur = stroke.size * (1 - (stroke.hardness ?? 1)) * 0.35; x.beginPath(); x.strokeStyle = stroke.color; x.lineWidth = stroke.size; x.moveTo(stroke.points[0].x * c.width, stroke.points[0].y * c.height); for (const point of stroke.points.slice(1)) x.lineTo(point.x * c.width, point.y * c.height); if (stroke.points.length === 1) { x.lineTo(stroke.points[0].x * c.width + .1, stroke.points[0].y * c.height + .1); } x.stroke(); x.restore(); }
+    x.restore();
+  }
+  if (maskStrokes.length) {
     x.save(); x.globalCompositeOperation = "destination-out"; x.lineCap = "round"; x.lineJoin = "round";
     for (const stroke of maskStrokes) { if (!stroke.points.length) continue; x.beginPath(); x.lineWidth = stroke.size; x.moveTo(stroke.points[0].x * c.width, stroke.points[0].y * c.height); for (const point of stroke.points.slice(1)) x.lineTo(point.x * c.width, point.y * c.height); if (stroke.points.length === 1) { x.lineTo(stroke.points[0].x * c.width + .1, stroke.points[0].y * c.height + .1); } x.stroke(); }
     x.restore();
@@ -164,7 +169,12 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [draggingLayer, setDraggingLayer] = useState(false);
   const [maskMode, setMaskMode] = useState(false);
   const [brushSize, setBrushSize] = useState(36);
-  const [maskStrokes, setMaskStrokes] = useState<MaskStroke[]>([]);\n  const [paintMode, setPaintMode] = useState(false);\n  const [paintColor, setPaintColor] = useState("#70e9ba");\n  const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
+  const [maskStrokes, setMaskStrokes] = useState<MaskStroke[]>([]);
+  const [paintMode, setPaintMode] = useState(false);
+  const [paintColor, setPaintColor] = useState("#70e9ba");
+  const [brushHardness, setBrushHardness] = useState(100);
+  const paintDrawing = useRef(false);
+  const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [zoom, setZoom] = useState(100);
   const [projectNotice, setProjectNotice] = useState("");
   const projectInput = useRef<HTMLInputElement>(null);
@@ -181,7 +191,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], []); }
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes, paintStrokes); }
-    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes); }
+    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes, paintStrokes); }
   }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes]);
 
   function saveProject() {
@@ -242,7 +252,13 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     updateLayer(activeLayer.id, { x: Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100)), y: Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100)) });
   };
 
-  const paintOnCanvas = (event: React.PointerEvent<HTMLCanvasElement>) => {\n    if (!paintMode || !ref.current) return;\n    const rect = ref.current.getBoundingClientRect();\n    const point = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };\n    setPaintStrokes((old) => { const next = [...old]; if (!next.length || !event.currentTarget.hasPointerCapture(event.pointerId)) next.push({ points: [point], size: brushSize, color: paintColor }); else next[next.length - 1] = { ...next[next.length - 1], points: [...next[next.length - 1].points, point] }; return next; });\n  };\n  const paintMask = (event: React.PointerEvent<HTMLCanvasElement>) => {
+  const paintOnCanvas = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!paintMode || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const point = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+    setPaintStrokes((old) => { const next = [...old]; if (!paintDrawing.current || !next.length) next.push({ points: [point], size: brushSize, color: paintColor, hardness: brushHardness / 100 }); else next[next.length - 1] = { ...next[next.length - 1], points: [...next[next.length - 1].points, point] }; return next; });
+  };
+  const paintMask = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!maskMode || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const point = { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
@@ -276,7 +292,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) paintMask(event); else paintOnCanvas(event); } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => setDraggingLayer(false)} onPointerCancel={() => setDraggingLayer(false)} style={{ touchAction: maskMode || paintMode || activeLayer ? "none" : "auto", cursor: maskMode || paintMode ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} /></div>
+        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) paintMask(event); else { paintDrawing.current = true; paintOnCanvas(event); } } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => { setDraggingLayer(false); paintDrawing.current = false; }} onPointerCancel={() => { setDraggingLayer(false); paintDrawing.current = false; }} style={{ touchAction: maskMode || paintMode || activeLayer ? "none" : "auto", cursor: maskMode || paintMode ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} /></div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
@@ -300,7 +316,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         </details>
 
 
-        <details open className="paint-panel"><summary>Paint &amp; retouch brush</summary><p className="editor-hint">Paint directly onto the image. Brush strokes are included in exports and saved project files.</p><button type="button" className={paintMode ? "go" : "chip"} onClick={() => { setPaintMode((v) => !v); setMaskMode(false); setSelectedLayer(null); }}>{paintMode ? "Paint brush active · tap to stop" : "Activate paint brush"}</button><label className="rng">Brush colour <input type="color" value={paintColor} onChange={(e) => setPaintColor(e.target.value)} /></label><label className="rng">Brush size <input type="range" min="2" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setPaintStrokes((old) => old.slice(0, -1))} disabled={!paintStrokes.length}>Undo last paint stroke</button><button type="button" className="chip" onClick={() => setPaintStrokes([])} disabled={!paintStrokes.length}>Clear paint</button></details>\n        <details open className="mask-panel"><summary>Selection &amp; mask</summary><p className="editor-hint">Paint over the canvas to erase parts of the composite into transparency. Export as PNG to preserve transparent areas.</p><button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); setPaintMode(false); setSelectedLayer(null); }}>{maskMode ? "Mask brush active · tap to stop" : "Activate mask brush"}</button><label className="rng">Brush size <input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setMaskStrokes([])}>Clear mask strokes</button><button type="button" className="chip" onClick={() => setMaskStrokes((old) => old.slice(0, -1))} disabled={!maskStrokes.length}>Undo last brush stroke</button></details>
+        <details open className="paint-panel"><summary>Paint &amp; retouch brush</summary><p className="editor-hint">Paint directly onto the image. Brush strokes are included in exports and saved project files.</p><button type="button" className={paintMode ? "go" : "chip"} onClick={() => { setPaintMode((v) => !v); setMaskMode(false); setSelectedLayer(null); }}>{paintMode ? "Paint brush active · tap to stop" : "Activate paint brush"}</button><label className="rng">Brush colour <input type="color" value={paintColor} onChange={(e) => setPaintColor(e.target.value)} /></label><label className="rng">Brush size <input type="range" min="2" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><label className="rng">Brush hardness <b>{brushHardness}%</b><input type="range" min="0" max="100" value={brushHardness} onChange={(e) => setBrushHardness(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setPaintStrokes((old) => old.slice(0, -1))} disabled={!paintStrokes.length}>Undo last paint stroke</button><button type="button" className="chip" onClick={() => setPaintStrokes([])} disabled={!paintStrokes.length}>Clear paint</button></details>
+        <details open className="mask-panel"><summary>Selection &amp; mask</summary><p className="editor-hint">Paint over the canvas to erase parts of the composite into transparency. Export as PNG to preserve transparent areas.</p><button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); setPaintMode(false); setSelectedLayer(null); }}>{maskMode ? "Mask brush active · tap to stop" : "Activate mask brush"}</button><label className="rng">Brush size <input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setMaskStrokes([])}>Clear mask strokes</button><button type="button" className="chip" onClick={() => setMaskStrokes((old) => old.slice(0, -1))} disabled={!maskStrokes.length}>Undo last brush stroke</button></details>
         <details open className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
           <div className="layer-actions"><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
           <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
