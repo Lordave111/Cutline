@@ -1,7 +1,7 @@
 import { readImage } from "@/lib/photoroom";
 import { paid } from "@/lib/credits";
 import { COST } from "@/lib/pricing";
-import { editWithHuggingFace, huggingFaceError } from "@/lib/huggingface";
+import { editWithPollinations, pollinationsErrorMessage } from "@/lib/huggingface";
 
 export const maxDuration = 60;
 
@@ -13,7 +13,7 @@ const json = (error: string, status: number) =>
 
 async function editBackground(image: File, prompt: string): Promise<Response> {
   try {
-    const output = await editWithHuggingFace(image, [
+    const output = await editWithPollinations(image, [
       "Replace the background while keeping the main subject unchanged.",
       "Requested background:",
       prompt,
@@ -25,11 +25,15 @@ async function editBackground(image: File, prompt: string): Promise<Response> {
       },
     });
   } catch (error) {
-    return json("Hugging Face image editing failed: " + huggingFaceError(error), 502);
+    return json("Pollinations image editing failed: " + pollinationsErrorMessage(error), 502);
   }
 }
 
 export async function POST(req: Request) {
+  if (!process.env.POLLINATIONS_API_KEY) {
+    return json("AI background editing is not configured. Add POLLINATIONS_API_KEY in Vercel Environment Variables, then redeploy.", 503);
+  }
+
   const form = await req.formData();
   const img = readImage(form.get("image"));
   if (img instanceof Response) return img;
