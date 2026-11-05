@@ -757,3 +757,41 @@ button[aria-disabled="true"],
   }
 }
 
+/* Clear in-progress feedback for actions that take time */
+.btn-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: cutline-spin .7s linear infinite;
+}
+button.is-loading {
+  cursor: progress !important;
+  pointer-events: none;
+  filter: saturate(.9);
+}
+button.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.13) 50%, transparent 65%);
+  background-size: 220% 100%;
+  animation: cutline-sheen 1.5s ease-in-out infinite;
+}
+button.is-loading {
+  position: relative;
+  overflow: hidden;
+}
+@keyframes cutline-spin { to { transform: rotate(360deg); } }
+@keyframes cutline-sheen { from { background-position: 100% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner,
+  button.is-loading::after { animation: none !important; }
+}
+
