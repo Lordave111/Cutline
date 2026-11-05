@@ -41,6 +41,13 @@ const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> 
   { name: "Matte film", note: "Muted editorial finish", swatch: "linear-gradient(135deg,#b7b4a1,#596b68)", values: { brightness: 103, contrast: 88, saturation: 72, warmth: 8, fade: 18, vignette: 10 } },
   { name: "Monochrome", note: "Classic black and white", swatch: "linear-gradient(135deg,#f4f4f4,#252525)", values: { brightness: 104, contrast: 125, saturation: 0, vignette: 18 } },
   { name: "Vibrant", note: "Punchy social-ready colour", swatch: "linear-gradient(135deg,#ffbf59,#8e57e8)", values: { brightness: 105, contrast: 118, saturation: 155, warmth: 5, vignette: 6 } },
+  { name: "Golden hour", note: "Warm sunlit highlights", swatch: "linear-gradient(135deg,#f7c978,#a95d39)", values: { brightness: 108, contrast: 108, saturation: 118, warmth: 42, tint: 5, fade: 3 } },
+  { name: "Arctic", note: "Cool crisp editorial tones", swatch: "linear-gradient(135deg,#d6e8ed,#587e9d)", values: { brightness: 106, contrast: 116, saturation: 92, warmth: -24, tint: 8, vignette: 10 } },
+  { name: "Rose", note: "Soft rosy colour grade", swatch: "linear-gradient(135deg,#f2b9c5,#76506d)", values: { brightness: 105, contrast: 104, saturation: 112, warmth: 12, tint: 22, fade: 7 } },
+  { name: "Noir", note: "Deep dramatic monochrome", swatch: "linear-gradient(135deg,#bfc2c6,#15171d)", values: { brightness: 96, contrast: 145, saturation: 0, grayscale: 100, vignette: 32 } },
+  { name: "Dream", note: "Airy pastel softness", swatch: "linear-gradient(135deg,#f4d8e8,#9abed1)", values: { brightness: 114, contrast: 88, saturation: 105, warmth: 12, fade: 16, blur: 0.5 } },
+  { name: "Emerald", note: "Rich cinematic greens", swatch: "linear-gradient(135deg,#9fc8a7,#163d38)", values: { brightness: 98, contrast: 124, saturation: 126, tint: -14, warmth: -8, vignette: 22 } },
+  { name: "Mocha", note: "Understated warm luxury", swatch: "linear-gradient(135deg,#d7b99a,#4e3932)", values: { brightness: 101, contrast: 112, saturation: 82, warmth: 28, sepia: 12, vignette: 16 } },
 ];
 
 async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = [], maskStrokes: MaskStroke[] = [], paintStrokes: PaintStroke[] = [], cloneStrokes: { points: { x: number; y: number }[]; source: { x: number; y: number }; size: number }[] = []) {
