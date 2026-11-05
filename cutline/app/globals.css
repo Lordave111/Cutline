@@ -658,3 +658,19 @@ body {
 
 /* Selection overlay for the editor canvas */
 .pro-editor .checker{position:relative;isolation:isolate}.selection-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.pro-editor .checker canvas{position:relative;z-index:1}.pro-editor .selection-overlay{z-index:2}
+
+
+/* Clear, prompt-first generative editing workflow */
+.ai-workflow-panel{display:grid;gap:12px;padding:14px;border:1px solid #354456;border-radius:13px;background:linear-gradient(145deg,#1b2634,#141d29)}
+.ai-workflow-heading{display:grid;gap:5px}.ai-workflow-heading h3{margin:0;color:#edf5fa;font-size:17px;letter-spacing:-.02em}.ai-workflow-heading .tool-kicker{color:#83e9c4}
+.ai-step-card{display:grid;gap:9px;padding:13px;border:1px solid #304052;border-radius:10px;background:#111a25}
+.ai-step-title{display:flex;align-items:center;gap:9px;color:#e5eef5;font-size:12px}.ai-step-title>span{display:grid;place-items:center;width:25px;height:25px;flex:none;border-radius:7px;background:rgba(112,233,186,.12);color:#80eac2;font:700 10px var(--mono,monospace)}
+.ai-step-card textarea{width:100%;min-height:104px;resize:vertical;padding:11px;border:1px solid #394b5e;border-radius:8px;background:#0b131d;color:#edf5fa;font:inherit;font-size:12px;line-height:1.55}
+.ai-step-card textarea:focus{outline:2px solid rgba(112,233,186,.35);border-color:#70e9ba}
+.ai-step-card>small{color:#8798a8;font-size:10px;line-height:1.5}
+.ai-step-card>.go,.ai-step-card>.chip{width:100%;min-height:40px}
+.ai-step-card .rng{display:grid;gap:7px}.ai-step-card .layer-actions{grid-template-columns:repeat(2,minmax(0,1fr));margin:0}
+.ai-step-card .editor-error{margin:0;padding:10px;border:1px solid rgba(255,112,112,.35);border-radius:8px;background:rgba(255,90,90,.08);color:#ffb0b0;font-size:11px;line-height:1.5}
+.ai-apply-card{border-color:rgba(112,233,186,.28);background:linear-gradient(145deg,rgba(112,233,186,.07),#111a25)}
+.ai-step-card button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.ai-workflow-panel{padding:10px}.ai-step-card{padding:11px}.ai-workflow-heading h3{font-size:16px}}
