@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redis } from "@/lib/credits";
 import { inpaintWithCloudflare } from "@/lib/cloudflare-ai";
+import { generateWithGemini } from "@/lib/gemini";
 
 export const maxDuration = 60;
 
@@ -37,6 +38,23 @@ export async function POST(req: Request) {
     return json("The AI selection mask is invalid. Please paint the area again and retry.", 400);
   }
 
+  if (!process.env.GEMINI_API_KEY) {
+    return json("Gemini prompt enhancement is not configured. Add GEMINI_API_KEY in Vercel.", 503);
+  }
+
+  let refinedPrompt: string;
+  try {
+    refinedPrompt = await generateWithGemini(
+      [{ role: "user", text: prompt }],
+      "You are Cutline's professional photo-editing prompt engineer. Rewrite the user's request as one concise, precise positive inpainting instruction for Stable Diffusion 1.5. The model can edit ONLY the white masked pixels; do not ask it to change anything outside the mask. Preserve the original person's identity, face shape, eyes, nose, mouth, expression, skin tone, hairstyle and all unselected pixels. If the requested edit is on the background, explicitly keep the person untouched. Do not add extra creative changes the user did not request. Do not include explanations, headings, quotes, markdown, or negative prompts. Return only the final image-editing instruction. If the request is unclear, make the safest minimal interpretation.",
+      220,
+    );
+    refinedPrompt = refinedPrompt.slice(0, 700);
+    if (!refinedPrompt) throw new Error("Gemini could not prepare your editing prompt.");
+  } catch (error) {
+    return json(error instanceof Error ? error.message : "Gemini could not prepare your prompt.", 502);
+  }
+
   const day = new Date().toISOString().slice(0, 10);
   const usageKey = "cutline-image-ai:" + userId + ":" + day;
   try {
@@ -48,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const output = await inpaintWithCloudflare(imageData, mask, width, height, prompt);
+    const output = await inpaintWithCloudflare(imageData, mask, width, height, refinedPrompt);
     const bytes = Buffer.from(await output.arrayBuffer());
     return new Response(JSON.stringify({ image: "data:image/png;base64," + bytes.toString("base64") }), {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
