@@ -11,86 +11,80 @@ const json = (error: string, status: number) =>
   });
 
 async function editBackground(image: File, prompt: string): Promise<Response> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.PIXELAPI_API_KEY;
   if (!apiKey) {
     return json(
-      "AI backgrounds need GEMINI_API_KEY. Add it in Vercel → Settings → Environment Variables, then redeploy.",
+      "AI backgrounds need PIXELAPI_API_KEY. Create a free PixelAPI account, add its API key in Vercel → Settings → Environment Variables, then redeploy.",
       500,
     );
   }
 
-  const imageData = Buffer.from(await image.arrayBuffer()).toString("base64");
-  const instruction = [
-    "Replace only the background in the provided photo.",
-    "Preserve the main subject as faithfully as possible, including face, identity, hair, skin tone, clothing, pose, body shape, and position.",
-    "Do not retouch or redesign the subject. Do not add text, logos, people, or unrelated objects.",
-    "Create a realistic background matching this description:",
-    prompt,
-  ].join(" ");
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "User-Agent": "Cutline/1.0",
+  };
 
   try {
-    const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+    const form = new FormData();
+    form.append("image", image, image.name || "cutline-upload");
+    form.append("prompt", prompt);
+
+    const submitted = await fetch("https://api.pixelapi.dev/v1/image/replace-background", {
       method: "POST",
-      headers: {
-        "x-goog-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-3.1-flash-image",
-        input: [
-          { type: "image", mime_type: image.type, data: imageData },
-          { type: "text", text: instruction },
-        ],
-      }),
-      signal: AbortSignal.timeout(55_000),
+      headers,
+      body: form,
+      signal: AbortSignal.timeout(15_000),
     });
 
-    if (!upstream.ok) {
-      let detail = "";
-      try {
-        const failure = await upstream.json();
-        detail = String(failure?.error?.message || failure?.message || "");
-      } catch {
-        // Keep a generic provider error if Google did not return JSON.
-      }
-      const safeDetail = detail.replace(/[\r\n]+/g, " ").slice(0, 240);
+    const job = await submitted.json().catch(() => ({}));
+    if (!submitted.ok || !job.generation_id) {
+      const detail = String(job?.error?.message || job?.message || "");
       return json(
-        safeDetail
-          ? `Gemini rejected the image request: ${safeDetail}`
-          : `Gemini image service returned error ${upstream.status}. Check your Gemini API key and project access.`,
+        detail
+          ? `PixelAPI could not start background replacement: ${detail.slice(0, 220)}`
+          : `PixelAPI rejected the request (error ${submitted.status}). Check your API key and free credits.`,
         502,
       );
     }
 
-    const result = await upstream.json();
-    let generated: { data?: string; mime_type?: string } | undefined = result.output_image;
+    const deadline = Date.now() + 42_000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
+      const statusResponse = await fetch(
+        `https://api.pixelapi.dev/v1/image/${encodeURIComponent(String(job.generation_id))}`,
+        { headers, signal: AbortSignal.timeout(10_000), cache: "no-store" },
+      );
+      const status = await statusResponse.json().catch(() => ({}));
 
-    if (!generated?.data && Array.isArray(result.steps)) {
-      for (const step of result.steps) {
-        if (step?.type !== "model_output" || !Array.isArray(step.content)) continue;
-        const block = step.content.find(
-          (item: { type?: string; data?: string; mime_type?: string }) =>
-            item?.type === "image" && item.data,
+      if (!statusResponse.ok) {
+        return json("PixelAPI could not check the background job. Please try again.", 502);
+      }
+      if (status.status === "failed" || status.status === "blocked") {
+        const detail = String(status.error?.message || status.error || "");
+        return json(
+          detail ? `PixelAPI could not edit this image: ${detail.slice(0, 220)}` : "PixelAPI could not edit this image. Try another photo or prompt.",
+          502,
         );
-        if (block) {
-          generated = block;
-          break;
+      }
+      if (status.status === "completed" && status.output_url) {
+        const outputUrl = new URL(String(status.output_url));
+        if (outputUrl.protocol !== "https:" || outputUrl.hostname !== "api.pixelapi.dev") {
+          return json("PixelAPI returned an invalid image URL.", 502);
         }
+        const output = await fetch(outputUrl, { signal: AbortSignal.timeout(15_000), cache: "no-store" });
+        if (!output.ok) return json("PixelAPI finished editing but the image could not be downloaded. Please try again.", 502);
+        return new Response(await output.arrayBuffer(), {
+          headers: {
+            "Content-Type": output.headers.get("content-type") || "image/png",
+            "Cache-Control": "no-store",
+          },
+        });
       }
     }
 
-    if (!generated?.data) {
-      return json("Gemini completed the request but returned no image. Please try again with another photo or prompt.", 502);
-    }
-
-    return new Response(Buffer.from(generated.data, "base64"), {
-      headers: {
-        "Content-Type": generated.mime_type || "image/png",
-        "Cache-Control": "no-store",
-      },
-    });
+    return json("Background editing is taking longer than expected. Please try again.", 504);
   } catch {
-    return json("Gemini image editing timed out or could not be reached. Please try again.", 502);
+    return json("PixelAPI could not be reached or timed out. Please try again.", 502);
   }
 }
 
