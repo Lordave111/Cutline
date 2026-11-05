@@ -200,10 +200,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
 
   useEffect(() => {
     if (!ref.current) return;
-    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], []); }
+    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], [], []); }
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
-    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes, paintStrokes); }
-  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes]);
+    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
+  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
   function saveProject() {
     const payload = { app: "Cutline", version: 3, settings: s, layers, maskStrokes, paintStrokes, selection, cloneStrokes };
