@@ -173,6 +173,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [hasAiResult, setHasAiResult] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
   const [aiError, setAiError] = useState("");
   const [layers, setLayers] = useState<DesignLayer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
@@ -232,11 +233,19 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   }
 
   async function download() {
-    if (!ref.current) return;
-    const blob = await exportImage(ref.current, showOriginal ? DEFAULTS : s);
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = `cutline.${s.format === "jpeg" ? "jpg" : s.format}`; a.click();
-    URL.revokeObjectURL(a.href);
+    if (!ref.current || exportBusy) return;
+    setExportBusy(true);
+    try {
+      const blob = await exportImage(ref.current, showOriginal ? DEFAULTS : s);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `cutline.${s.format === "jpeg" ? "jpg" : s.format}`; a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setProjectNotice("Export failed. Please try again.");
+    } finally {
+      setExportBusy(false);
+    }
   }
 
 
@@ -351,7 +360,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button>
           <button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button>
           <button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Compare"}</button>
-          <button type="button" className="chip" onClick={saveProject}>Save project</button><button type="button" className="chip" onClick={() => projectInput.current?.click()}>Open project</button><input ref={projectInput} type="file" accept="application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void loadProject(file); e.currentTarget.value = ""; }} /><button type="button" className="pro-export" onClick={() => void download()}>Export ↗</button>
+          <button type="button" className="chip" onClick={saveProject}>Save project</button><button type="button" className="chip" onClick={() => projectInput.current?.click()}>Open project</button><input ref={projectInput} type="file" accept="application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void loadProject(file); e.currentTarget.value = ""; }} /><button type="button" className={`pro-export${exportBusy ? " is-loading" : ""}`} onClick={() => void download()} disabled={exportBusy}>{exportBusy ? <><span className="btn-spinner" aria-hidden="true" /> Preparing export…</> : "Export ↗"}</button>
         </div>
       </div>
       <aside className="pro-tool-rail" aria-label="Editing tools">
@@ -418,7 +427,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
           <div className="ai-step-card ai-apply-card">
             <div className="ai-step-title"><span>03</span><b>Generate your edit</b></div>
-            <button className="go" type="button" disabled={aiBusy || !aiPrompt.trim() || (!maskStrokes.length && !magicSeed)} onClick={() => void runAiEdit()}>{aiBusy ? "AI is editing…" : "Generate AI edit ✨"}</button>
+            <button className={`go${aiBusy ? " is-loading" : ""}`} type="button" disabled={aiBusy || !aiPrompt.trim() || (!maskStrokes.length && !magicSeed)} onClick={() => void runAiEdit()}>{aiBusy ? <><span className="btn-spinner" aria-hidden="true" /> AI is editing…</> : "Generate AI edit ✨"}</button>
             {aiError && <p role="alert" className="editor-error">{aiError}</p>}
             <small>Cloudflare Workers AI · Up to 5 image edits per day.</small>
           </div>
@@ -456,7 +465,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         </details>
         <details><summary>Text &amp; watermark</summary><input aria-label="Overlay text" placeholder="Add a title, label or watermark…" maxLength={90} value={s.caption} onChange={(e) => set("caption", e.target.value)} /><div className="chips"><label className="rng">Text colour <input aria-label="Text colour" type="color" value={s.captionColor} onChange={(e) => set("captionColor", e.target.value)} /></label></div><Range label="Text size" k="captionSize" min={18} max={120} /><Range label="Vertical position" k="captionY" min={5} max={95} /></details>
         <details><summary>Export settings</summary><select aria-label="Format" value={s.format} onChange={(e) => set("format", e.target.value)}><option value="png">PNG (transparent)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select><select aria-label="Size" value={s.maxSide} onChange={(e) => set("maxSide", Number(e.target.value))}><option value={0}>Full size</option><option value={4096}>Up to 4096 px</option><option value={2048}>Up to 2048 px</option><option value={1080}>Up to 1080 px</option></select>{s.format !== "png" && <Range label="Quality" k="quality" min={0.5} max={1} step={0.01} />}</details>
-        <button className="go" type="button" onClick={() => void download()}>Export image ↗</button>
+        <button className={`go${exportBusy ? " is-loading" : ""}`} type="button" disabled={exportBusy} onClick={() => void download()}>{exportBusy ? <><span className="btn-spinner" aria-hidden="true" /> Preparing export…</> : "Export image ↗"}</button>
         <button className="chip" type="button" onClick={() => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS(DEFAULTS); }}>Reset all edits</button>
       </div>
     </div>
