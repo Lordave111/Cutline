@@ -314,7 +314,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const edited = await fetch(data.image).then((r) => r.blob());
       setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI inpainting failed."); }
-    finally { aiBusy && setAiBusy(false); }
+    finally { setAiBusy(false); }
   }
 
 
