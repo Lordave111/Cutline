@@ -24,6 +24,7 @@ export async function inpaintWithCloudflare(
       body: JSON.stringify({
         prompt,
         image_b64: imageBase64,
+        mask_image: mask,
         mask,
         width,
         height,
