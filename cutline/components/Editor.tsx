@@ -193,7 +193,16 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   );
 
   return (
-    <div className="editor">
+    <div className="editor pro-editor">
+      <div className="pro-editor-topbar">
+        <div className="pro-document"><span className="pro-doc-icon">▧</span><span><b>Untitled design</b><small>{showOriginal ? "Original preview" : "Live editing session"}</small></span></div>
+        <div className="pro-top-actions">
+          <button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button>
+          <button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button>
+          <button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Compare"}</button>
+          <button type="button" className="pro-export" onClick={() => void download()}>Export ↗</button>
+        </div>
+      </div>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
         <div className="checker"><canvas ref={ref} /></div>
