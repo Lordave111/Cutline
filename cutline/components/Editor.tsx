@@ -294,10 +294,12 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           for (const next of neighbors) if (next >= 0 && !seen[next]) { seen[next] = 1; queue[tail++] = next; }
         }
       }
-      const pixels = maskCtx.getImageData(0, 0, width, height).data;
-      const mask = new Array<number>(width * height);
-      for (let i = 0; i < mask.length; i++) mask[i] = pixels[i * 4];
-      const response = await fetch("/api/inpaint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: imageDataUrl.split(",")[1], mask, width, height, prompt: aiPrompt.trim() }) });
+      // Cloudflare expects encoded PNG bytes for the mask image, not flat grayscale pixels.
+      const maskBlob = await new Promise<Blob>((resolve, reject) => {
+        maskCanvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not prepare the AI selection mask.")), "image/png");
+      });
+      const maskBytes = Array.from(new Uint8Array(await maskBlob.arrayBuffer()));
+      const response = await fetch("/api/inpaint", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: imageDataUrl.split(",")[1], mask: maskBytes, width, height, prompt: aiPrompt.trim() }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI inpainting failed.");
       const edited = await fetch(data.image).then((r) => r.blob());
