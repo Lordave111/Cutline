@@ -203,6 +203,15 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <button type="button" className="pro-export" onClick={() => void download()}>Export ↗</button>
         </div>
       </div>
+      <aside className="pro-tool-rail" aria-label="Editing tools">
+        <span>TOOLS</span>
+        <button type="button" title="Enhance image" onClick={() => applyPreset({ blur: 0, contrast: 118, brightness: 104 })}>✧</button>
+        <button type="button" title="Crop image" onClick={() => applyPreset({ cropLeft: 8, cropTop: 8, cropWidth: 84, cropHeight: 84 })}>▣</button>
+        <button type="button" title="Blur" onClick={() => applyPreset({ blur: 2 })}>◌</button>
+        <button type="button" title="Add text" onClick={() => { const value = window.prompt("Text to add to image"); if (value !== null) set("caption", value.slice(0, 90)); }}>T</button>
+        <button type="button" title="Black and white" onClick={() => applyPreset({ grayscale: 100, saturation: 0 })}>◐</button>
+        <button type="button" title="Add frame" onClick={() => applyPreset({ borderWidth: 18, borderColor: "#ffffff" })}>▢</button>
+      </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
         <div className="checker"><canvas ref={ref} /></div>
