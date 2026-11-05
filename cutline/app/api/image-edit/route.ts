@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redis } from "@/lib/credits";
-import { editWithHuggingFace, huggingFaceError } from "@/lib/huggingface";
+import { editWithPollinations, pollinationsErrorMessage } from "@/lib/huggingface";
 
 export const maxDuration = 60;
 
@@ -14,8 +14,8 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return json("Sign in to use AI image editing.", 401);
 
-  if (!process.env.HF_TOKEN) {
-    return json("AI image editing is not configured. Add HF_TOKEN in Vercel → Project Settings → Environment Variables, then redeploy.", 503);
+  if (!process.env.POLLINATIONS_API_KEY) {
+    return json("AI image editing is not configured. Add POLLINATIONS_API_KEY in Vercel → Project Settings → Environment Variables, then redeploy.", 503);
   }
 
   let body: { imageData?: string; mimeType?: string; prompt?: string };
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
   try {
     const input = Buffer.from(imageData, "base64");
-    const output = await editWithHuggingFace(new Blob([input], { type: mimeType }), prompt);
+    const output = await editWithPollinations(new Blob([input], { type: mimeType }), prompt);
     const outputType = output.type || "image/png";
     if (!["image/png", "image/jpeg", "image/webp"].includes(outputType)) {
       await redis.decr(usageKey).catch(() => undefined);
@@ -60,8 +60,7 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (error) {
-    // A failed provider request must not consume the user's daily edit allowance.
     await redis.decr(usageKey).catch(() => undefined);
-    return json("Hugging Face image editing failed: " + huggingFaceError(error), 502);
+    return json("Pollinations image editing failed: " + pollinationsErrorMessage(error), 502);
   }
 }
