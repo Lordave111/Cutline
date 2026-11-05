@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redis } from "@/lib/credits";
+import { editWithHuggingFace, huggingFaceError } from "@/lib/huggingface";
 
 export const maxDuration = 60;
 
@@ -13,8 +14,9 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return json("Sign in to use AI image editing.", 401);
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return json("AI image editing is not configured. Add GEMINI_API_KEY in Vercel → Project Settings → Environment Variables, then redeploy.", 503);
+  if (!process.env.HF_TOKEN) {
+    return json("AI image editing is not configured. Add HF_TOKEN in Vercel → Project Settings → Environment Variables, then redeploy.", 503);
+  }
 
   let body: { imageData?: string; mimeType?: string; prompt?: string };
   try {
@@ -46,41 +48,17 @@ export async function POST(req: Request) {
   }
 
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        contents: [{
-          role: "user",
-          parts: [
-            { inlineData: { mimeType, data: imageData } },
-            { text: "Edit the supplied photograph according to this instruction: " + prompt + " Preserve the original subject, identity, composition and all unaffected details unless the instruction explicitly asks to change them. Return the edited image." },
-          ],
-        }],
-        generationConfig: { responseModalities: ["IMAGE"] },
-      }),
-      signal: AbortSignal.timeout(55000),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (response.status === 429) return json("Google's image AI is busy or the API quota has been reached. Wait and try again.", 429);
-      if (response.status === 400 || response.status === 404) return json("Google rejected the image request. Check that your Gemini API key has image-generation access enabled.", 502);
-      return json("The image AI service is temporarily unavailable. Please try again.", 502);
-    }
-
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const image = parts.find((part: { inlineData?: { data?: string; mimeType?: string } }) => part.inlineData?.data);
-    if (!image?.inlineData?.data) {
-      return json("The AI did not return an edited image. Try a more specific instruction.", 502);
-    }
-    const outputType = image.inlineData.mimeType || "image/png";
+    const input = Buffer.from(imageData, "base64");
+    const output = await editWithHuggingFace(new Blob([input], { type: mimeType }), prompt);
+    const outputType = output.type || "image/png";
     if (!["image/png", "image/jpeg", "image/webp"].includes(outputType)) {
       return json("The AI returned an unsupported image format. Please try again.", 502);
     }
-    return new Response(JSON.stringify({ image: "data:" + outputType + ";base64," + image.inlineData.data }), {
+    const outputBase64 = Buffer.from(await output.arrayBuffer()).toString("base64");
+    return new Response(JSON.stringify({ image: "data:" + outputType + ";base64," + outputBase64 }), {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
-  } catch {
-    return json("AI image editing timed out or could not connect. Please try again.", 502);
+  } catch (error) {
+    return json("Hugging Face image editing failed: " + huggingFaceError(error), 502);
   }
 }
