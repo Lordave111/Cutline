@@ -389,6 +389,35 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const layer: DesignLayer = { id: "layer-" + Date.now(), name: kind === "text" ? value!.trim().slice(0, 22) : (shape === "circle" ? "Circle shape" : "Rectangle shape"), kind, text: value?.trim().slice(0, 100) || "", color: kind === "text" ? "#ffffff" : "#70e9ba", x: 50, y: 50, size: 64, opacity: kind === "text" ? 100 : 35, visible: true, shape };
     setLayers((old) => [...old, layer]); setSelectedLayer(layer.id);
   };
+  const applyDesignTemplate = (template: "product" | "social" | "sale" | "editorial") => {
+    const id = () => "template-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+    const presets: Record<typeof template, { aspect: string; layers: Omit<DesignLayer, "id">[] }> = {
+      product: { aspect: "1:1", layers: [
+        { name: "PRODUCT TITLE", kind: "text", text: "PURE. SIMPLE. BETTER.", color: "#ffffff", x: 50, y: 82, size: 46, opacity: 100, visible: true, shape: "rect" },
+        { name: "Product detail", kind: "text", text: "THE EVERYDAY COLLECTION", color: "#d9c8a5", x: 50, y: 91, size: 18, opacity: 100, visible: true, shape: "rect" },
+      ] },
+      social: { aspect: "4:5", layers: [
+        { name: "Social headline", kind: "text", text: "MAKE IT
+MATTER.", color: "#ffffff", x: 50, y: 76, size: 68, opacity: 100, visible: true, shape: "rect" },
+        { name: "Social caption", kind: "text", text: "@YOURBRAND  ·  NEW STORY", color: "#e8d6b7", x: 50, y: 91, size: 17, opacity: 100, visible: true, shape: "rect" },
+      ] },
+      sale: { aspect: "1:1", layers: [
+        { name: "Sale badge", kind: "shape", text: "", color: "#d8b77c", x: 82, y: 16, size: 64, opacity: 92, visible: true, shape: "circle" },
+        { name: "Sale headline", kind: "text", text: "SPECIAL OFFER", color: "#ffffff", x: 50, y: 78, size: 48, opacity: 100, visible: true, shape: "rect" },
+        { name: "Sale detail", kind: "text", text: "DISCOVER THE COLLECTION", color: "#f1d8ad", x: 50, y: 89, size: 18, opacity: 100, visible: true, shape: "rect" },
+      ] },
+      editorial: { aspect: "4:5", layers: [
+        { name: "Editorial title", kind: "text", text: "THE ART OF\nTHE EVERYDAY", color: "#ffffff", x: 50, y: 80, size: 50, opacity: 100, visible: true, shape: "rect" },
+        { name: "Editorial issue", kind: "text", text: "ISSUE NO. 01   /   STUDIO EDITION", color: "#e4c99e", x: 50, y: 93, size: 15, opacity: 100, visible: true, shape: "rect" },
+      ] },
+    };
+    const chosen = presets[template];
+    setHistory((h) => [...h.slice(-19), s]); setFuture([]);
+    setS((old) => ({ ...old, aspect: chosen.aspect }));
+    const next = chosen.layers.map((layer) => ({ ...layer, id: id() } as DesignLayer));
+    setLayers((old) => [...old, ...next]); setSelectedLayer(next[0]?.id ?? null);
+    setProjectNotice("Template added. Select a text layer to customise it, then drag it into place.");
+  };
   const activeLayer = layers.find((layer) => layer.id === selectedLayer) ?? null;
   const updateLayer = (id: string, patch: Partial<DesignLayer>) => setLayers((old) => old.map((layer) => layer.id === id ? { ...layer, ...patch } : layer));
   const moveLayerOnCanvas = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -508,6 +537,15 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
             <button className={`go${aiBusy ? " is-loading" : ""}`} type="button" disabled={aiBusy || !aiPrompt.trim() || (!maskStrokes.length && !magicSeed)} onClick={() => void runAiEdit()}>{aiBusy ? <><span className="btn-spinner" aria-hidden="true" /> AI is editing…</> : "Generate AI edit ✨"}</button>
             {aiError && <p role="alert" className="editor-error">{aiError}</p>}
             <small>Cloudflare Workers AI · Up to 5 image edits per day.</small>
+          </div>
+        </section>
+        <section className="design-template-panel">
+          <div className="design-template-heading"><div><span className="tool-kicker">START WITH A LAYOUT</span><h3>Design templates</h3><p className="editor-hint">Add a polished text layout to your photo. Every element stays editable in Layers.</p></div><span className="template-count">04 LAYOUTS</span></div>
+          <div className="design-template-grid">
+            <button type="button" className="design-template-card template-product" onClick={() => applyDesignTemplate("product")}><span className="template-preview"><b>PURE.<br/>SIMPLE.</b><small>THE EVERYDAY COLLECTION</small></span><strong>Product feature</strong><small>Clean square product creative</small></button>
+            <button type="button" className="design-template-card template-social" onClick={() => applyDesignTemplate("social")}><span className="template-preview"><b>MAKE IT<br/>MATTER.</b><small>@YOURBRAND</small></span><strong>Social story</strong><small>Portrait-first social layout</small></button>
+            <button type="button" className="design-template-card template-sale" onClick={() => applyDesignTemplate("sale")}><span className="template-preview"><i>✦</i><b>SPECIAL<br/>OFFER</b><small>DISCOVER THE COLLECTION</small></span><strong>Sale announcement</strong><small>Promotional product graphic</small></button>
+            <button type="button" className="design-template-card template-editorial" onClick={() => applyDesignTemplate("editorial")}><span className="template-preview"><small>STUDIO / JOURNAL</small><b>THE ART OF<br/>THE EVERYDAY</b><small>ISSUE NO. 01</small></span><strong>Editorial cover</strong><small>Minimal magazine-inspired layout</small></button>
           </div>
         </section>
         <details open><summary>Creative samples &amp; looks</summary>
