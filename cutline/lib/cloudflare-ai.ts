@@ -32,9 +32,10 @@ export async function inpaintWithCloudflare(
         width,
         height,
         num_steps: 20,
-        strength: 1,
+        // A slightly lower strength helps preserve the unmasked photo context.
+        strength: 0.8,
         guidance: 7.5,
-        negative_prompt: "blurry, distorted, low quality, artifacts",
+        negative_prompt: "blurry, distorted, low quality, artifacts, deformed details, duplicate objects, warped edges, unnatural textures, oversaturated, cartoon, illustration",
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(55_000),
