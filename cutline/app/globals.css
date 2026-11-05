@@ -678,3 +678,82 @@ body {
 /* Visible feedback for the magic-wand tap target */
 .pro-editor .checker{position:relative}
 .magic-wand-point{position:absolute;z-index:4;width:34px;height:34px;display:grid;place-items:center;transform:translate(-50%,-50%);border:2px solid #69e6b5;border-radius:50%;background:rgba(105,230,181,.24);box-shadow:0 0 0 5px rgba(105,230,181,.16),0 0 18px rgba(105,230,181,.8);color:#fff;font-size:18px;pointer-events:none}
+
+/* Site-wide lively, accessible button interactions */
+:root {
+  --cutline-button-ease: cubic-bezier(.2,.75,.25,1);
+}
+button,
+[role="button"],
+.nav-cta,
+.primary-action,
+.secondary-action {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform .2s var(--cutline-button-ease),
+    box-shadow .22s ease,
+    background-color .2s ease,
+    border-color .2s ease,
+    color .2s ease,
+    filter .2s ease,
+    opacity .2s ease;
+}
+button:not(:disabled):not([aria-disabled="true"]),
+[role="button"]:not([aria-disabled="true"]),
+.nav-cta,
+.primary-action,
+.secondary-action {
+  cursor: pointer;
+}
+button:not(:disabled):not([aria-disabled="true"]):hover,
+[role="button"]:not([aria-disabled="true"]):hover,
+.nav-cta:hover,
+.primary-action:hover,
+.secondary-action:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 7px 22px rgba(0,0,0,.2), 0 0 0 1px rgba(121,232,192,.12);
+}
+button:not(:disabled):not([aria-disabled="true"]):active,
+[role="button"]:not([aria-disabled="true"]):active,
+.nav-cta:active,
+.primary-action:active,
+.secondary-action:active {
+  transform: translateY(0) scale(.97);
+  filter: brightness(.98);
+  transition-duration: .08s;
+}
+button:focus-visible,
+[role="button"]:focus-visible,
+.nav-cta:focus-visible,
+.primary-action:focus-visible,
+.secondary-action:focus-visible {
+  outline: 2px solid var(--accent, #79e8c0);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(121,232,192,.13);
+}
+button:disabled,
+button[aria-disabled="true"],
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  .nav-cta,
+  .primary-action,
+  .secondary-action {
+    transition: none !important;
+  }
+  button:hover,
+  [role="button"]:hover,
+  .nav-cta:hover,
+  .primary-action:hover,
+  .secondary-action:hover {
+    transform: none !important;
+  }
+}
+
