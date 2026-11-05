@@ -397,8 +397,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         { name: "Product detail", kind: "text", text: "THE EVERYDAY COLLECTION", color: "#d9c8a5", x: 50, y: 91, size: 18, opacity: 100, visible: true, shape: "rect" },
       ] },
       social: { aspect: "4:5", layers: [
-        { name: "Social headline", kind: "text", text: "MAKE IT
-MATTER.", color: "#ffffff", x: 50, y: 76, size: 68, opacity: 100, visible: true, shape: "rect" },
+        { name: "Social headline", kind: "text", text: "MAKE IT MATTER.", color: "#ffffff", x: 50, y: 76, size: 68, opacity: 100, visible: true, shape: "rect" },
         { name: "Social caption", kind: "text", text: "@YOURBRAND  ·  NEW STORY", color: "#e8d6b7", x: 50, y: 91, size: 17, opacity: 100, visible: true, shape: "rect" },
       ] },
       sale: { aspect: "1:1", layers: [
