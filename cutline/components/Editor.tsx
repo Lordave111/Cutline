@@ -180,6 +180,9 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [maskMode, setMaskMode] = useState(false);
   const [brushSize, setBrushSize] = useState(36);
   const [maskStrokes, setMaskStrokes] = useState<MaskStroke[]>([]);
+  const [magicWandMode, setMagicWandMode] = useState(false);
+  const [magicSeed, setMagicSeed] = useState<{ x: number; y: number } | null>(null);
+  const [magicTolerance, setMagicTolerance] = useState(42);
   const maskDrawing = useRef(false);
   const [paintMode, setPaintMode] = useState(false);
   const [paintColor, setPaintColor] = useState("#70e9ba");
@@ -239,7 +242,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
 
   async function runAiEdit() {
     if (!ref.current || !aiPrompt.trim() || aiBusy) return;
-    if (!maskStrokes.length) { setAiError("Activate the AI mask brush and paint over the area you want to change."); return; }
+    if (!maskStrokes.length && !magicSeed) { setAiError("Tap Select background and choose a point on the background, or use the mask brush."); return; }
     setAiBusy(true); setAiError("");
     try {
       const sourceCanvas = document.createElement("canvas");
@@ -262,6 +265,26 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         if (stroke.points.length === 1) { maskCtx.lineTo(stroke.points[0].x * width + .1, stroke.points[0].y * height + .1); }
         maskCtx.stroke();
       }
+      if (magicSeed) {
+        const sourcePixels = imageCtx.getImageData(0, 0, width, height).data;
+        const sx = Math.max(0, Math.min(width - 1, Math.round(magicSeed.x * (width - 1))));
+        const sy = Math.max(0, Math.min(height - 1, Math.round(magicSeed.y * (height - 1))));
+        const start = (sy * width + sx) * 4;
+        const sr = sourcePixels[start], sg = sourcePixels[start + 1], sb = sourcePixels[start + 2];
+        const seen = new Uint8Array(width * height), queue = new Int32Array(width * height);
+        let head = 0, tail = 0; const first = sy * width + sx;
+        queue[tail++] = first; seen[first] = 1;
+        const threshold = magicTolerance * 2.2;
+        while (head < tail) {
+          const index = queue[head++], p = index * 4;
+          const dr = sourcePixels[p] - sr, dg = sourcePixels[p + 1] - sg, db = sourcePixels[p + 2] - sb;
+          if (Math.sqrt(dr * dr + dg * dg + db * db) > threshold) continue;
+          const px = index % width, py = Math.floor(index / width);
+          maskCtx.fillRect(px, py, 1, 1);
+          const neighbors = [px > 0 ? index - 1 : -1, px < width - 1 ? index + 1 : -1, py > 0 ? index - width : -1, py < height - 1 ? index + width : -1];
+          for (const next of neighbors) if (next >= 0 && !seen[next]) { seen[next] = 1; queue[tail++] = next; }
+        }
+      }
       const pixels = maskCtx.getImageData(0, 0, width, height).data;
       const mask = new Array<number>(width * height);
       for (let i = 0; i < mask.length; i++) mask[i] = pixels[i * 4];
@@ -269,7 +292,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI inpainting failed.");
       const edited = await fetch(data.image).then((r) => r.blob());
-      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]);
+      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI inpainting failed."); }
     finally { aiBusy && setAiBusy(false); }
   }
@@ -342,7 +365,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       </aside>
       <div className="editor-stage">
         <div className="editor-stage-head"><span>{showOriginal ? "ORIGINAL PREVIEW" : "LIVE CANVAS"}</span><div><button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button><button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button><button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Before"}</button></div></div>
-        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (selectionTool !== "off") { event.currentTarget.setPointerCapture(event.pointerId); beginSelection(event); } else if (cloneMode) { event.currentTarget.setPointerCapture(event.pointerId); setClonePoint(event); } else if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) { maskDrawing.current = true; paintMask(event); } else { paintDrawing.current = true; paintOnCanvas(event); } } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && selectionTool !== "off") extendSelection(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && cloneMode) extendClone(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} onPointerCancel={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} style={{ touchAction: maskMode || paintMode || cloneMode || selectionTool !== "off" || activeLayer ? "none" : "auto", cursor: maskMode || paintMode || cloneMode || selectionTool !== "off" ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} />{selection && <svg className="selection-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">{selection.kind === "rect" && selection.points.length > 1 ? <rect x={Math.min(selection.points[0].x, selection.points[1].x)*1000} y={Math.min(selection.points[0].y, selection.points[1].y)*1000} width={Math.abs(selection.points[1].x-selection.points[0].x)*1000} height={Math.abs(selection.points[1].y-selection.points[0].y)*1000} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" /> : <polygon points={selection.points.map(p => `${p.x*1000},${p.y*1000}`).join(" ")} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" />}</svg>}</div>
+        <div className="canvas-zoom-bar"><button type="button" className="chip" onClick={() => setZoom((v) => Math.max(25, v - 10))}>−</button><span>{zoom}%</span><button type="button" className="chip" onClick={() => setZoom((v) => Math.min(200, v + 10))}>＋</button><button type="button" className="chip" onClick={() => setZoom(100)}>100%</button><button type="button" className="chip" onClick={() => set("rotate", (s.rotate + 90) % 360)}>Rotate 90°</button><button type="button" className="chip" onClick={() => set("flip", !s.flip)}>Flip H</button><button type="button" className="chip" onClick={() => set("flipY", !s.flipY)}>Flip V</button></div>{projectNotice && <p className="editor-hint project-notice">{projectNotice}</p>}<div className="checker"><canvas ref={ref} onPointerDown={(event) => { if (magicWandMode) { setMagicSeed(canvasPoint(event)); setMagicWandMode(false); setAiError(""); } else if (selectionTool !== "off") { event.currentTarget.setPointerCapture(event.pointerId); beginSelection(event); } else if (cloneMode) { event.currentTarget.setPointerCapture(event.pointerId); setClonePoint(event); } else if (maskMode || paintMode) { event.currentTarget.setPointerCapture(event.pointerId); if (maskMode) { maskDrawing.current = true; paintMask(event); } else { paintDrawing.current = true; paintOnCanvas(event); } } else if (activeLayer) { setDraggingLayer(true); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId) && selectionTool !== "off") extendSelection(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && cloneMode) extendClone(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && maskMode) paintMask(event); else if (event.currentTarget.hasPointerCapture(event.pointerId) && paintMode) paintOnCanvas(event); else moveLayerOnCanvas(event); }} onPointerUp={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} onPointerCancel={() => { setDraggingLayer(false); paintDrawing.current = false; maskDrawing.current = false; selectionDrawing.current = false; cloneDrawing.current = false; }} style={{ touchAction: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" || activeLayer ? "none" : "auto", cursor: magicWandMode || maskMode || paintMode || cloneMode || selectionTool !== "off" ? "crosshair" : activeLayer ? "move" : "default", transform: `scale(${zoom / 100})`, transformOrigin: "center center" }} />{selection && <svg className="selection-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">{selection.kind === "rect" && selection.points.length > 1 ? <rect x={Math.min(selection.points[0].x, selection.points[1].x)*1000} y={Math.min(selection.points[0].y, selection.points[1].y)*1000} width={Math.abs(selection.points[1].x-selection.points[0].x)*1000} height={Math.abs(selection.points[1].y-selection.points[0].y)*1000} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" /> : <polygon points={selection.points.map(p => `${p.x*1000},${p.y*1000}`).join(" ")} fill="rgba(105,230,181,.10)" stroke="#69e6b5" strokeWidth="3" strokeDasharray="10 7" />}</svg>}</div>
         <p className="editor-hint">Changes preview live. Export when your image is ready.</p>
       </div>
       <div className="ctrls">
@@ -387,15 +410,15 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
           <div className="ai-step-card">
             <div className="ai-step-title"><span>02</span><b>Paint the replacement area</b></div>
-            <p className="editor-hint">Activate the mask brush, then paint over the area you want AI to change. Purple marks show the selected area.</p>
+            <p className="editor-hint">Tap the background once to select connected areas of similar colour. Use the brush only to refine missed spots.</p><button type="button" className={magicWandMode ? "go" : "chip"} onClick={() => { setMagicWandMode(v => !v); setMaskMode(false); setPaintMode(false); setCloneMode(false); setSelectionTool("off"); setAiError(""); }}>{magicWandMode ? "Tap the background on the image…" : "✦ Select background (magic wand)"}</button><label className="rng"><span>Selection tolerance <b>{magicTolerance}</b></span><input type="range" min="10" max="100" value={magicTolerance} onChange={e => setMagicTolerance(Number(e.target.value))} /></label>{magicSeed && <p className="editor-hint">Background point selected. Generate to apply the connected colour selection.</p>}
             <button type="button" className={maskMode ? "go" : "chip"} onClick={() => { setMaskMode((v) => !v); maskDrawing.current = false; setPaintMode(false); setCloneMode(false); setSelectionTool("off"); setSelectedLayer(null); setAiError(""); }}>{maskMode ? "Mask brush active · tap to finish" : "Activate AI mask brush"}</button>
             <label className="rng"><span>Mask brush size <b>{brushSize}px</b></span><input type="range" min="8" max="160" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label>
             <div className="layer-actions"><button type="button" className="chip" onClick={() => setMaskStrokes((old) => old.slice(0, -1))} disabled={!maskStrokes.length}>Undo stroke</button><button type="button" className="chip" onClick={() => setMaskStrokes([])} disabled={!maskStrokes.length}>Clear mask</button></div>
-            <small>{maskStrokes.length ? `${maskStrokes.length} mask stroke(s) painted` : "No area selected yet"}</small>
+            <small>{maskStrokes.length ? `${maskStrokes.length} mask stroke(s) painted` : magicSeed ? "Background point selected" : "No area selected yet"}</small>
           </div>
           <div className="ai-step-card ai-apply-card">
             <div className="ai-step-title"><span>03</span><b>Generate your edit</b></div>
-            <button className="go" type="button" disabled={aiBusy || !aiPrompt.trim() || !maskStrokes.length} onClick={() => void runAiEdit()}>{aiBusy ? "AI is editing…" : "Generate AI edit ✨"}</button>
+            <button className="go" type="button" disabled={aiBusy || !aiPrompt.trim() || (!maskStrokes.length && !magicSeed)} onClick={() => void runAiEdit()}>{aiBusy ? "AI is editing…" : "Generate AI edit ✨"}</button>
             {aiError && <p role="alert" className="editor-error">{aiError}</p>}
             <small>Cloudflare Workers AI · Up to 5 image edits per day.</small>
           </div>
