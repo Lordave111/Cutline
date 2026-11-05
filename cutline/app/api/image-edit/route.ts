@@ -52,6 +52,7 @@ export async function POST(req: Request) {
     const output = await editWithHuggingFace(new Blob([input], { type: mimeType }), prompt);
     const outputType = output.type || "image/png";
     if (!["image/png", "image/jpeg", "image/webp"].includes(outputType)) {
+      await redis.decr(usageKey).catch(() => undefined);
       return json("The AI returned an unsupported image format. Please try again.", 502);
     }
     const outputBase64 = Buffer.from(await output.arrayBuffer()).toString("base64");
@@ -59,6 +60,8 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (error) {
+    // A failed provider request must not consume the user's daily edit allowance.
+    await redis.decr(usageKey).catch(() => undefined);
     return json("Hugging Face image editing failed: " + huggingFaceError(error), 502);
   }
 }
