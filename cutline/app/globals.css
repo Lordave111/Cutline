@@ -654,3 +654,7 @@ body {
 .canvas-zoom-bar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;padding:8px;margin:0 0 10px;border:1px solid #2b3642;border-radius:9px;background:#111923}.canvas-zoom-bar .chip{min-height:30px;padding:6px 10px;font-size:10px}.canvas-zoom-bar span{min-width:42px;text-align:center;color:#9eb2c0;font:10px var(--mono),monospace}.project-notice{padding:8px 10px;border:1px solid rgba(112,233,186,.22);border-radius:8px;background:rgba(112,233,186,.05)}.pro-editor .checker{overflow:auto;overscroll-behavior:contain}.pro-editor .checker canvas{transition:transform .12s ease;flex:none}@media(max-width:700px){.canvas-zoom-bar{justify-content:flex-start}.canvas-zoom-bar .chip{flex:1}}
 
 .paint-panel{background:#18212c;border:1px solid #2b3745;border-radius:10px;padding:12px}.paint-panel .go,.paint-panel .chip{width:100%;margin:6px 0}.paint-panel .rng{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#aab8c5;font-size:10px}.paint-panel input[type=color]{width:48px;min-height:32px;padding:2px;background:#0d141d;border:1px solid #344252;border-radius:6px}.paint-panel input[type=range]{width:100%}
+
+
+/* Selection overlay for the editor canvas */
+.pro-editor .checker{position:relative;isolation:isolate}.selection-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.pro-editor .checker canvas{position:relative;z-index:1}.pro-editor .selection-overlay{z-index:2}
