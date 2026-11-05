@@ -615,3 +615,12 @@ body {
 .pro-editor .go{background:linear-gradient(110deg,#70e9ba,#67cde8);color:#08130f;box-shadow:none}.pro-editor textarea,.pro-editor input:not([type=range]),.pro-editor select{background:#0d141d;border-color:#344252;color:#e8f0f5}
 @media(min-width:900px){.pro-editor{grid-template-columns:minmax(0,1.65fr) minmax(300px,.85fr)!important}.pro-editor-topbar{grid-column:1/-1}.pro-editor .editor-stage{min-height:600px}.pro-editor .ctrls{max-height:760px}}
 @media(max-width:700px){.pro-editor-topbar{align-items:flex-start;flex-direction:column;padding:13px}.pro-top-actions{width:100%}.pro-top-actions .chip{flex:1}.pro-export{flex:1}.pro-editor .editor-stage{padding:10px}.pro-editor .checker{min-height:240px}.pro-editor .ctrls{border-left:0;border-top:1px solid #27333f;max-height:none}.pro-editor .editor-stage-head{font-size:9px}}
+
+
+/* Docked Photoshop-style tool rail */
+.pro-tool-rail{display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 7px;background:#111923;border-right:1px solid #27333f}
+.pro-tool-rail>span{font:8px var(--mono),monospace;letter-spacing:.12em;color:#718394;margin:3px 0 7px}
+.pro-tool-rail button{width:40px;height:42px;display:grid;place-items:center;border:1px solid transparent;border-radius:9px;background:transparent;color:#b5c4d0;font-size:19px;cursor:pointer}
+.pro-tool-rail button:hover{background:#20312f;border-color:#397c68;color:#76e8bc}
+@media(min-width:900px){.pro-editor{grid-template-columns:58px minmax(0,1fr) minmax(290px,340px)!important}.pro-editor-topbar{grid-column:1/-1}.pro-editor .editor-stage{grid-column:2;grid-row:2}.pro-editor .pro-tool-rail{grid-column:1;grid-row:2}.pro-editor .ctrls{grid-column:3;grid-row:2}}
+@media(max-width:899px){.pro-tool-rail{flex-direction:row;justify-content:flex-start;overflow-x:auto;border-right:0;border-bottom:1px solid #27333f;padding:8px 12px}.pro-tool-rail>span{margin:0 8px 0 0}.pro-tool-rail button{flex:none;width:38px;height:38px}.pro-editor .editor-stage,.pro-editor .ctrls{grid-column:1}}
