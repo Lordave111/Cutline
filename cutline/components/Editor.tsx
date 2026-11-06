@@ -203,6 +203,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [selectionTool, setSelectionTool] = useState<"off" | "rect" | "lasso">("off");
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [pendingBackdrop, setPendingBackdrop] = useState<string | null>(null);
   const selectionDrawing = useRef(false);
   const [cloneMode, setCloneMode] = useState(false);
   const [cloneSource, setCloneSource] = useState<{ x: number; y: number } | null>(null);
@@ -243,7 +244,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   useEffect(() => {
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], [], []); }
-    else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
+    else if (hasAiResult) { void render(ref.current, sourceBlob, true, editorBg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
     else { void render(ref.current, base, flat, editorBg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
   }, [base, sourceBlob, hasAiResult, flat, editorBg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
@@ -415,7 +416,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Tech launch": { aspect:"1:1", background:{kind:"gradient",color:"#17283b",color2:"#347c83"}, headline:"MEET WHAT'S NEXT", sub:"DESIGNED FOR TOMORROW", color:"#ffffff" }
     };
     const chosen = presets[template]; if (!chosen) return;
-    if (flat) { setProjectNotice("Remove the background first to keep your face/subject untouched. Then apply a studio backdrop template."); return; }
+    if (!selection || selection.points.length < 3) { setPendingBackdrop(template); setSelectionTool("lasso"); setMaskMode(false); setPaintMode(false); setProjectNotice("Trace around the person or object you want to keep. Close the outline, then tap Apply subject & template."); return; }
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setS((old) => ({ ...old, aspect: chosen.aspect }));
     setEditorBg(chosen.background);
@@ -460,7 +461,42 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   };
   const beginSelection = (event: React.PointerEvent<HTMLCanvasElement>) => { const p = canvasPoint(event); selectionDrawing.current = true; setSelection({ kind: selectionTool === "lasso" ? "lasso" : "rect", points: [p, p] }); };
   const extendSelection = (event: React.PointerEvent<HTMLCanvasElement>) => { if (!selectionDrawing.current || !selection) return; const p = canvasPoint(event); setSelection((old) => { if (!old) return old; if (old.kind === "rect") return { ...old, points: [old.points[0], p] }; return { ...old, points: [...old.points, p] }; }); };
-  const applySelectionCrop = () => { if (!selection?.points.length) return; const xs = selection.points.map(p => p.x), ys = selection.points.map(p => p.y); const left = Math.min(...xs), top = Math.min(...ys), right = Math.max(...xs), bottom = Math.max(...ys); if (right-left < .01 || bottom-top < .01) return; applyPreset({ cropLeft: Math.round(left*100), cropTop: Math.round(top*100), cropWidth: Math.max(1, Math.round((right-left)*100)), cropHeight: Math.max(1, Math.round((bottom-top)*100)) }); setSelection(null); setSelectionTool("off"); };
+  const applySelectionCrop = async () => {
+    if (!selection?.points || selection.points.length < 3) return;
+    if (pendingBackdrop) {
+      try {
+        const image = await createImageBitmap(base);
+        const cutout = document.createElement("canvas"); cutout.width = image.width; cutout.height = image.height;
+        const ctx = cutout.getContext("2d"); if (!ctx) throw new Error("Could not prepare image");
+        ctx.save(); ctx.beginPath();
+        selection.points.forEach((p,i)=>{const x=p.x*image.width,y=p.y*image.height;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+        ctx.closePath(); ctx.clip(); ctx.drawImage(image,0,0); ctx.restore();
+        const blob = await new Promise<Blob>((resolve,reject)=>cutout.toBlob(b=>b?resolve(b):reject(new Error("Could not create cut-out")),"image/png"));
+        const presets: Record<string,Bg> = {
+          "Product feature":{kind:"gradient",color:"#e7e2d7",color2:"#9eaaa4"},"Luxury product":{kind:"gradient",color:"#d5c3a3",color2:"#554638"},
+          "Social story":{kind:"gradient",color:"#d8d8ec",color2:"#7d86a9"},"Sale announcement":{kind:"gradient",color:"#f4d6c7",color2:"#b95c4c"},
+          "Editorial cover":{kind:"gradient",color:"#d6d0c3",color2:"#646d68"},"Beauty campaign":{kind:"gradient",color:"#f1d8d8",color2:"#b77c85"},
+          "Fashion lookbook":{kind:"gradient",color:"#e4dfd4",color2:"#85877c"},"Travel postcard":{kind:"gradient",color:"#a9c8d0",color2:"#e7c79b"},
+          "Music poster":{kind:"gradient",color:"#28233d",color2:"#865d83"},"Food menu":{kind:"gradient",color:"#e8d7bd",color2:"#9b7554"},
+          "Real estate":{kind:"gradient",color:"#d8e2e0",color2:"#829b96"},"Event flyer":{kind:"gradient",color:"#252b42",color2:"#a66d69"},
+          "Podcast cover":{kind:"gradient",color:"#2c3942",color2:"#b08b68"},"YouTube thumbnail":{kind:"gradient",color:"#27394b",color2:"#477d85"},
+          "Profile portrait":{kind:"gradient",color:"#d5e2df",color2:"#8da9a3"},"Graduation":{kind:"gradient",color:"#172d4d",color2:"#b69b6a"},
+          "Birthday":{kind:"gradient",color:"#f3d3c5",color2:"#b77d9a"},"Minimal quote":{kind:"gradient",color:"#e8e5dc",color2:"#b6c1ba"},
+          "Sports promo":{kind:"gradient",color:"#243c35",color2:"#a2a85d"},"Tech launch":{kind:"gradient",color:"#17283b",color2:"#347c83"}
+        };
+        const chosen=presets[pendingBackdrop] ?? presets["Product feature"];
+        setEditorBg(chosen); setSourceBlob(blob); setHasAiResult(true); setS(DEFAULTS); setLayers([]); setSelectedLayer(null);
+        setProjectNotice("Subject cut out using your outline. The selected template is now behind it. Use Refine edges for hair and fine details.");
+        setPendingBackdrop(null); setSelection(null); setSelectionTool("off"); setHistory([]); setFuture([]);
+        image.close();
+      } catch(error) { setProjectNotice(error instanceof Error?error.message:"Could not apply backdrop."); }
+      return;
+    }
+    const xs=selection.points.map(p=>p.x),ys=selection.points.map(p=>p.y),left=Math.min(...xs),top=Math.min(...ys),right=Math.max(...xs),bottom=Math.max(...ys);
+    if(right-left<.01||bottom-top<.01)return;
+    applyPreset({cropLeft:Math.round(left*100),cropTop:Math.round(top*100),cropWidth:Math.max(1,Math.round((right-left)*100)),cropHeight:Math.max(1,Math.round((bottom-top)*100))});
+    setSelection(null);setSelectionTool("off");
+  };
   const clearSelection = () => { setSelection(null); setSelectionTool("off"); selectionDrawing.current = false; };
   const setClonePoint = (event: React.PointerEvent<HTMLCanvasElement>) => { const p = canvasPoint(event); if (!cloneSource) { setCloneSource(p); return; } cloneDrawing.current = true; setCloneStrokes(old => [...old, { points: [p], source: cloneSource, size: brushSize }]); };
   const extendClone = (event: React.PointerEvent<HTMLCanvasElement>) => { if (!cloneDrawing.current) return; const p = canvasPoint(event); setCloneStrokes(old => { const next=[...old]; if(next.length) next[next.length-1]={...next[next.length-1],points:[...next[next.length-1].points,p]}; return next; }); };
@@ -520,7 +556,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
 
         <details className="retouch-panel"><summary>Clone stamp setup</summary><label className="rng">Retouch brush size <input type="range" min="5" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => { setCloneSource(null); setCloneStrokes([]); }}>Reset clone source &amp; strokes</button></details>
         <details open className="paint-panel"><summary>Paint &amp; retouch brush</summary><p className="editor-hint">Paint directly onto the image. Brush strokes are included in exports and saved project files.</p><button type="button" className={paintMode ? "go" : "chip"} onClick={() => { setPaintMode((v) => !v); setMaskMode(false); setSelectedLayer(null); }}>{paintMode ? "Paint brush active · tap to stop" : "Activate paint brush"}</button><label className="rng">Brush colour <input type="color" value={paintColor} onChange={(e) => setPaintColor(e.target.value)} /></label><label className="rng">Brush size <input type="range" min="2" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><label className="rng">Brush hardness <b>{brushHardness}%</b><input type="range" min="0" max="100" value={brushHardness} onChange={(e) => setBrushHardness(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setPaintStrokes((old) => old.slice(0, -1))} disabled={!paintStrokes.length}>Undo last paint stroke</button><button type="button" className="chip" onClick={() => setPaintStrokes([])} disabled={!paintStrokes.length}>Clear paint</button></details>
-        <details open className="mask-panel"><summary>Selection, masks &amp; retouch</summary><p className="editor-hint">Make a rectangular or freehand lasso selection, then crop to its bounds. The brush marks the area AI is allowed to replace.</p><div className="layer-actions"><button type="button" className={selectionTool === "rect" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "rect" ? "off" : "rect"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>▣ Rectangle select</button><button type="button" className={selectionTool === "lasso" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "lasso" ? "off" : "lasso"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>〰 Lasso select</button></div>{selection && <><p className="editor-hint">Selection ready. Crop uses the selection bounding box.</p><button type="button" className="go" onClick={applySelectionCrop}>Crop to selection</button><button type="button" className="chip" onClick={clearSelection}>Clear selection</button></>}<button type="button" className={cloneMode ? "go" : "chip"} onClick={() => { setCloneMode(v => !v); setCloneSource(null); setSelectionTool("off"); setMaskMode(false); setPaintMode(false); }}>{cloneMode ? "Clone stamp active · tap source then paint" : "Clone stamp"}</button>{cloneMode && <p className="editor-hint">{cloneSource ? "Source selected. Tap or drag to stamp from that point." : "Tap the image to choose the source point."}</p>}<p className="editor-hint">AI masking is managed in the dedicated AI image editor below, so the brush controls stay in one place.</p></details>
+        <details open className="mask-panel"><summary>Selection, masks &amp; retouch</summary><p className="editor-hint">Make a rectangular or freehand lasso selection, then crop to its bounds. The brush marks the area AI is allowed to replace.</p><div className="layer-actions"><button type="button" className={selectionTool === "rect" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "rect" ? "off" : "rect"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>▣ Rectangle select</button><button type="button" className={selectionTool === "lasso" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "lasso" ? "off" : "lasso"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>〰 Lasso select</button>{pendingBackdrop && <><p className="editor-hint">Template: <b>{pendingBackdrop}</b>. Draw a closed outline around the subject to keep.</p><button type="button" className="go" disabled={!selection || selection.points.length<3} onClick={() => void applySelectionCrop()}>Apply subject &amp; template</button><button type="button" className="chip" onClick={() => {setPendingBackdrop(null);clearSelection();}}>Cancel</button></>}</div>{selection && <><p className="editor-hint">Selection ready. Crop uses the selection bounding box.</p><button type="button" className="go" onClick={applySelectionCrop}>Crop to selection</button><button type="button" className="chip" onClick={clearSelection}>Clear selection</button></>}<button type="button" className={cloneMode ? "go" : "chip"} onClick={() => { setCloneMode(v => !v); setCloneSource(null); setSelectionTool("off"); setMaskMode(false); setPaintMode(false); }}>{cloneMode ? "Clone stamp active · tap source then paint" : "Clone stamp"}</button>{cloneMode && <p className="editor-hint">{cloneSource ? "Source selected. Tap or drag to stamp from that point." : "Tap the image to choose the source point."}</p>}<p className="editor-hint">AI masking is managed in the dedicated AI image editor below, so the brush controls stay in one place.</p></details>
         <details open className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
           <div className="layer-actions"><button type="button" onClick={() => imageLayerInput.current?.click()}>＋ Image</button><input ref={imageLayerInput} type="file" accept="image/*" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void addImageLayer(file); e.currentTarget.value = ""; }} /><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
           <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
