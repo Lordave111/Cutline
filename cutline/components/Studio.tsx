@@ -169,44 +169,49 @@ export default function Studio() {
         </div>
       </div>
 
-      <div className="tabs" role="tablist">
-        {MODES.map(([m, label]) => (
-          <button type="button" key={m} role="tab" aria-selected={mode === m} aria-disabled={!file} disabled={!file} className={mode === m ? "on" : ""} onClick={() => setMode(m)}>{label}</button>
-        ))}
-      </div>
-
-      {(mode === "color" || mode === "gradient") && (
-        <div className="background-picker">
-          <div className="background-picker-heading">
-            <b>Ready-made backgrounds</b>
-            <small>Choose a clean backdrop, or fine-tune the colour below.</small>
-          </div>
-          <div className="background-preset-grid">
-            {BACKGROUND_PRESETS.map((preset) => (
-              <button
-                type="button"
-                key={preset.name}
-                className={mode === "color" && color.toLowerCase() === preset.color ? "selected" : ""}
-                onClick={() => { setMode("color"); setColor(preset.color); }}
-                aria-pressed={mode === "color" && color.toLowerCase() === preset.color}
-              >
-                <i style={{ background: preset.color }} />
-                <span><b>{preset.name}</b><small>{preset.note}</small></span>
-              </button>
-            ))}
-          </div>
-          <div className="chips">
-            <label className="background-custom-label">Custom colour <input aria-label="Custom background colour" type="color" value={color} onChange={(e) => { setMode("color"); setColor(e.target.value); }} /></label>
-            {mode === "gradient" && <label className="background-custom-label">Second colour <input aria-label="Second gradient colour" type="color" value={color2} onChange={(e) => setColor2(e.target.value)} /></label>}
-          </div>
+      {file && (
+        <>
+        <div className="tabs" role="tablist">
+          {MODES.map(([m, label]) => (
+            <button type="button" key={m} role="tab" aria-selected={mode === m} aria-disabled={!file} disabled={!file} className={mode === m ? "on" : ""} onClick={() => setMode(m)}>{label}</button>
+          ))}
         </div>
+  
+        {(mode === "color" || mode === "gradient") && (
+          <div className="background-picker">
+            <div className="background-picker-heading">
+              <b>Ready-made backgrounds</b>
+              <small>Choose a clean backdrop, or fine-tune the colour below.</small>
+            </div>
+            <div className="background-preset-grid">
+              {BACKGROUND_PRESETS.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.name}
+                  className={mode === "color" && color.toLowerCase() === preset.color ? "selected" : ""}
+                  onClick={() => { setMode("color"); setColor(preset.color); }}
+                  aria-pressed={mode === "color" && color.toLowerCase() === preset.color}
+                >
+                  <i style={{ background: preset.color }} />
+                  <span><b>{preset.name}</b><small>{preset.note}</small></span>
+                </button>
+              ))}
+            </div>
+            <div className="chips">
+              <label className="background-custom-label">Custom colour <input aria-label="Custom background colour" type="color" value={color} onChange={(e) => { setMode("color"); setColor(e.target.value); }} /></label>
+              {mode === "gradient" && <label className="background-custom-label">Second colour <input aria-label="Second gradient colour" type="color" value={color2} onChange={(e) => setColor2(e.target.value)} /></label>}
+            </div>
+          </div>
+        )}
+        {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" disabled={!file} onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
+        {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
+  
+        <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
+          {busy ? "Opening editor…" : mode === "ai" ? "Open AI background editor" : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
+        </button>
+  
+        </>
       )}
-      {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" disabled={!file} onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
-      {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
-
-      <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
-        {busy ? "Opening editor…" : mode === "ai" ? "Open AI background editor" : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
-      </button>
       {error && <p className="err" role="alert">{error}</p>}
 
       {preview && !base && <figure><figcaption>INPUT</figcaption><img src={preview} alt="Original" /></figure>}
