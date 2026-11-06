@@ -1764,3 +1764,24 @@ body:after{
  .site-footer{gap:16px;align-items:flex-start;flex-direction:column}
 }
 @media(prefers-reduced-motion:reduce){body:after{animation:none}.feature-card,.workflow-step{transition:none}}
+
+
+/* CUTLINE TEMPLATE ART DIRECTION + FACIAL OVERLAY CONTROLS */
+.design-template-panel{background:linear-gradient(135deg,rgba(47,31,63,.76),rgba(16,17,31,.94))!important;border-color:rgba(222,177,128,.22)!important;box-shadow:0 18px 55px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.045)}
+.design-template-card{padding:10px!important;border-color:rgba(225,190,153,.2)!important;background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.018))!important}
+.design-template-card:hover{border-color:rgba(244,192,127,.8)!important;box-shadow:0 12px 28px rgba(0,0,0,.25)}
+.template-preview{position:relative;isolation:isolate;min-height:170px;aspect-ratio:4/5;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 35px rgba(0,0,0,.16)}
+.template-preview:before{content:"";position:absolute;inset:9px;border:1px solid rgba(255,255,255,.36);border-radius:4px;pointer-events:none}
+.template-preview:after{content:"";position:absolute;width:76%;height:42%;top:12%;left:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.22),transparent 68%);filter:blur(8px);z-index:-1}
+.template-preview b{max-width:95%;text-wrap:balance;text-shadow:0 3px 18px rgba(0,0,0,.3);font-size:clamp(17px,2.4vw,27px)!important;line-height:.94!important;letter-spacing:-.065em}
+.template-preview small{font-size:8px!important;letter-spacing:.16em!important}
+.design-template-card>strong{font-size:13px!important}
+.design-template-card>small{font-size:11px!important}
+.face-sticker-grid button{min-height:86px;border-color:rgba(229,193,156,.22)!important;background:linear-gradient(145deg,rgba(73,52,73,.72),rgba(24,23,36,.96))!important}
+.face-sticker-grid button:hover{border-color:#e6b77c!important;background:linear-gradient(145deg,rgba(113,76,77,.8),rgba(35,27,42,.98))!important}
+.face-sticker-grid button span{font-size:22px;color:#f2c38c}
+.face-sticker-grid button small{font-size:11px}
+.template-howto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.template-howto span{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid rgba(224,184,142,.18);border-radius:10px;background:rgba(255,255,255,.045);font-size:12px}
+.template-howto b{display:grid;place-items:center;flex:0 0 22px;height:22px;border-radius:50%;background:#d99b66;color:#211722}
+@media(max-width:560px){.template-preview{min-height:130px}.template-howto{grid-template-columns:1fr}}
