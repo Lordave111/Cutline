@@ -394,27 +394,27 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   };
   const applyDesignTemplate = (template: string) => {
     const id = () => "template-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
-    const presets: Record<string, { aspect: string; background: Bg; headline: string; sub: string; color: string }> = {
-      "Product feature": { aspect:"1:1", background:{kind:"gradient",color:"#e7e2d7",color2:"#9eaaa4"}, headline:"MADE TO STAND OUT", sub:"THE NEW COLLECTION", color:"#24332f" },
-      "Luxury product": { aspect:"1:1", background:{kind:"gradient",color:"#d5c3a3",color2:"#554638"}, headline:"TIMELESS DESIGN", sub:"A STUDY IN QUALITY", color:"#fff8e9" },
-      "Social story": { aspect:"9:16", background:{kind:"gradient",color:"#d8d8ec",color2:"#7d86a9"}, headline:"MAKE IT MATTER", sub:"YOUR STORY STARTS HERE", color:"#ffffff" },
-      "Sale announcement": { aspect:"1:1", background:{kind:"gradient",color:"#f4d6c7",color2:"#b95c4c"}, headline:"SPECIAL OFFER", sub:"SHOP THE COLLECTION", color:"#ffffff" },
-      "Editorial cover": { aspect:"4:5", background:{kind:"gradient",color:"#d6d0c3",color2:"#646d68"}, headline:"THE ART OF EVERYDAY", sub:"ISSUE 01 · STUDIO EDITION", color:"#ffffff" },
-      "Beauty campaign": { aspect:"4:5", background:{kind:"gradient",color:"#f1d8d8",color2:"#b77c85"}, headline:"YOUR NATURAL GLOW", sub:"BEAUTY · CARE · CONFIDENCE", color:"#633d4a" },
-      "Fashion lookbook": { aspect:"4:5", background:{kind:"gradient",color:"#e4dfd4",color2:"#85877c"}, headline:"NEW SEASON", sub:"THE LOOKBOOK", color:"#26312e" },
-      "Travel postcard": { aspect:"4:5", background:{kind:"gradient",color:"#a9c8d0",color2:"#e7c79b"}, headline:"WISH YOU WERE HERE", sub:"COLLECT MOMENTS", color:"#183b47" },
-      "Music poster": { aspect:"4:5", background:{kind:"gradient",color:"#28233d",color2:"#865d83"}, headline:"FEEL THE SOUND", sub:"LIVE · LOUD · TONIGHT", color:"#ffffff" },
-      "Food menu": { aspect:"4:5", background:{kind:"gradient",color:"#e8d7bd",color2:"#9b7554"}, headline:"FRESH & DELICIOUS", sub:"MADE WITH LOVE", color:"#463325" },
-      "Real estate": { aspect:"16:9", background:{kind:"gradient",color:"#d8e2e0",color2:"#829b96"}, headline:"FIND YOUR SPACE", sub:"A PLACE TO CALL HOME", color:"#203c39" },
-      "Event flyer": { aspect:"4:5", background:{kind:"gradient",color:"#252b42",color2:"#a66d69"}, headline:"YOU ARE INVITED", sub:"SAVE THE DATE", color:"#ffffff" },
-      "Podcast cover": { aspect:"1:1", background:{kind:"gradient",color:"#2c3942",color2:"#b08b68"}, headline:"THE BIG CONVERSATION", sub:"A NEW EPISODE", color:"#ffffff" },
-      "YouTube thumbnail": { aspect:"16:9", background:{kind:"gradient",color:"#27394b",color2:"#477d85"}, headline:"WATCH THIS", sub:"NEW VIDEO · NOW LIVE", color:"#ffffff" },
-      "Profile portrait": { aspect:"4:5", background:{kind:"gradient",color:"#d5e2df",color2:"#8da9a3"}, headline:"YOUR NAME", sub:"CREATIVE · PERSONAL · ORIGINAL", color:"#243b37" },
-      "Graduation": { aspect:"4:5", background:{kind:"gradient",color:"#172d4d",color2:"#b69b6a"}, headline:"THE FUTURE IS YOURS", sub:"CLASS OF 2026", color:"#ffffff" },
-      "Birthday": { aspect:"4:5", background:{kind:"gradient",color:"#f3d3c5",color2:"#b77d9a"}, headline:"MAKE A WISH", sub:"LET'S CELEBRATE", color:"#57394d" },
-      "Minimal quote": { aspect:"1:1", background:{kind:"gradient",color:"#e8e5dc",color2:"#b6c1ba"}, headline:"LESS, BUT BETTER", sub:"A LITTLE REMINDER", color:"#28352f" },
-      "Sports promo": { aspect:"16:9", background:{kind:"gradient",color:"#243c35",color2:"#a2a85d"}, headline:"BUILT TO WIN", sub:"NO LIMITS · ALL HEART", color:"#ffffff" },
-      "Tech launch": { aspect:"1:1", background:{kind:"gradient",color:"#17283b",color2:"#347c83"}, headline:"MEET WHAT'S NEXT", sub:"DESIGNED FOR TOMORROW", color:"#ffffff" }
+    const presets: Record<string, { aspect: string; background: Bg; headline: string; sub: string; color: string; accent: string }> = {
+      "Product feature": { aspect:"1:1", background:{kind:"gradient",color:"#f3eee4",color2:"#a5b7ae"}, headline:"MADE TO STAND OUT", sub:"OBJECTS WITH INTENTION · 2026", color:"#172c27", accent:"#d58b52" },
+      "Luxury product": { aspect:"1:1", background:{kind:"gradient",color:"#1c1916",color2:"#806348"}, headline:"THE QUIET LUXURY", sub:"CRAFTED BEYOND EXPECTATION", color:"#fff0d4", accent:"#d8b47b" },
+      "Social story": { aspect:"9:16", background:{kind:"gradient",color:"#f3a4a0",color2:"#6d4c91"}, headline:"MAKE YOUR MOMENT", sub:"A STORY WORTH SHARING", color:"#ffffff", accent:"#ffd66b" },
+      "Sale announcement": { aspect:"1:1", background:{kind:"gradient",color:"#ff6c43",color2:"#8f173d"}, headline:"UP TO 50% OFF", sub:"THE BIGGEST DROP OF THE SEASON", color:"#ffffff", accent:"#ffe16b" },
+      "Editorial cover": { aspect:"4:5", background:{kind:"gradient",color:"#d9d0bd",color2:"#555c50"}, headline:"FORM / FEEL / FUNCTION", sub:"THE MODERN CULTURE ISSUE · NO. 08", color:"#fffaf0", accent:"#d6a66e" },
+      "Beauty campaign": { aspect:"4:5", background:{kind:"gradient",color:"#f4c7c2",color2:"#8e5368"}, headline:"OWN YOUR GLOW", sub:"SKIN THAT FEELS LIKE YOU", color:"#fff9f3", accent:"#f5df9b" },
+      "Fashion lookbook": { aspect:"4:5", background:{kind:"gradient",color:"#d9d2c5",color2:"#4a504c"}, headline:"AFTER HOURS", sub:"THE AUTUMN / WINTER LOOKBOOK", color:"#fffaf0", accent:"#d3a06c" },
+      "Travel postcard": { aspect:"4:5", background:{kind:"gradient",color:"#2c7380",color2:"#e0a36e"}, headline:"TAKE THE LONG WAY", sub:"SOMEWHERE NEW · ALWAYS", color:"#ffffff", accent:"#f5d88d" },
+      "Music poster": { aspect:"4:5", background:{kind:"gradient",color:"#100e24",color2:"#8a3d70"}, headline:"TURN IT ALL THE WAY UP", sub:"ONE NIGHT · NO REPLAY", color:"#ffffff", accent:"#f7c95c" },
+      "Food menu": { aspect:"4:5", background:{kind:"gradient",color:"#49291e",color2:"#c27b42"}, headline:"A TASTE OF SOMETHING", sub:"FRESHLY MADE · BEAUTIFULLY SERVED", color:"#fff3df", accent:"#e9c47c" },
+      "Real estate": { aspect:"16:9", background:{kind:"gradient",color:"#173d42",color2:"#a4b9a9"}, headline:"SPACE TO LIVE WELL", sub:"ARCHITECTURE · LIGHT · LIFESTYLE", color:"#ffffff", accent:"#d7b77b" },
+      "Event flyer": { aspect:"4:5", background:{kind:"gradient",color:"#191c36",color2:"#b14d67"}, headline:"THE NIGHT IS YOURS", sub:"DRESS UP · SHOW UP · STAY LATE", color:"#ffffff", accent:"#f4ce76" },
+      "Podcast cover": { aspect:"1:1", background:{kind:"gradient",color:"#152d3c",color2:"#b47a50"}, headline:"OFF THE RECORD", sub:"REAL TALK · NEW EPISODES", color:"#ffffff", accent:"#e9c77c" },
+      "YouTube thumbnail": { aspect:"16:9", background:{kind:"gradient",color:"#111b35",color2:"#e15d46"}, headline:"YOU NEED TO SEE THIS", sub:"THE STORY EVERYONE'S TALKING ABOUT", color:"#ffffff", accent:"#ffda62" },
+      "Profile portrait": { aspect:"4:5", background:{kind:"gradient",color:"#d9c7b8",color2:"#6f7d83"}, headline:"THIS IS ME", sub:"A LITTLE MORE PERSONAL", color:"#ffffff", accent:"#e6bd7c" },
+      "Graduation": { aspect:"4:5", background:{kind:"gradient",color:"#102a4c",color2:"#b28a4d"}, headline:"THE WORLD IS NEXT", sub:"CLASS OF 2026 · WE MADE IT", color:"#ffffff", accent:"#f4d98b" },
+      "Birthday": { aspect:"4:5", background:{kind:"gradient",color:"#f6b6a2",color2:"#a83c70"}, headline:"ANOTHER YEAR ICONIC", sub:"MAKE A WISH · MAKE IT COUNT", color:"#ffffff", accent:"#ffe28a" },
+      "Minimal quote": { aspect:"1:1", background:{kind:"gradient",color:"#e8e2d5",color2:"#a3ada5"}, headline:"MAKE ROOM TO BECOME", sub:"A NOTE TO YOUR FUTURE SELF", color:"#26352e", accent:"#bd7956" },
+      "Sports promo": { aspect:"16:9", background:{kind:"gradient",color:"#102e28",color2:"#9caa43"}, headline:"NO DAYS GIVEN", sub:"BUILT BY WORK · DEFINED BY RESULTS", color:"#ffffff", accent:"#f2d46b" },
+      "Tech launch": { aspect:"1:1", background:{kind:"gradient",color:"#081b30",color2:"#087e91"}, headline:"THE NEXT ERA STARTS NOW", sub:"BUILT FOR WHAT COMES NEXT", color:"#ffffff", accent:"#50e4d0" }
     };
     const chosen = presets[template]; if (!chosen) return;
     // Templates should be one-tap: never force users into a manual lasso workflow.
@@ -423,16 +423,26 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     setS((old) => ({ ...old, aspect: chosen.aspect }));
     setEditorBg(chosen.background);
     const next: DesignLayer[] = [
-      { id:id(), name:"Template headline", kind:"text", text:chosen.headline, color:chosen.color, x:50, y:84, size:46, opacity:100, visible:true, shape:"rect" },
-      { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:93, size:17, opacity:92, visible:true, shape:"rect" }
+      { id:id(), name:"Template accent", kind:"shape", text:"", color:chosen.accent, x:50, y:73, size:1, opacity:95, visible:true, shape:"rect" },
+      { id:id(), name:"Template headline", kind:"text", text:chosen.headline, color:chosen.color, x:50, y:82, size:48, opacity:100, visible:true, shape:"rect" },
+      { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:92, size:15, opacity:95, visible:true, shape:"rect" }
     ];
     setLayers((old) => [...old, ...next]); setSelectedLayer(next[0].id);
     setProjectNotice(flat ? "Template added in one tap. Your photo and editable text are in place. To show the template backdrop behind your subject, remove the photo background first, then tap a template again." : "Template applied in one tap. Edit its headline and subtitle in Layers.");
   };
-  const addSticker = (label: string, emoji: string) => {
-    const layer: DesignLayer = { id:"sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6), name:label, kind:"text", text:emoji, color:"#ffffff", x:50, y:42, size:76, opacity:100, visible:true, shape:"rect" };
+  const addSticker = (label: string, _emoji: string) => {
+    const id = "sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6);
+    const art: Record<string, string> = {
+      "Moustache": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 240"><defs><linearGradient id="h" x2="0" y2="1"><stop stop-color="#6a4029"/><stop offset=".42" stop-color="#24150f"/><stop offset="1" stop-color="#090706"/></linearGradient><filter id="s"><feGaussianBlur stdDeviation="2"/></filter></defs><path d="M300 111 C260 54 197 25 120 45 C53 62 28 123 54 165 C82 210 152 205 207 174 C250 151 276 126 300 111 C324 126 350 151 393 174 C448 205 518 210 546 165 C572 123 547 62 480 45 C403 25 340 54 300 111Z" fill="url(#h)" stroke="#160d09" stroke-width="7"/><g fill="none" stroke="#b27a4f" stroke-opacity=".38" stroke-width="4"><path d="M65 113 Q155 62 272 116 M76 143 Q167 91 277 129 M535 113 Q445 62 328 116 M524 143 Q433 91 323 129"/></g></svg>',
+      "Beard": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 560"><defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="#70462f"/><stop offset=".35" stop-color="#2a1a12"/><stop offset="1" stop-color="#090706"/></linearGradient></defs><path d="M68 35 Q155 75 300 78 Q445 75 532 35 L566 205 Q544 360 425 480 Q356 552 300 545 Q244 552 175 480 Q56 360 34 205Z" fill="url(#b)" stroke="#160d09" stroke-width="9"/><path d="M105 126 Q170 170 220 146 M495 126 Q430 170 380 146" fill="none" stroke="#b27a4f" stroke-opacity=".34" stroke-width="8"/><g stroke="#b27a4f" stroke-opacity=".28" stroke-width="3" fill="none"><path d="M90 180 Q150 260 200 390 M130 150 Q180 260 230 430 M510 180 Q450 260 400 390 M470 150 Q420 260 370 430 M250 180 Q270 340 300 500 M350 180 Q330 340 300 500"/></g></svg>',
+      "Goatee": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 400"><defs><linearGradient id="g" x2="0" y2="1"><stop stop-color="#68432e"/><stop offset="1" stop-color="#100a07"/></linearGradient></defs><path d="M80 30 Q210 90 340 30 L325 205 Q300 335 210 380 Q120 335 95 205Z" fill="url(#g)" stroke="#160d09" stroke-width="8"/><g stroke="#b27a4f" stroke-opacity=".3" stroke-width="4"><path d="M120 100 Q170 220 210 330 M300 100 Q250 220 210 330"/></g></svg>'
+    };
+    const svg = art[label];
+    if (!svg) return;
+    const src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    const layer: DesignLayer = { id, name:label+" · realistic overlay", kind:"image", text:"", color:"#ffffff", x:50, y:48, size:1, opacity:100, visible:true, shape:"rect", src, width:label==="Beard"?48:label==="Goatee"?27:36 };
     setLayers((old)=>[...old,layer]); setSelectedLayer(layer.id);
-    setProjectNotice(label+" added. Drag it onto the face and adjust size, position and opacity in Layers.");
+    setProjectNotice(label+" overlay added. Drag it into position and resize it in Layers. It is a realistic-style illustrated overlay; align it carefully for the best fit.");
   };
 
   const activeLayer = layers.find((layer) => layer.id === selectedLayer) ?? null;
@@ -621,16 +631,16 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
         </section>
         <section className="design-template-panel face-sticker-panel">
-          <div className="design-template-heading"><div><span className="tool-kicker">FACE ACCESSORIES</span><h3>Add stickers &amp; fun effects</h3><p className="editor-hint">Add an overlay, then drag it onto the face. These are movable stickers, not automatic face tracking.</p></div></div>
+          <div className="design-template-heading"><div><span className="tool-kicker">FACE ACCESSORIES</span><h3>Realistic facial overlays</h3><p className="editor-hint">Add a shaded moustache, beard or goatee as an image layer. Drag it into place and resize it to fit the face. These are realistic-style overlays, not automatic face tracking.</p></div></div>
           <div className="face-sticker-grid">
-            <button type="button" onClick={() => addSticker("Moustache","〰️")}><span>〰️</span><small>Moustache</small></button>
-            <button type="button" onClick={() => addSticker("Glasses","🕶️")}><span>🕶️</span><small>Glasses</small></button>
+            <button type="button" onClick={() => addSticker("Moustache","")}><span>✦</span><small>Moustache</small></button>
+            <button type="button" onClick={() => addSticker("Goatee","")}><span>✦</span><small>Goatee</small></button>
             <button type="button" onClick={() => addSticker("Sunglasses","😎")}><span>😎</span><small>Sunglasses</small></button>
             <button type="button" onClick={() => addSticker("Crown","👑")}><span>👑</span><small>Crown</small></button>
             <button type="button" onClick={() => addSticker("Makeup","💄")}><span>💄</span><small>Makeup</small></button>
             <button type="button" onClick={() => addSticker("Blush","🌸")}><span>🌸</span><small>Blush</small></button>
             <button type="button" onClick={() => addSticker("Freckles","✨")}><span>✨</span><small>Freckles</small></button>
-            <button type="button" onClick={() => addSticker("Beard","🧔")}><span>🧔</span><small>Beard</small></button>
+            <button type="button" onClick={() => addSticker("Beard","")}><span>✦</span><small>Beard</small></button>
             <button type="button" onClick={() => addSticker("Halo","😇")}><span>😇</span><small>Halo</small></button>
             <button type="button" onClick={() => addSticker("Sparkles","💫")}><span>💫</span><small>Sparkles</small></button>
             <button type="button" onClick={() => addSticker("Flower","🌺")}><span>🌺</span><small>Flower</small></button>
