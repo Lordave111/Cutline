@@ -417,8 +417,9 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Tech launch": { aspect:"1:1", background:{kind:"gradient",color:"#17283b",color2:"#347c83"}, headline:"MEET WHAT'S NEXT", sub:"DESIGNED FOR TOMORROW", color:"#ffffff" }
     };
     const chosen = presets[template]; if (!chosen) return;
-    if (!selection || selection.points.length < 3) { setPendingBackdrop(template); setSelectionTool("lasso"); setMaskMode(false); setPaintMode(false); setProjectNotice("Trace around the person or object you want to keep. Close the outline, then tap Apply subject & template."); return; }
+    // Templates should be one-tap: never force users into a manual lasso workflow.
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
+    setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
     setS((old) => ({ ...old, aspect: chosen.aspect }));
     setEditorBg(chosen.background);
     const next: DesignLayer[] = [
@@ -426,7 +427,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:93, size:17, opacity:92, visible:true, shape:"rect" }
     ];
     setLayers((old) => [...old, ...next]); setSelectedLayer(next[0].id);
-    setProjectNotice("Backdrop applied behind your cut-out subject. Your face and foreground remain on the top layer. Edit the text in Layers.");
+    setProjectNotice(flat ? "Template added in one tap. Your photo and editable text are in place. To show the template backdrop behind your subject, remove the photo background first, then tap a template again." : "Template applied in one tap. Edit its headline and subtitle in Layers.");
   };
   const addSticker = (label: string, emoji: string) => {
     const layer: DesignLayer = { id:"sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6), name:label, kind:"text", text:emoji, color:"#ffffff", x:50, y:42, size:76, opacity:100, visible:true, shape:"rect" };
@@ -595,7 +596,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
         </section>
         <section className="design-template-panel">
-          <div className="design-template-heading"><div><span className="tool-kicker">STUDIO BACKDROPS</span><h3>20 professional templates</h3><p className="editor-hint">Templates place the backdrop behind your cut-out subject. Your face stays in front and is not painted over. Remove the background first.</p></div><span className="template-count">20 TEMPLATES</span></div>
+          <div className="design-template-heading"><div><span className="tool-kicker">STUDIO BACKDROPS</span><h3>20 professional templates</h3><p className="editor-hint">Tap any design to apply it instantly. For a new backdrop behind your subject, remove the photo background first; you can edit the template text in Layers.</p></div><span className="template-count">20 TEMPLATES</span></div>
           {projectNotice && <p className="editor-hint" role="status">{projectNotice}</p>}
           <div className="design-template-grid"><button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Product feature")}><span className="template-preview"><b>PRODUCT FEATURE</b><small>EDITABLE DESIGN · 01</small></span><strong>Product feature</strong><small>Backdrop + editable text</small></button>
             <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Luxury product")}><span className="template-preview"><b>LUXURY PRODUCT</b><small>EDITABLE DESIGN · 02</small></span><strong>Luxury product</strong><small>Backdrop + editable text</small></button>
