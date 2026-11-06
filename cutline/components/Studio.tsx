@@ -154,11 +154,12 @@ export default function Studio() {
         </div>
       )}
 
+      <div className="studio-intake-grid">
       <label className="drop">
         <input type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
         <span className="drop-icon">＋</span>
         <b>{file ? "Change photo" : "Upload a photo to start creating"}</b>
-        <small>{file ? file.name : "Drop an image here or tap to browse · JPG, PNG, WebP"}</small>
+        <small>{file ? file.name : "Choose a photo · JPG, PNG or WebP"}</small>
       </label>
       <div className="sample-entry">
         <div><b>Want to try Cutline first?</b><small>Explore the editor with a sample photo.</small></div>
@@ -167,6 +168,7 @@ export default function Studio() {
           <button type="button" onClick={() => void useSample("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=85", "landscape-sample")}><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=160&auto=format&fit=crop&q=70" alt="" /><span>Landscape</span></button>
           <button type="button" onClick={() => void useSample("https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop&q=85", "product-sample")}><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=160&auto=format&fit=crop&q=70" alt="" /><span>Product</span></button>
         </div>
+      </div>
       </div>
 
       {file && (
@@ -215,7 +217,7 @@ export default function Studio() {
       {error && <p className="err" role="alert">{error}</p>}
 
       {preview && !base && <figure><figcaption>INPUT</figcaption><img src={preview} alt="Original" /></figure>}
-      {file && base ? <div className="studio-editor-ready"><div className="studio-editor-heading"><div><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><h3>Your editing workspace</h3><p>All tools are ready. Changes update the canvas as you work.</p></div><span className="studio-active-status"><i /> ACTIVE</span></div><Editor base={base} flat={editorFlat} bg={bg} /></div> : <div className="studio-locked-workspace" aria-disabled="true"><div className="studio-locked-heading"><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><span className="studio-locked-status">LOCKED · NO PHOTO</span></div><h3>Your creative tools, all in one place.</h3><p>Upload a photo to activate the canvas and unlock every editing function.</p><div className="studio-locked-tools"><span>✧ Enhance</span><span>▣ Crop &amp; transform</span><span>◌ Retouch &amp; blur</span><span>T Text &amp; layers</span><span>✦ AI editing</span><span>◈ Filters &amp; colour</span><span>▧ Backgrounds</span><span>↗ Export</span></div></div>}
+      {file && base ? <div className="studio-editor-ready"><div className="studio-editor-heading"><div><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><h3>Your editing workspace</h3><p>All tools are ready. Changes update the canvas as you work.</p></div><span className="studio-active-status"><i /> ACTIVE</span></div><Editor base={base} flat={editorFlat} bg={bg} /></div> : <div className="studio-locked-workspace" aria-disabled="true"><div className="studio-locked-heading"><span className="tool-kicker">PHOTO STUDIO / WORKSPACE</span><span className="studio-locked-status">LOCKED · NO PHOTO</span></div><h3>Your creative tools, all in one place.</h3><p>Upload a photo to activate the canvas and unlock every editing function.</p><div className="studio-locked-tools"><span>✧ Enhance</span><span>▣ Crop &amp; transform</span><span>◌ Retouch &amp; blur</span><span>T Text &amp; layers</span><span>✦ AI editing</span><span>◈ Filters &amp; colour</span><span>▧ Backgrounds</span><span>↗ Export</span></div><div className="studio-template-preview"><div className="studio-template-title"><b>Design templates</b><small>Ready-made layouts · activate when a photo is uploaded</small></div><div className="studio-template-list"><span><i className="template-swatch swatch-product"/>Product feature</span><span><i className="template-swatch swatch-social"/>Social story</span><span><i className="template-swatch swatch-sale"/>Sale announcement</span><span><i className="template-swatch swatch-editorial"/>Editorial cover</span></div></div></div>}
       {isSignedIn ? <Assistant /> : (
         <div className="ai-assistant">
           <p className="tag">YOUR CREATIVE COPILOT</p>
