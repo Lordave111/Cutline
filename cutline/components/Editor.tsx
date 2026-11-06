@@ -174,6 +174,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const ref = useRef<HTMLCanvasElement>(null);
   const magicPreviewRef = useRef<HTMLCanvasElement>(null);
   const [s, setS] = useState<S>(DEFAULTS);
+  const [editorBg, setEditorBg] = useState<Bg>(bg);
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
   const [showOriginal, setShowOriginal] = useState(false);
@@ -236,15 +237,15 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   });
 
   useEffect(() => {
-    setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setMaskStrokes([]); setPaintStrokes([]); setSelection(null); setCloneStrokes([]);
+    setEditorBg(bg); setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setMaskStrokes([]); setPaintStrokes([]); setSelection(null); setCloneStrokes([]);
   }, [base]);
 
   useEffect(() => {
     if (!ref.current) return;
     if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], [], []); }
     else if (hasAiResult) { void render(ref.current, sourceBlob, true, { kind: "none" }, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
-    else { void render(ref.current, base, flat, bg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
-  }, [base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
+    else { void render(ref.current, base, flat, editorBg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
+  }, [base, sourceBlob, hasAiResult, flat, editorBg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
   useEffect(() => {
     const source = ref.current;
@@ -389,34 +390,48 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const layer: DesignLayer = { id: "layer-" + Date.now(), name: kind === "text" ? value!.trim().slice(0, 22) : (shape === "circle" ? "Circle shape" : "Rectangle shape"), kind, text: value?.trim().slice(0, 100) || "", color: kind === "text" ? "#ffffff" : "#70e9ba", x: 50, y: 50, size: 64, opacity: kind === "text" ? 100 : 35, visible: true, shape };
     setLayers((old) => [...old, layer]); setSelectedLayer(layer.id);
   };
-  const applyDesignTemplate = (template: "product" | "social" | "sale" | "editorial") => {
+  const applyDesignTemplate = (template: string) => {
     const id = () => "template-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
-    const presets: Record<typeof template, { aspect: string; layers: Omit<DesignLayer, "id">[] }> = {
-      product: { aspect: "1:1", layers: [
-        { name: "PRODUCT TITLE", kind: "text", text: "PURE. SIMPLE. BETTER.", color: "#ffffff", x: 50, y: 82, size: 46, opacity: 100, visible: true, shape: "rect" },
-        { name: "Product detail", kind: "text", text: "THE EVERYDAY COLLECTION", color: "#d9c8a5", x: 50, y: 91, size: 18, opacity: 100, visible: true, shape: "rect" },
-      ] },
-      social: { aspect: "4:5", layers: [
-        { name: "Social headline", kind: "text", text: "MAKE IT MATTER.", color: "#ffffff", x: 50, y: 76, size: 68, opacity: 100, visible: true, shape: "rect" },
-        { name: "Social caption", kind: "text", text: "@YOURBRAND  ·  NEW STORY", color: "#e8d6b7", x: 50, y: 91, size: 17, opacity: 100, visible: true, shape: "rect" },
-      ] },
-      sale: { aspect: "1:1", layers: [
-        { name: "Sale badge", kind: "shape", text: "", color: "#d8b77c", x: 82, y: 16, size: 64, opacity: 92, visible: true, shape: "circle" },
-        { name: "Sale headline", kind: "text", text: "SPECIAL OFFER", color: "#ffffff", x: 50, y: 78, size: 48, opacity: 100, visible: true, shape: "rect" },
-        { name: "Sale detail", kind: "text", text: "DISCOVER THE COLLECTION", color: "#f1d8ad", x: 50, y: 89, size: 18, opacity: 100, visible: true, shape: "rect" },
-      ] },
-      editorial: { aspect: "4:5", layers: [
-        { name: "Editorial title", kind: "text", text: "THE ART OF\nTHE EVERYDAY", color: "#ffffff", x: 50, y: 80, size: 50, opacity: 100, visible: true, shape: "rect" },
-        { name: "Editorial issue", kind: "text", text: "ISSUE NO. 01   /   STUDIO EDITION", color: "#e4c99e", x: 50, y: 93, size: 15, opacity: 100, visible: true, shape: "rect" },
-      ] },
+    const presets: Record<string, { aspect: string; background: Bg; headline: string; sub: string; color: string }> = {
+      "Product feature": { aspect:"1:1", background:{kind:"gradient",color:"#e7e2d7",color2:"#9eaaa4"}, headline:"MADE TO STAND OUT", sub:"THE NEW COLLECTION", color:"#24332f" },
+      "Luxury product": { aspect:"1:1", background:{kind:"gradient",color:"#d5c3a3",color2:"#554638"}, headline:"TIMELESS DESIGN", sub:"A STUDY IN QUALITY", color:"#fff8e9" },
+      "Social story": { aspect:"9:16", background:{kind:"gradient",color:"#d8d8ec",color2:"#7d86a9"}, headline:"MAKE IT MATTER", sub:"YOUR STORY STARTS HERE", color:"#ffffff" },
+      "Sale announcement": { aspect:"1:1", background:{kind:"gradient",color:"#f4d6c7",color2:"#b95c4c"}, headline:"SPECIAL OFFER", sub:"SHOP THE COLLECTION", color:"#ffffff" },
+      "Editorial cover": { aspect:"4:5", background:{kind:"gradient",color:"#d6d0c3",color2:"#646d68"}, headline:"THE ART OF EVERYDAY", sub:"ISSUE 01 · STUDIO EDITION", color:"#ffffff" },
+      "Beauty campaign": { aspect:"4:5", background:{kind:"gradient",color:"#f1d8d8",color2:"#b77c85"}, headline:"YOUR NATURAL GLOW", sub:"BEAUTY · CARE · CONFIDENCE", color:"#633d4a" },
+      "Fashion lookbook": { aspect:"4:5", background:{kind:"gradient",color:"#e4dfd4",color2:"#85877c"}, headline:"NEW SEASON", sub:"THE LOOKBOOK", color:"#26312e" },
+      "Travel postcard": { aspect:"4:5", background:{kind:"gradient",color:"#a9c8d0",color2:"#e7c79b"}, headline:"WISH YOU WERE HERE", sub:"COLLECT MOMENTS", color:"#183b47" },
+      "Music poster": { aspect:"4:5", background:{kind:"gradient",color:"#28233d",color2:"#865d83"}, headline:"FEEL THE SOUND", sub:"LIVE · LOUD · TONIGHT", color:"#ffffff" },
+      "Food menu": { aspect:"4:5", background:{kind:"gradient",color:"#e8d7bd",color2:"#9b7554"}, headline:"FRESH & DELICIOUS", sub:"MADE WITH LOVE", color:"#463325" },
+      "Real estate": { aspect:"16:9", background:{kind:"gradient",color:"#d8e2e0",color2:"#829b96"}, headline:"FIND YOUR SPACE", sub:"A PLACE TO CALL HOME", color:"#203c39" },
+      "Event flyer": { aspect:"4:5", background:{kind:"gradient",color:"#252b42",color2:"#a66d69"}, headline:"YOU ARE INVITED", sub:"SAVE THE DATE", color:"#ffffff" },
+      "Podcast cover": { aspect:"1:1", background:{kind:"gradient",color:"#2c3942",color2:"#b08b68"}, headline:"THE BIG CONVERSATION", sub:"A NEW EPISODE", color:"#ffffff" },
+      "YouTube thumbnail": { aspect:"16:9", background:{kind:"gradient",color:"#27394b",color2:"#477d85"}, headline:"WATCH THIS", sub:"NEW VIDEO · NOW LIVE", color:"#ffffff" },
+      "Profile portrait": { aspect:"4:5", background:{kind:"gradient",color:"#d5e2df",color2:"#8da9a3"}, headline:"YOUR NAME", sub:"CREATIVE · PERSONAL · ORIGINAL", color:"#243b37" },
+      "Graduation": { aspect:"4:5", background:{kind:"gradient",color:"#172d4d",color2:"#b69b6a"}, headline:"THE FUTURE IS YOURS", sub:"CLASS OF 2026", color:"#ffffff" },
+      "Birthday": { aspect:"4:5", background:{kind:"gradient",color:"#f3d3c5",color2:"#b77d9a"}, headline:"MAKE A WISH", sub:"LET'S CELEBRATE", color:"#57394d" },
+      "Minimal quote": { aspect:"1:1", background:{kind:"gradient",color:"#e8e5dc",color2:"#b6c1ba"}, headline:"LESS, BUT BETTER", sub:"A LITTLE REMINDER", color:"#28352f" },
+      "Sports promo": { aspect:"16:9", background:{kind:"gradient",color:"#243c35",color2:"#a2a85d"}, headline:"BUILT TO WIN", sub:"NO LIMITS · ALL HEART", color:"#ffffff" },
+      "Tech launch": { aspect:"1:1", background:{kind:"gradient",color:"#17283b",color2:"#347c83"}, headline:"MEET WHAT'S NEXT", sub:"DESIGNED FOR TOMORROW", color:"#ffffff" }
     };
-    const chosen = presets[template];
+    const chosen = presets[template]; if (!chosen) return;
+    if (flat) { setProjectNotice("Remove the background first to keep your face/subject untouched. Then apply a studio backdrop template."); return; }
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setS((old) => ({ ...old, aspect: chosen.aspect }));
-    const next = chosen.layers.map((layer) => ({ ...layer, id: id() } as DesignLayer));
-    setLayers((old) => [...old, ...next]); setSelectedLayer(next[0]?.id ?? null);
-    setProjectNotice("Template added. Select a text layer to customise it, then drag it into place.");
+    setEditorBg(chosen.background);
+    const next: DesignLayer[] = [
+      { id:id(), name:"Template headline", kind:"text", text:chosen.headline, color:chosen.color, x:50, y:84, size:46, opacity:100, visible:true, shape:"rect" },
+      { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:93, size:17, opacity:92, visible:true, shape:"rect" }
+    ];
+    setLayers((old) => [...old, ...next]); setSelectedLayer(next[0].id);
+    setProjectNotice("Backdrop applied behind your cut-out subject. Your face and foreground remain on the top layer. Edit the text in Layers.");
   };
+  const addSticker = (label: string, emoji: string) => {
+    const layer: DesignLayer = { id:"sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6), name:label, kind:"text", text:emoji, color:"#ffffff", x:50, y:42, size:76, opacity:100, visible:true, shape:"rect" };
+    setLayers((old)=>[...old,layer]); setSelectedLayer(layer.id);
+    setProjectNotice(label+" added. Drag it onto the face and adjust size, position and opacity in Layers.");
+  };
+
   const activeLayer = layers.find((layer) => layer.id === selectedLayer) ?? null;
   const updateLayer = (id: string, patch: Partial<DesignLayer>) => setLayers((old) => old.map((layer) => layer.id === id ? { ...layer, ...patch } : layer));
   const moveLayerOnCanvas = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -539,12 +554,49 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
         </section>
         <section className="design-template-panel">
-          <div className="design-template-heading"><div><span className="tool-kicker">START WITH A LAYOUT</span><h3>Design templates</h3><p className="editor-hint">Add a polished text layout to your photo. Every element stays editable in Layers.</p></div><span className="template-count">04 LAYOUTS</span></div>
-          <div className="design-template-grid">
-            <button type="button" className="design-template-card template-product" onClick={() => applyDesignTemplate("product")}><span className="template-preview"><b>PURE.<br/>SIMPLE.</b><small>THE EVERYDAY COLLECTION</small></span><strong>Product feature</strong><small>Clean square product creative</small></button>
-            <button type="button" className="design-template-card template-social" onClick={() => applyDesignTemplate("social")}><span className="template-preview"><b>MAKE IT<br/>MATTER.</b><small>@YOURBRAND</small></span><strong>Social story</strong><small>Portrait-first social layout</small></button>
-            <button type="button" className="design-template-card template-sale" onClick={() => applyDesignTemplate("sale")}><span className="template-preview"><i>✦</i><b>SPECIAL<br/>OFFER</b><small>DISCOVER THE COLLECTION</small></span><strong>Sale announcement</strong><small>Promotional product graphic</small></button>
-            <button type="button" className="design-template-card template-editorial" onClick={() => applyDesignTemplate("editorial")}><span className="template-preview"><small>STUDIO / JOURNAL</small><b>THE ART OF<br/>THE EVERYDAY</b><small>ISSUE NO. 01</small></span><strong>Editorial cover</strong><small>Minimal magazine-inspired layout</small></button>
+          <div className="design-template-heading"><div><span className="tool-kicker">STUDIO BACKDROPS</span><h3>20 professional templates</h3><p className="editor-hint">Templates place the backdrop behind your cut-out subject. Your face stays in front and is not painted over. Remove the background first.</p></div><span className="template-count">20 TEMPLATES</span></div>
+          {projectNotice && <p className="editor-hint" role="status">{projectNotice}</p>}
+          <div className="design-template-grid"><button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Product feature")}><span className="template-preview"><b>PRODUCT FEATURE</b><small>EDITABLE DESIGN · 01</small></span><strong>Product feature</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Luxury product")}><span className="template-preview"><b>LUXURY PRODUCT</b><small>EDITABLE DESIGN · 02</small></span><strong>Luxury product</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Social story")}><span className="template-preview"><b>SOCIAL STORY</b><small>EDITABLE DESIGN · 03</small></span><strong>Social story</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Sale announcement")}><span className="template-preview"><b>SALE ANNOUNCEMENT</b><small>EDITABLE DESIGN · 04</small></span><strong>Sale announcement</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Editorial cover")}><span className="template-preview"><b>EDITORIAL COVER</b><small>EDITABLE DESIGN · 05</small></span><strong>Editorial cover</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Beauty campaign")}><span className="template-preview"><b>BEAUTY CAMPAIGN</b><small>EDITABLE DESIGN · 06</small></span><strong>Beauty campaign</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Fashion lookbook")}><span className="template-preview"><b>FASHION LOOKBOOK</b><small>EDITABLE DESIGN · 07</small></span><strong>Fashion lookbook</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Travel postcard")}><span className="template-preview"><b>TRAVEL POSTCARD</b><small>EDITABLE DESIGN · 08</small></span><strong>Travel postcard</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Music poster")}><span className="template-preview"><b>MUSIC POSTER</b><small>EDITABLE DESIGN · 09</small></span><strong>Music poster</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Food menu")}><span className="template-preview"><b>FOOD MENU</b><small>EDITABLE DESIGN · 10</small></span><strong>Food menu</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Real estate")}><span className="template-preview"><b>REAL ESTATE</b><small>EDITABLE DESIGN · 11</small></span><strong>Real estate</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Event flyer")}><span className="template-preview"><b>EVENT FLYER</b><small>EDITABLE DESIGN · 12</small></span><strong>Event flyer</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Podcast cover")}><span className="template-preview"><b>PODCAST COVER</b><small>EDITABLE DESIGN · 13</small></span><strong>Podcast cover</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("YouTube thumbnail")}><span className="template-preview"><b>YOUTUBE THUMBNAIL</b><small>EDITABLE DESIGN · 14</small></span><strong>YouTube thumbnail</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Profile portrait")}><span className="template-preview"><b>PROFILE PORTRAIT</b><small>EDITABLE DESIGN · 15</small></span><strong>Profile portrait</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Graduation")}><span className="template-preview"><b>GRADUATION</b><small>EDITABLE DESIGN · 16</small></span><strong>Graduation</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Birthday")}><span className="template-preview"><b>BIRTHDAY</b><small>EDITABLE DESIGN · 17</small></span><strong>Birthday</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Minimal quote")}><span className="template-preview"><b>MINIMAL QUOTE</b><small>EDITABLE DESIGN · 18</small></span><strong>Minimal quote</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Sports promo")}><span className="template-preview"><b>SPORTS PROMO</b><small>EDITABLE DESIGN · 19</small></span><strong>Sports promo</strong><small>Backdrop + editable text</small></button>
+            <button type="button" className="design-template-card" onClick={() => applyDesignTemplate("Tech launch")}><span className="template-preview"><b>TECH LAUNCH</b><small>EDITABLE DESIGN · 20</small></span><strong>Tech launch</strong><small>Backdrop + editable text</small></button>
+          </div>
+        </section>
+        <section className="design-template-panel face-sticker-panel">
+          <div className="design-template-heading"><div><span className="tool-kicker">FACE ACCESSORIES</span><h3>Add stickers &amp; fun effects</h3><p className="editor-hint">Add an overlay, then drag it onto the face. These are movable stickers, not automatic face tracking.</p></div></div>
+          <div className="face-sticker-grid">
+            <button type="button" onClick={() => addSticker("Moustache","〰️")}><span>〰️</span><small>Moustache</small></button>
+            <button type="button" onClick={() => addSticker("Glasses","🕶️")}><span>🕶️</span><small>Glasses</small></button>
+            <button type="button" onClick={() => addSticker("Sunglasses","😎")}><span>😎</span><small>Sunglasses</small></button>
+            <button type="button" onClick={() => addSticker("Crown","👑")}><span>👑</span><small>Crown</small></button>
+            <button type="button" onClick={() => addSticker("Makeup","💄")}><span>💄</span><small>Makeup</small></button>
+            <button type="button" onClick={() => addSticker("Blush","🌸")}><span>🌸</span><small>Blush</small></button>
+            <button type="button" onClick={() => addSticker("Freckles","✨")}><span>✨</span><small>Freckles</small></button>
+            <button type="button" onClick={() => addSticker("Beard","🧔")}><span>🧔</span><small>Beard</small></button>
+            <button type="button" onClick={() => addSticker("Halo","😇")}><span>😇</span><small>Halo</small></button>
+            <button type="button" onClick={() => addSticker("Sparkles","💫")}><span>💫</span><small>Sparkles</small></button>
+            <button type="button" onClick={() => addSticker("Flower","🌺")}><span>🌺</span><small>Flower</small></button>
+            <button type="button" onClick={() => addSticker("Star","⭐")}><span>⭐</span><small>Star</small></button>
+            <button type="button" onClick={() => addSticker("Cat ears","🐱")}><span>🐱</span><small>Cat ears</small></button>
+            <button type="button" onClick={() => addSticker("Mask","🎭")}><span>🎭</span><small>Mask</small></button>
+            <button type="button" onClick={() => addSticker("Bow","🎀")}><span>🎀</span><small>Bow</small></button>
+            <button type="button" onClick={() => addSticker("Hearts","💗")}><span>💗</span><small>Hearts</small></button>
           </div>
         </section>
         <details open><summary>Creative samples &amp; looks</summary>
