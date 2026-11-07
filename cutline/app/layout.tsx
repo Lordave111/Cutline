@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     siteName: "Cutline",
     title: "Cutline — AI Photo Editor & Creative Studio",
     description: "A focused online studio for background removal, photo editing and AI-assisted image creation.",
-    images: [{ url: "/icon.svg", alt: "Cutline creative studio" }],
   },
   twitter: {
     card: "summary",
@@ -30,7 +29,6 @@ export const metadata: Metadata = {
     description: "Remove backgrounds, refine photos and create polished visuals in one online studio.",
   },
   robots: { index: true, follow: true },
-  applicationName: "Cutline",
   manifest: "/manifest.json",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Cutline" },
