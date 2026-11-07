@@ -157,7 +157,7 @@ export default function Studio() {
   const ready = mode !== "ai" && !!cutBlob && cutSrc.current === file; // cut-out done: switching backgrounds is free and instant
 
   return (
-    <section className="studio" id="studio">
+    <section className="studio">
       <div className="bar">
         {isSignedIn ? (
           <>
