@@ -10,13 +10,21 @@ export async function generateWithGemini(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("Gemini is not configured. Add GEMINI_API_KEY in Vercel project environment variables.");
 
-  const contents = messages
+  const conversation = messages
     .filter((message) => typeof message.text === "string" && message.text.trim())
-    .map((message) => ({
-      role: message.role,
-      parts: [{ text: message.text.slice(0, 2500) }],
-    }));
-  if (!contents.length) throw new Error("Please enter a message.");
+    .map((message) => ({ ...message, text: message.text.slice(0, 2500) }));
+
+  // Gemini conversation history must begin with a user turn. The UI's welcome
+  // message is presentation-only, so discard any leading model turn.
+  while (conversation[0]?.role === "model") conversation.shift();
+  if (!conversation.length || conversation[0].role !== "user") {
+    throw new Error("Please enter a message.");
+  }
+
+  const contents = conversation.map((message) => ({
+    role: message.role,
+    parts: [{ text: message.text }],
+  }));
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
