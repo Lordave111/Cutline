@@ -303,3 +303,13 @@ body:before{background:linear-gradient(180deg,rgba(9,11,14,.02),#090b0e 90%)}
 @keyframes assistantPanelIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:600px){.assistant-floating-panel{right:58px!important;bottom:18px!important;width:calc(100vw - 76px)!important;max-height:calc(100dvh - 36px)!important;padding:15px!important}.assistant-floating-panel .assistant-chat{max-height:190px}}
 @media(prefers-reduced-motion:reduce){.assistant-floating-panel{animation:none}}
+
+
+/* Designer-avatar launcher for the floating AI chat */
+.assistant-edge-launcher{width:66px;height:82px;gap:3px;padding:6px 5px 7px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;writing-mode:horizontal-tb;border-radius:18px 0 0 18px;background:linear-gradient(145deg,#e6ff91 0%,#c8f85a 48%,#8ddc3d 100%);border:1px solid rgba(239,255,178,.8);border-right:0;box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 26px rgba(190,255,81,.24)}
+.assistant-edge-launcher:hover{width:72px}
+.assistant-avatar-art{display:grid;place-items:center;width:47px;height:47px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.3))}
+.assistant-avatar-art svg{display:block;width:100%;height:100%}
+.assistant-edge-label{font:800 8px var(--mono),monospace;letter-spacing:.12em;color:#18210d;white-space:nowrap}
+.assistant-edge-pulse{top:5px;left:7px;width:6px;height:6px;background:#fff}
+@media(max-width:600px){.assistant-edge-launcher{width:60px;height:76px}.assistant-edge-launcher:hover{width:60px}}
