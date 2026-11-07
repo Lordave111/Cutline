@@ -22,20 +22,33 @@ const BACKGROUND_PRESETS = [
 
 
 async function shrink(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) throw new Error("Choose an image file.");
+  if (file.size > 20 * 1024 * 1024) throw new Error("That image is too large. Choose a file under 20 MB.");
+
   const bmp = await createImageBitmap(file);
-  const s = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
-  const x = c.getContext("2d")!;
-  x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
-  x.drawImage(bmp, 0, 0, c.width, c.height);
-  const blob = await new Promise<Blob>((r) => c.toBlob((b) => r(b!), "image/jpeg", 0.88));
-  return new File([blob], "photo.jpg", { type: "image/jpeg" });
+  try {
+    const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bmp.width * scale));
+    canvas.height = Math.max(1, Math.round(bmp.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Your browser could not prepare this image.");
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+    if (!blob) throw new Error("Could not process this image. Try another file.");
+    return new File([blob], "photo.jpg", { type: "image/jpeg" });
+  } finally {
+    bmp.close();
+  }
 }
 
 async function call(url: string, body: FormData, onLeft: (n: number) => void): Promise<Blob> {
   const r = await fetch(url, { method: "POST", body });
   if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || "Request failed. Try a smaller image."); }
+  const contentType = r.headers.get("content-type") || "";
+  if (!contentType.startsWith("image/")) throw new Error("The image service returned an unexpected response. Please try again.");
   const left = r.headers.get("X-Credits-Left");
   if (left) onLeft(Number(left));
   return r.blob();
@@ -56,6 +69,11 @@ export default function Studio() {
   const [credits, setCredits] = useState<number | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
   const cutSrc = useRef<File | null>(null);
+  const previewUrl = useRef("");
+
+  useEffect(() => () => {
+    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+  }, []);
 
   useEffect(() => {
     if (!isSignedIn) { setCredits(null); return; }
@@ -85,8 +103,17 @@ export default function Studio() {
   async function pick(f?: File) {
     if (!f) return;
     setError(""); setCutBlob(null); setFlatBlob(null); cutSrc.current = null;
-    try { const s = await shrink(f); setFile(s); setPreview(URL.createObjectURL(s)); }
-    catch { setError("Could not read that image."); }
+    try {
+      const s = await shrink(f);
+      const nextUrl = URL.createObjectURL(s);
+      if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+      previewUrl.current = nextUrl;
+      setFile(s);
+      setPreview(nextUrl);
+      setBgFile(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not read that image.");
+    }
   }
 
   async function useSample(url: string, name: string) {
@@ -155,8 +182,12 @@ export default function Studio() {
       )}
 
       <div className="studio-intake-grid">
-      <label className="drop">
-        <input type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
+      <label
+        className="drop"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => { event.preventDefault(); void pick(event.dataTransfer.files?.[0]); }}
+      >
+        <input type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { void pick(e.target.files?.[0]); e.currentTarget.value = ""; }} />
         <span className="drop-icon">＋</span>
         <b>{file ? "Change photo" : "Upload a photo to start creating"}</b>
         <small>{file ? file.name : "Choose a photo · JPG, PNG or WebP"}</small>
@@ -205,7 +236,13 @@ export default function Studio() {
             </div>
           </div>
         )}
-        {mode === "image" && <input aria-label="Background image" type="file" accept="image/*" disabled={!file} onChange={(e) => setBgFile(e.target.files?.[0] ?? null)} />}
+        {mode === "image" && <label className="background-custom-label">Choose background image <input aria-label="Background image" type="file" accept="image/jpeg,image/png,image/webp" disabled={!file} onChange={async (e) => {
+          const selected = e.target.files?.[0];
+          e.currentTarget.value = "";
+          if (!selected) return;
+          try { setBgFile(await shrink(selected)); setError(""); }
+          catch (reason) { setError(reason instanceof Error ? reason.message : "Could not read that background image."); }
+        }} /></label>}
         {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
   
         <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
