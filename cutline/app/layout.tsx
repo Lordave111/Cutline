@@ -5,11 +5,30 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--mono" });
 const sans = Space_Grotesk({ subsets: ["latin"], variable: "--sans" });
+const siteUrl = "https://cutline-gamma.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Cutline — Creative Studio",
-  description: "A fast, app-like creative studio for background removal, photo editing and AI-powered image creation.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Cutline — AI Photo Editor & Creative Studio",
+    template: "%s | Cutline",
+  },
+  description: "Remove image backgrounds, retouch photos, build new scenes and fine-tune every detail in Cutline's online creative studio.",
   applicationName: "Cutline",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "Cutline",
+    title: "Cutline — AI Photo Editor & Creative Studio",
+    description: "A focused online studio for background removal, photo editing and AI-assisted image creation.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Cutline — AI Photo Editor & Creative Studio",
+    description: "Remove backgrounds, refine photos and create polished visuals in one online studio.",
+  },
+  robots: { index: true, follow: true },
   manifest: "/manifest.json",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Cutline" },

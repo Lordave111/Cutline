@@ -23,11 +23,8 @@ export async function inpaintWithCloudflare(
       },
       body: JSON.stringify({
         prompt: `Edit only the white masked region. Preserve every unmasked pixel exactly as in the input photo. Do not change the person, face, eyes, nose, mouth, skin tone, hairstyle, clothing, body shape, or identity. Keep facial features and expression untouched. Make the requested change naturally and blend it into the existing lighting and perspective. User request: ${prompt}`,
-        // Cloudflare's inpainting examples use encoded PNG byte arrays for both inputs.
-        // Keep image_b64 as a compatibility fallback while supplying the documented image array.
+        // Workers AI expects the source image and PNG mask as 8-bit byte arrays.
         image: [...Buffer.from(imageBase64, "base64")],
-        image_b64: imageBase64,
-        mask_image: mask,
         mask,
         width,
         height,
