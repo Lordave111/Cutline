@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 type Message = { role: "user" | "model"; text: string };
@@ -19,6 +19,27 @@ export default function Assistant() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [floatPos, setFloatPos] = useState<{ x: number; y: number } | null>(null);
+  const dragStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const didDrag = useRef(false);
+  function startFloatDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    dragStart.current = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+    didDrag.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function moveFloat(event: React.PointerEvent<HTMLButtonElement>) {
+    if (!dragStart.current) return;
+    const dx = event.clientX - dragStart.current.x;
+    const dy = event.clientY - dragStart.current.y;
+    if (Math.abs(dx) + Math.abs(dy) > 6) didDrag.current = true;
+    if (!didDrag.current) return;
+    const width = event.currentTarget.offsetWidth;
+    const height = event.currentTarget.offsetHeight;
+    setFloatPos({ x: Math.max(8, Math.min(window.innerWidth - width - 8, dragStart.current.left + dx)), y: Math.max(8, Math.min(window.innerHeight - height - 8, dragStart.current.top + dy)) });
+  }
+  function endFloatDrag() { dragStart.current = null; }
 
   async function send(text = input) {
     const value = text.trim();
@@ -51,20 +72,20 @@ export default function Assistant() {
 
   return (
     <>
-      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onClick={() => setPanelOpen((open) => !open)} aria-expanded={panelOpen}>
+      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
         <span className="assistant-avatar-art" aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="img">
-            <defs><linearGradient id="designerGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#efffa0"/><stop offset="1" stopColor="#a5ed42"/></linearGradient></defs>
-            <circle cx="32" cy="32" r="30" fill="#111a15"/>
-            <path d="M12 25Q17 5 36 9Q49 11 53 25L47 29H17Z" fill="url(#designerGlow)"/>
-            <path d="M18 28Q20 17 32 17Q45 17 47 30L45 43Q41 53 32 53Q22 52 18 42Z" fill="#e9b58d"/>
-            <path d="M18 30Q21 15 34 17Q45 18 48 31L43 27L39 22Q31 29 19 28Z" fill="#18211a"/>
-            <path d="M25 35h3M37 35h3" stroke="#263027" strokeWidth="2.5" strokeLinecap="round"/>
-            <path d="M28 43Q32 46 36 43" fill="none" stroke="#9b594a" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M12 61Q14 48 25 47L32 53L39 47Q51 49 53 61" fill="#d5ff62"/>
-            <path d="M8 17L11 12L14 17L11 22Z" fill="#fff6b7"/>
+          <svg viewBox="0 0 80 80" role="img">
+            <defs><linearGradient id="botMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f4ffd0"/><stop offset=".55" stopColor="#d5ff62"/><stop offset="1" stopColor="#70c936"/></linearGradient><linearGradient id="botGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#243a32"/><stop offset="1" stopColor="#0a1512"/></linearGradient></defs>
+            <path d="M40 4V12" stroke="#d5ff62" strokeWidth="3" strokeLinecap="round"/><circle cx="40" cy="4" r="4" fill="#f6ffb7"/>
+            <path d="M17 29Q17 13 40 13Q63 13 63 29V52Q63 64 51 64H29Q17 64 17 52Z" fill="url(#botMetal)" stroke="#efffa0" strokeWidth="2"/>
+            <rect x="22" y="25" width="36" height="26" rx="10" fill="url(#botGlass)" stroke="#64864a" strokeWidth="1.5"/>
+            <ellipse cx="32" cy="37" rx="3.5" ry="4.5" fill="#d5ff62"/><ellipse cx="48" cy="37" rx="3.5" ry="4.5" fill="#d5ff62"/><path d="M34 45Q40 49 46 45" stroke="#d5ff62" strokeWidth="2" fill="none" strokeLinecap="round"/>
+            <path d="M17 34H11Q7 34 7 40V43Q7 47 12 47H17M63 34H69Q73 34 73 40V43Q73 47 68 47H63" fill="none" stroke="#b7ed5a" strokeWidth="4" strokeLinecap="round"/>
+            <path d="M28 63L24 70M52 63L56 70M24 70H56" stroke="#d5ff62" strokeWidth="4" strokeLinecap="round"/>
+            <path d="M56 15L66 7L68 20L58 24Z" fill="#f0a94e" stroke="#fff0bd" strokeWidth="1.5"/><path d="M63 8L70 3M68 3L73 8" stroke="#fff0bd" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M13 18L16 12L19 18L16 24Z" fill="#fff6b7"/>
           </svg>
-        </span><span className="assistant-edge-label">{panelOpen ? "CLOSE" : "DESIGN AI"}</span><span className="assistant-edge-pulse" />
+        </span><span className="assistant-edge-pulse" />
       </button>
       {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
