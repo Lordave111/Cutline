@@ -302,6 +302,43 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Could not open project."); }
   }
 
+  function autoEnhance() {
+    const canvas = ref.current;
+    if (!canvas || !canvas.width || !canvas.height) return;
+    try {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return;
+      const sample = document.createElement("canvas");
+      const w = 96, h = Math.max(1, Math.round(96 * canvas.height / canvas.width));
+      sample.width = w; sample.height = h;
+      sample.getContext("2d")!.drawImage(canvas, 0, 0, w, h);
+      const pixels = sample.getContext("2d")!.getImageData(0, 0, w, h).data;
+      let luminance = 0, luminanceSq = 0, saturation = 0, count = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i] / 255, g = pixels[i + 1] / 255, b = pixels[i + 2] / 255;
+        const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) * 255;
+        luminance += y; luminanceSq += y * y;
+        saturation += Math.max(r, g, b) - Math.min(r, g, b); count++;
+      }
+      if (!count) return;
+      const mean = luminance / count;
+      const deviation = Math.sqrt(Math.max(0, luminanceSq / count - mean * mean));
+      const averageSaturation = saturation / count;
+      const next = {
+        brightness: Math.round(Math.max(88, Math.min(118, 100 + (128 - mean) * 0.16))),
+        contrast: Math.round(Math.max(92, Math.min(132, 100 + (48 - deviation) * 0.55))),
+        saturation: Math.round(Math.max(88, Math.min(125, 100 + (0.22 - averageSaturation) * 45))),
+        fade: 0,
+        vignette: 8,
+      };
+      setHistory((old) => [...old.slice(-19), s]); setFuture([]);
+      setS((old) => ({ ...old, ...next }));
+      setProjectNotice("Auto enhance applied. Fine-tune the sliders or undo to compare.");
+    } catch {
+      setProjectNotice("Auto enhance could not analyse this image. Try a preset instead.");
+    }
+  }
+
   async function download() {
     if (!ref.current || exportBusy) return;
     setExportBusy(true);
@@ -661,7 +698,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         </details>
         {!flat && <details open><summary>Subject positioning</summary><Range label="Scale" k="scale" min={40} max={160} /><Range label="Horizontal position" k="offX" min={-50} max={50} /><Range label="Vertical position" k="offY" min={-50} max={50} /><Range label="Drop shadow" k="shadow" min={0} max={100} /></details>}
         {bg.kind === "image" && <details open><summary>Background controls</summary><Range label="Background blur" k="bgBlur" min={0} max={30} /></details>}
-        <details open><summary>Light &amp; colour</summary><Range label="Exposure / brightness" k="brightness" min={50} max={150} /><Range label="Contrast" k="contrast" min={50} max={160} /><Range label="Saturation" k="saturation" min={0} max={200} /><Range label="Warmth" k="warmth" min={-50} max={100} /><Range label="Tint" k="tint" min={-60} max={60} /><Range label="Fade" k="fade" min={0} max={60} /><Range label="Soft focus" k="blur" min={0} max={5} step={0.5} /><Range label="Vignette" k="vignette" min={0} max={85} /></details>
+        <details open><summary>Light &amp; colour</summary><div className="editor-tool-actions"><button type="button" className="go" onClick={autoEnhance}>✦ Auto enhance</button><button type="button" className="chip" onClick={() => applyPreset({ brightness: 100, contrast: 100, saturation: 100, warmth: 0, tint: 0, fade: 0, vignette: 0 })}>Reset colour</button></div><p className="editor-hint">Auto enhance analyses a small preview and applies a balanced starting grade. You can still adjust every setting below.</p><Range label="Exposure / brightness" k="brightness" min={50} max={150} /><Range label="Contrast" k="contrast" min={50} max={160} /><Range label="Saturation" k="saturation" min={0} max={200} /><Range label="Warmth" k="warmth" min={-50} max={100} /><Range label="Tint" k="tint" min={-60} max={60} /><Range label="Fade" k="fade" min={0} max={60} /><Range label="Soft focus" k="blur" min={0} max={5} step={0.5} /><Range label="Vignette" k="vignette" min={0} max={85} /></details>
         <details><summary>Precision crop</summary>
           <p className="editor-hint">Trim the image by adjusting the crop boundaries. These changes are included in export.</p>
           <Range label="Crop from left" k="cropLeft" min={0} max={100 - s.cropWidth} />
