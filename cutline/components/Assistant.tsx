@@ -73,7 +73,7 @@ export default function Assistant() {
   return (
     <>
       <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
-        <span className="assistant-avatar-art" aria-hidden="true"><img src="/cutline-ai-icon.jpg" alt="" /></span><span className="assistant-edge-pulse" />
+        <span className="assistant-avatar-art" aria-hidden="true"><img src="/icon.svg" alt="" /></span><span className="assistant-edge-pulse" />
       </button>
       {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
