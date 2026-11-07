@@ -270,3 +270,14 @@ body:before{background:linear-gradient(180deg,rgba(9,11,14,.02),#090b0e 90%)}
 @media(min-width:700px){.install-nudge-backdrop{align-items:center}.install-nudge{border-radius:20px}}
 @media(max-width:420px){.install-nudge{padding:24px 20px;border-radius:18px}.install-nudge-kicker{margin-top:20px}.install-nudge h2{font-size:32px}}
 @media(prefers-reduced-motion:reduce){.install-nudge-backdrop,.install-nudge{animation:none}}
+
+
+/* Floating Cutline AI launcher — stays on the viewport edge while browsing */
+.assistant-edge-launcher{position:fixed;z-index:9000;right:0;top:48%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;gap:5px;width:54px;height:76px;padding:8px 6px 8px 9px;border:1px solid rgba(213,255,98,.5);border-right:0;border-radius:16px 0 0 16px;background:linear-gradient(145deg,#d5ff62,#a8e94b);color:#11170b;box-shadow:0 8px 30px rgba(0,0,0,.38),0 0 25px rgba(213,255,98,.16);cursor:pointer;writing-mode:vertical-rl;transition:width .2s,box-shadow .2s}
+.assistant-edge-launcher:hover{width:62px;box-shadow:0 8px 34px rgba(0,0,0,.45),0 0 30px rgba(213,255,98,.28)}
+.assistant-edge-spark{font-size:18px;line-height:1}
+.assistant-edge-label{font:800 10px var(--mono),monospace;letter-spacing:.14em}
+.assistant-edge-pulse{position:absolute;top:8px;left:8px;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.75);animation:assistantEdgePulse 2s infinite}
+@keyframes assistantEdgePulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)}70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@media(max-width:600px){.assistant-edge-launcher{top:auto;bottom:28%;right:0;width:48px;height:70px;border-radius:14px 0 0 14px}.assistant-edge-launcher:hover{width:48px}}
+@media(prefers-reduced-motion:reduce){.assistant-edge-pulse{animation:none}}
