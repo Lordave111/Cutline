@@ -246,3 +246,27 @@ body:before{background:linear-gradient(180deg,rgba(9,11,14,.02),#090b0e 90%)}
  .assistant-form input{font-size:11px;padding:11px 9px}
  .assistant-form .go{padding:0 12px}
 }
+
+
+/* Timed install-app promotion */
+.install-nudge-backdrop{position:fixed;z-index:9999;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:18px;background:rgba(2,5,6,.72);backdrop-filter:blur(9px);animation:installFade .24s ease both}
+.install-nudge{position:relative;width:min(100%,470px);padding:30px;border:1px solid rgba(213,255,98,.3);border-radius:22px;background:radial-gradient(ellipse at 90% 0,rgba(213,255,98,.13),transparent 42%),linear-gradient(145deg,#171e1c,#0b1011 78%);box-shadow:0 28px 100px rgba(0,0,0,.62);color:#f4f7ee;animation:installRise .36s cubic-bezier(.2,.8,.2,1) both}
+.install-nudge-close{position:absolute;top:15px;right:16px;width:34px;height:34px;border:1px solid rgba(255,255,255,.13);border-radius:50%;background:rgba(255,255,255,.05);color:#cbd4ca;font-size:22px}
+.install-nudge-brand{display:flex;align-items:center;gap:10px;font:700 12px var(--sans),sans-serif;letter-spacing:.13em}
+.install-nudge-brand>span:last-child{display:flex;flex-direction:column;gap:3px}
+.install-nudge-brand small{font:8px var(--mono),monospace;letter-spacing:.18em;color:#929d93}
+.install-nudge-mark{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(213,255,98,.4);border-radius:12px;background:rgba(213,255,98,.1);color:#d5ff62;font-size:23px}
+.install-nudge-kicker{margin:25px 0 10px;color:#d5ff62;font:9px var(--mono),monospace;letter-spacing:.16em}
+.install-nudge h2{max-width:370px;margin:0;font:600 clamp(30px,7vw,42px)/1.02 var(--sans),sans-serif;letter-spacing:-.065em}
+.install-nudge-copy{margin:14px 0 18px;color:#aab5ac;font-size:13px;line-height:1.75}
+.install-nudge-benefits{display:grid;gap:10px;margin:0 0 22px;padding:15px 16px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.025);list-style:none;color:#d6dfd5;font-size:12px}
+.install-nudge-benefits li{display:flex;gap:10px;align-items:center}
+.install-nudge-benefits li:first-letter{color:#d5ff62}
+.install-nudge-cta{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;border:0;border-radius:10px;background:#d5ff62;color:#10150b;font:700 14px var(--sans),sans-serif;box-shadow:0 9px 28px rgba(213,255,98,.18);transition:transform .18s,box-shadow .18s}
+.install-nudge-cta:hover{transform:translateY(-2px);box-shadow:0 13px 34px rgba(213,255,98,.25)}
+.install-nudge-later{display:block;margin:12px auto 0;padding:8px 16px;border:0;background:transparent;color:#929d95;font-size:11px}
+@keyframes installFade{from{opacity:0}to{opacity:1}}
+@keyframes installRise{from{opacity:0;transform:translateY(35px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(min-width:700px){.install-nudge-backdrop{align-items:center}.install-nudge{border-radius:20px}}
+@media(max-width:420px){.install-nudge{padding:24px 20px;border-radius:18px}.install-nudge-kicker{margin-top:20px}.install-nudge h2{font-size:32px}}
+@media(prefers-reduced-motion:reduce){.install-nudge-backdrop,.install-nudge{animation:none}}
