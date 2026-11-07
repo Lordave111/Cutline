@@ -74,30 +74,43 @@ export default function Assistant() {
     <>
       <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
         <span className="assistant-avatar-art" aria-hidden="true">
-          <svg viewBox="0 0 100 100" role="img">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Painter robot mascot">
             <defs>
-              <linearGradient id="paletteHead" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fffbdc"/><stop offset=".48" stopColor="#d9ff72"/><stop offset="1" stopColor="#83cf39"/></linearGradient>
-              <linearGradient id="botBody" x1="0" y1="0" x2="0.9" y2="1"><stop stopColor="#f5ffd8"/><stop offset=".45" stopColor="#c9ef72"/><stop offset="1" stopColor="#649e38"/></linearGradient>
-              <linearGradient id="botVisor" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#263c39"/><stop offset="1" stopColor="#081412"/></linearGradient>
-              <linearGradient id="brushWood" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffe7a0"/><stop offset="1" stopColor="#c47b39"/></linearGradient>
+              <linearGradient id="palShell" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f8ffe8"/><stop offset=".42" stopColor="#d8ff76"/><stop offset="1" stopColor="#78bd3e"/></linearGradient>
+              <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#344a46"/><stop offset=".55" stopColor="#182b29"/><stop offset="1" stopColor="#0b1716"/></linearGradient>
+              <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#f0f6dc"/><stop offset="1" stopColor="#9bbd83"/></linearGradient>
+              <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f5ffd2"/><stop offset="1" stopColor="#82ba48"/></linearGradient>
+              <linearGradient id="brush" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f9d28c"/><stop offset="1" stopColor="#a96b39"/></linearGradient>
             </defs>
-            <ellipse cx="50" cy="91" rx="27" ry="5" fill="#8dff52" opacity=".22"/>
-            <path d="M35 64L29 80Q28 84 33 85H45L49 71M65 64L71 80Q72 84 67 85H55L51 71" fill="url(#botBody)" stroke="#efffb4" strokeWidth="2"/>
-            <path d="M32 44Q50 39 68 44L75 65Q76 73 67 76H33Q24 73 25 65Z" fill="url(#botBody)" stroke="#efffb4" strokeWidth="2"/>
-            <path d="M31 52L19 61Q15 65 19 69L24 70L39 60M69 52L81 61Q85 65 81 69L76 70L61 60" fill="none" stroke="#b8e95e" strokeWidth="7" strokeLinecap="round"/>
-            <circle cx="18" cy="70" r="5" fill="#eaffb0"/><circle cx="82" cy="70" r="5" fill="#eaffb0"/>
-            <path d="M18 30Q14 13 31 10Q42 4 55 9Q75 5 82 22Q91 38 76 51Q64 61 43 57Q23 58 16 45Q10 37 18 30Z" fill="url(#paletteHead)" stroke="#f4ffd0" strokeWidth="2.5"/>
-            <path d="M26 24Q34 17 44 20Q51 23 48 30Q45 36 36 34Q27 33 26 24Z" fill="#ff5b73" stroke="#fff0d0" strokeWidth="1.5"/>
-            <circle cx="65" cy="21" r="7" fill="#55c9ff" stroke="#eaffd0" strokeWidth="1.5"/>
-            <circle cx="76" cy="36" r="6" fill="#a56cff" stroke="#eaffd0" strokeWidth="1.5"/>
-            <circle cx="27" cy="43" r="5.5" fill="#ffbf45" stroke="#fff0d0" strokeWidth="1.5"/>
-            <path d="M35 31Q50 25 67 32Q73 35 72 44Q70 52 59 53H41Q29 52 29 43Q29 35 35 31Z" fill="url(#botVisor)" stroke="#668b4d" strokeWidth="1.8"/>
-            <ellipse cx="43" cy="41" rx="4" ry="5" fill="#d5ff62"/><ellipse cx="59" cy="41" rx="4" ry="5" fill="#d5ff62"/>
-            <path d="M44 48Q51 53 58 48" fill="none" stroke="#d5ff62" strokeWidth="2.3" strokeLinecap="round"/>
-            <path d="M78 57L91 29" stroke="url(#brushWood)" strokeWidth="5" strokeLinecap="round"/>
-            <path d="M88 27Q91 14 98 12Q98 25 92 32Z" fill="#ff78a8" stroke="#ffe4c0" strokeWidth="1.5"/>
-            <path d="M76 60L81 64" stroke="#fff2b7" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M11 13L14 7L17 13L14 19Z" fill="#fff5bd"/><path d="M86 7L89 2L92 7L89 12Z" fill="#a8f7ff"/>
+            <ellipse cx="49" cy="93" rx="27" ry="4.5" fill="#9cff62" opacity=".2"/>
+            <!-- tailored artist jacket and legs -->
+            <path d="M37 68L33 84Q33 88 38 88H46L49 73M63 68L67 84Q67 88 62 88H54L51 73" fill="url(#suit)" stroke="#9acb62" strokeWidth="1.7"/>
+            <path d="M28 54Q39 48 50 50Q62 48 72 55L77 74Q77 79 71 80H29Q23 79 23 74Z" fill="url(#suit)" stroke="#b4e66b" strokeWidth="2"/>
+            <path d="M39 53L50 65L61 53L57 78H43Z" fill="#e9f4d5" opacity=".95"/>
+            <path d="M47 64L53 64L55 77L50 81L45 77Z" fill="#d5ff62"/>
+            <path d="M28 57L17 67Q14 71 18 75L23 76L38 65M72 57L83 67Q86 71 82 75L77 76L62 65" fill="none" stroke="url(#metal)" strokeWidth="7" strokeLinecap="round"/>
+            <circle cx="18" cy="76" r="4.5" fill="#dfff9c"/><circle cx="82" cy="76" r="4.5" fill="#dfff9c"/>
+            <!-- palette-shaped crown/head shell -->
+            <path d="M17 30Q12 17 25 11Q34 5 46 9Q59 3 72 12Q87 18 83 34Q82 45 72 51Q61 59 43 56Q25 57 17 45Q11 38 17 30Z" fill="url(#palShell)" stroke="#f3ffd7" strokeWidth="2.2"/>
+            <!-- paint wells around the palette rim -->
+            <path d="M24 23Q30 15 39 19Q45 22 41 29Q36 35 28 31Q23 29 24 23Z" fill="#ff6b75" stroke="#fff1d4" strokeWidth="1.4"/>
+            <circle cx="66" cy="19" r="6.5" fill="#56c8ff" stroke="#efffd1" strokeWidth="1.4"/>
+            <circle cx="77" cy="35" r="5.5" fill="#a879f7" stroke="#efffd1" strokeWidth="1.4"/>
+            <circle cx="25" cy="43" r="5" fill="#ffbd4b" stroke="#fff1d4" strokeWidth="1.4"/>
+            <!-- human-like robotic face -->
+            <path d="M34 27Q50 20 67 28Q74 33 72 43L68 50Q61 56 50 55Q38 55 31 49L28 41Q28 32 34 27Z" fill="url(#face)" stroke="#63894d" strokeWidth="1.8"/>
+            <path d="M34 33Q40 27 46 32M54 32Q61 27 67 33" fill="none" stroke="#526b49" strokeWidth="3.2" strokeLinecap="round"/>
+            <rect x="35" y="35" width="11" height="8" rx="4" fill="#172d2a"/><rect x="54" y="35" width="11" height="8" rx="4" fill="#172d2a"/>
+            <circle cx="41" cy="39" r="2.2" fill="#d5ff62"/><circle cx="59" cy="39" r="2.2" fill="#d5ff62"/>
+            <path d="M48 39L46 46Q50 48 53 46" fill="none" stroke="#78946a" strokeWidth="1.6" strokeLinecap="round"/>
+            <path d="M42 49Q50 53 58 49" fill="none" stroke="#3e5d43" strokeWidth="2" strokeLinecap="round"/>
+            <!-- ear pieces and artist brush -->
+            <rect x="15" y="34" width="6" height="12" rx="3" fill="#9ed75b" stroke="#f1ffd0" strokeWidth="1"/>
+            <rect x="79" y="34" width="6" height="12" rx="3" fill="#9ed75b" stroke="#f1ffd0" strokeWidth="1"/>
+            <path d="M78 62L91 28" stroke="url(#brush)" strokeWidth="4.5" strokeLinecap="round"/>
+            <path d="M87 29Q89 16 97 12Q98 24 92 33Z" fill="#e6f5c8" stroke="#fff2d2" strokeWidth="1.4"/>
+            <path d="M78 60L82 64" stroke="#fff0bd" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M12 13L15 7L18 13L15 19Z" fill="#fff6c6"/><path d="M86 7L89 2L92 7L89 12Z" fill="#a8f7ff"/>
           </svg>
         </span><span className="assistant-edge-pulse" />
       </button>
