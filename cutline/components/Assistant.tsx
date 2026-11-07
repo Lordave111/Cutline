@@ -52,7 +52,19 @@ export default function Assistant() {
   return (
     <>
       <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onClick={() => setPanelOpen((open) => !open)} aria-expanded={panelOpen}>
-        <span className="assistant-edge-spark">✦</span><span className="assistant-edge-label">{panelOpen ? "×" : "AI"}</span><span className="assistant-edge-pulse" />
+        <span className="assistant-avatar-art" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <defs><linearGradient id="designerGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#efffa0"/><stop offset="1" stopColor="#a5ed42"/></linearGradient></defs>
+            <circle cx="32" cy="32" r="30" fill="#111a15"/>
+            <path d="M12 25Q17 5 36 9Q49 11 53 25L47 29H17Z" fill="url(#designerGlow)"/>
+            <path d="M18 28Q20 17 32 17Q45 17 47 30L45 43Q41 53 32 53Q22 52 18 42Z" fill="#e9b58d"/>
+            <path d="M18 30Q21 15 34 17Q45 18 48 31L43 27L39 22Q31 29 19 28Z" fill="#18211a"/>
+            <path d="M25 35h3M37 35h3" stroke="#263027" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M28 43Q32 46 36 43" fill="none" stroke="#9b594a" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M12 61Q14 48 25 47L32 53L39 47Q51 49 53 61" fill="#d5ff62"/>
+            <path d="M8 17L11 12L14 17L11 22Z" fill="#fff6b7"/>
+          </svg>
+        </span><span className="assistant-edge-label">{panelOpen ? "CLOSE" : "DESIGN AI"}</span><span className="assistant-edge-pulse" />
       </button>
       {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
@@ -79,5 +91,6 @@ export default function Assistant() {
       </form>
       <p className="assistant-note">AI responses can be inaccurate. Don't share private or sensitive information.</p>
       </section>}
+    </>
   );
 }
