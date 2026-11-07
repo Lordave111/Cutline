@@ -54,3 +54,28 @@ body:before{background:linear-gradient(180deg,rgba(9,11,14,.02),#090b0e 90%)}
 
 /* Auto-enhance controls */
 .editor-tool-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}.editor-tool-actions .go,.editor-tool-actions .chip{min-height:38px;padding:9px 13px;border-radius:7px;font-size:12px}.editor-tool-actions .go{flex:1}.editor-tool-actions .chip{border:1px solid rgba(255,255,255,.14);background:#151b19;color:#d7e0d7}.editor-tool-actions .chip:hover{border-color:var(--accent);color:var(--accent)}
+
+
+/* Layer lock controls */
+.layer-row .layer-lock {
+  flex: 0 0 34px;
+  min-width: 34px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line, rgba(255,255,255,.12));
+  border-radius: 10px;
+  background: rgba(255,255,255,.035);
+  color: var(--muted, #a4a4a4);
+  cursor: pointer;
+  font-size: 13px;
+}
+.layer-row .layer-lock:hover {
+  border-color: var(--accent, #c6f36b);
+  color: var(--accent, #c6f36b);
+}
+.layer-order-actions button:disabled {
+  opacity: .38;
+  cursor: not-allowed;
+}
