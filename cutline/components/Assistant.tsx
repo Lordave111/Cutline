@@ -18,6 +18,7 @@ export default function Assistant() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
 
   async function send(text = input) {
     const value = text.trim();
@@ -50,11 +51,12 @@ export default function Assistant() {
 
   return (
     <>
-      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onClick={() => document.getElementById("cutline-ai")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
-        <span className="assistant-edge-spark">✦</span><span className="assistant-edge-label">AI</span><span className="assistant-edge-pulse" />
+      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onClick={() => setPanelOpen((open) => !open)} aria-expanded={panelOpen}>
+        <span className="assistant-edge-spark">✦</span><span className="assistant-edge-label">{panelOpen ? "×" : "AI"}</span><span className="assistant-edge-pulse" />
       </button>
-      <section className="ai-assistant" id="cutline-ai" aria-labelledby="assistant-title">
+      {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
+        <button type="button" className="assistant-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close Cutline AI">×</button>
         <div><p className="tag">YOUR CREATIVE COPILOT</p><h2 id="assistant-title">Cutline AI</h2><p className="mute">Ideas, editing advice and prompts — right inside your studio.</p></div>
         <span className="ai-status">● AI READY</span>
       </div>
@@ -76,7 +78,6 @@ export default function Assistant() {
         <button className="go" type="submit" disabled={busy || !input.trim()}>{busy ? "…" : "Send ↗"}</button>
       </form>
       <p className="assistant-note">AI responses can be inaccurate. Don't share private or sensitive information.</p>
-      </section>
-    </>
+      </section>}
   );
 }
