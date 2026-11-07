@@ -78,12 +78,6 @@ export default function AppShell() {
 
   return (
     <>
-      {!installed && (
-        <button className="install-app-button" type="button" onClick={() => void install()}>
-          <span aria-hidden="true">↓</span> Install app
-        </button>
-      )}
-
       {promptOpen && !installed && (
         <div className="install-nudge-backdrop" role="presentation" onClick={remindLater}>
           <section className="install-nudge" role="dialog" aria-modal="true" aria-labelledby="install-nudge-title" onClick={(event) => event.stopPropagation()}>
