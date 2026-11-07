@@ -1,8 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="116" fill="#070a0d"/>
-  <g fill="none" stroke="#62f5b2" stroke-width="30" stroke-linecap="round">
-    <path d="M150 150h212M150 256h150M150 362h212"/>
-    <path d="M362 150v212"/>
-  </g>
-  <circle cx="362" cy="256" r="25" fill="#62f5b2"/>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#25133f"/><stop offset="1" stop-color="#080b12"/></linearGradient><linearGradient id="paint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c6a1ff"/><stop offset="1" stop-color="#7b36e8"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="256" cy="250" r="194" fill="none" stroke="#9b55ff" stroke-opacity=".28" stroke-width="8"/>
+<path d="M106 214c-10-76 57-137 150-137s160 61 150 137c-7 50-43 83-83 99H189c-40-16-76-49-83-99Z" fill="#f4efff"/>
+<ellipse cx="190" cy="155" rx="28" ry="17" fill="#ff5368"/><ellipse cx="255" cy="128" rx="27" ry="17" fill="#ffbf43"/><ellipse cx="322" cy="155" rx="28" ry="17" fill="#35c9ff"/><ellipse cx="365" cy="211" rx="22" ry="14" fill="#a66bff"/>
+<path d="M173 221c18-48 147-55 167 0l-12 72c-16 38-43 55-72 55s-57-17-72-55l-11-72Z" fill="#a96743"/>
+<path d="M178 226c17-45 132-52 157-2l-8 22c-38-24-105-24-143 0Z" fill="#171222"/>
+<path d="M195 249h39m44 0h39" stroke="#21162f" stroke-width="14" stroke-linecap="round"/><circle cx="214" cy="258" r="7" fill="#c6ff59"/><circle cx="298" cy="258" r="7" fill="#c6ff59"/>
+<path d="M232 295q24 19 48 0" fill="none" stroke="#4b2431" stroke-width="9" stroke-linecap="round"/>
+<path d="M132 386q124-92 248 0l35 66H97Z" fill="#17151f" stroke="#a55cff" stroke-width="9"/>
+<path d="M228 370h56v46h-56z" rx="10" fill="#c6ff59"/><path d="M242 393h28" stroke="#17151f" stroke-width="9" stroke-linecap="round"/>
+<path d="M372 350l55-112" stroke="#e4c18c" stroke-width="13" stroke-linecap="round"/><path d="M413 266q-5-46 40-69 4 49-27 80Z" fill="url(#paint)"/>
+<path d="M95 344q-26-20-8-52 28 17 8 52Zm320-7q34-17 42 19-30 16-42-19Z" fill="#c6ff59"/>
 </svg>
