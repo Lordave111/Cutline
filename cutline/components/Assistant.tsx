@@ -49,7 +49,7 @@ export default function Assistant() {
   }
 
   return (
-    <section className="ai-assistant" aria-labelledby="assistant-title">
+    <section className="ai-assistant" id="cutline-ai" aria-labelledby="assistant-title">
       <div className="assistant-heading">
         <div><p className="tag">YOUR CREATIVE COPILOT</p><h2 id="assistant-title">Cutline AI</h2><p className="mute">Ideas, editing advice and prompts — right inside your studio.</p></div>
         <span className="ai-status">● AI READY</span>
