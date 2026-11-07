@@ -21,12 +21,6 @@
   ],
   "icons": [
     {
-      "src": "/cutline-ai-icon.jpg",
-      "sizes": "128x128",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
@@ -41,9 +35,9 @@
       "url": "/#studio",
       "icons": [
         {
-          "src": "/cutline-ai-icon.jpg",
-          "sizes": "128x128",
-          "type": "image/jpeg"
+          "src": "/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
         }
       ]
     }
