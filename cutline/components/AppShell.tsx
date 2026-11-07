@@ -7,7 +7,7 @@ type InstallPrompt = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
-const DISMISS_KEY = "cutline-install-dismissed-until";
+const DISMISS_KEY = "cutline-install-dismissed-until-v2";
 const REMIND_AFTER = 12_000;
 const REMIND_DAYS = 7;
 
