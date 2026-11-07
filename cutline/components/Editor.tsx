@@ -120,7 +120,22 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
   }
 
 
-  if (cloneStrokes.length) { const sample = document.createElement("canvas"); sample.width = c.width; sample.height = c.height; sample.getContext("2d")!.drawImage(c, 0, 0); const sx = sample.getContext("2d")!; for (const stroke of cloneStrokes) { const radius = Math.max(2, stroke.size / 2); for (const p of stroke.points) { const dx = p.x*c.width, dy = p.y*c.height, ox = stroke.source.x*c.width, oy = stroke.source.y*c.height; sx.drawImage(sample, Math.max(0,ox-radius), Math.max(0,oy-radius), Math.min(radius*2,sample.width-Math.max(0,ox-radius)), Math.min(radius*2,sample.height-Math.max(0,oy-radius)), Math.max(0,dx-radius), Math.max(0,dy-radius), Math.min(radius*2,c.width-Math.max(0,dx-radius)), Math.min(radius*2,c.height-Math.max(0,dy-radius))); } } }
+  if (cloneStrokes.length) {
+    const sample = document.createElement("canvas"); sample.width = c.width; sample.height = c.height;
+    sample.getContext("2d")!.drawImage(c, 0, 0);
+    const clone = c.getContext("2d")!;
+    for (const stroke of cloneStrokes) {
+      const radius = Math.max(2, stroke.size / 2);
+      for (const p of stroke.points) {
+        const dx = p.x * c.width, dy = p.y * c.height;
+        const ox = stroke.source.x * c.width + (p.x - stroke.points[0].x) * c.width;
+        const oy = stroke.source.y * c.height + (p.y - stroke.points[0].y) * c.height;
+        clone.save(); clone.beginPath(); clone.arc(dx, dy, radius, 0, Math.PI * 2); clone.clip();
+        clone.drawImage(sample, ox - radius, oy - radius, radius * 2, radius * 2, dx - radius, dy - radius, radius * 2, radius * 2);
+        clone.restore();
+      }
+    }
+  }
   if (paintStrokes.length) {
     x.save(); x.lineCap = "round"; x.lineJoin = "round";
     for (const stroke of paintStrokes) { if (!stroke.points.length) continue; x.save(); x.shadowColor = stroke.color; x.shadowBlur = stroke.size * (1 - (stroke.hardness ?? 1)) * 0.35; x.beginPath(); x.strokeStyle = stroke.color; x.lineWidth = stroke.size; x.moveTo(stroke.points[0].x * c.width, stroke.points[0].y * c.height); for (const point of stroke.points.slice(1)) x.lineTo(point.x * c.width, point.y * c.height); if (stroke.points.length === 1) { x.lineTo(stroke.points[0].x * c.width + .1, stroke.points[0].y * c.height + .1); } x.stroke(); x.restore(); }
@@ -162,12 +177,19 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
 }
 
 async function exportImage(c: HTMLCanvasElement, s: S): Promise<Blob> {
-  const k = s.maxSide ? Math.min(1, s.maxSide / Math.max(c.width, c.height)) : 1;
-  const o = document.createElement("canvas"); o.width = Math.round(c.width * k); o.height = Math.round(c.height * k);
-  const x = o.getContext("2d")!;
-  if (s.format !== "png") { x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); }
+  const maxSide = Math.max(0, Number(s.maxSide) || 0);
+  const k = maxSide ? Math.min(1, maxSide / Math.max(c.width, c.height)) : 1;
+  const o = document.createElement("canvas");
+  o.width = Math.max(1, Math.round(c.width * k)); o.height = Math.max(1, Math.round(c.height * k));
+  const x = o.getContext("2d");
+  if (!x) throw new Error("Could not prepare the export canvas.");
+  const mime = s.format === "jpeg" ? "image/jpeg" : s.format === "webp" ? "image/webp" : "image/png";
+  if (mime === "image/jpeg") { x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); }
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = "high";
   x.drawImage(c, 0, 0, o.width, o.height);
-  return new Promise((r) => o.toBlob((b) => r(b!), `image/${s.format}`, s.quality));
+  const blob = await new Promise<Blob | null>((resolve) => o.toBlob(resolve, mime, Math.max(.5, Math.min(1, s.quality))));
+  if (!blob) throw new Error("Your browser could not create this image format. Try PNG instead.");
+  return blob;
 }
 
 export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; bg: Bg }) {
