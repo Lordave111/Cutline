@@ -49,7 +49,11 @@ export default function Assistant() {
   }
 
   return (
-    <section className="ai-assistant" id="cutline-ai" aria-labelledby="assistant-title">
+    <>
+      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onClick={() => document.getElementById("cutline-ai")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+        <span className="assistant-edge-spark">✦</span><span className="assistant-edge-label">AI</span><span className="assistant-edge-pulse" />
+      </button>
+      <section className="ai-assistant" id="cutline-ai" aria-labelledby="assistant-title">
       <div className="assistant-heading">
         <div><p className="tag">YOUR CREATIVE COPILOT</p><h2 id="assistant-title">Cutline AI</h2><p className="mute">Ideas, editing advice and prompts — right inside your studio.</p></div>
         <span className="ai-status">● AI READY</span>
@@ -72,6 +76,7 @@ export default function Assistant() {
         <button className="go" type="submit" disabled={busy || !input.trim()}>{busy ? "…" : "Send ↗"}</button>
       </form>
       <p className="assistant-note">AI responses can be inaccurate. Don't share private or sensitive information.</p>
-    </section>
+      </section>
+    </>
   );
 }
