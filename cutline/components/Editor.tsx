@@ -215,6 +215,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const magicPreviewRef = useRef<HTMLCanvasElement>(null);
   const [s, setS] = useState<S>(DEFAULTS);
   const [templateSearch, setTemplateSearch] = useState("");
+  const [exportFileName, setExportFileName] = useState("my-design");
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [editorBg, setEditorBg] = useState<Bg>(bg);
   const [history, setHistory] = useState<S[]>([]);
@@ -389,7 +390,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const blob = await exportImage(ref.current, showOriginal ? DEFAULTS : s);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url;
-      a.download = `cutline.${s.format === "jpeg" ? "jpg" : s.format}`; a.click();
+      const safeName = exportFileName.trim().replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "my-design";
+      a.download = `${safeName}.${s.format === "jpeg" ? "jpg" : s.format}`; a.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       setProjectNotice("Export failed. Please try again.");
@@ -772,7 +774,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <button type="button" className="chip" onClick={() => applyPreset({ borderWidth: 0 })}>Remove border</button>
         </details>
         <details><summary>Text &amp; watermark</summary><input aria-label="Overlay text" placeholder="Add a title, label or watermark…" maxLength={90} value={s.caption} onChange={(e) => set("caption", e.target.value)} /><div className="chips"><label className="rng">Text colour <input aria-label="Text colour" type="color" value={s.captionColor} onChange={(e) => set("captionColor", e.target.value)} /></label></div><Range label="Text size" k="captionSize" min={18} max={120} /><Range label="Vertical position" k="captionY" min={5} max={95} /></details>
-        <details><summary>Export settings</summary><select aria-label="Format" value={s.format} onChange={(e) => set("format", e.target.value)}><option value="png">PNG (transparent)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select><select aria-label="Size" value={s.maxSide} onChange={(e) => set("maxSide", Number(e.target.value))}><option value={0}>Full size</option><option value={4096}>Up to 4096 px</option><option value={2048}>Up to 2048 px</option><option value={1080}>Up to 1080 px</option></select>{s.format !== "png" && <Range label="Quality" k="quality" min={0.5} max={1} step={0.01} />}</details>
+        <details><summary>Export settings</summary><label className="export-filename-field">File name<input aria-label="Export file name" type="text" value={exportFileName} onChange={(e) => setExportFileName(e.target.value)} placeholder="Enter a file name" maxLength={80} /></label><select aria-label="Format" value={s.format} onChange={(e) => set("format", e.target.value)}><option value="png">PNG (transparent)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select><select aria-label="Size" value={s.maxSide} onChange={(e) => set("maxSide", Number(e.target.value))}><option value={0}>Full size</option><option value={4096}>Up to 4096 px</option><option value={2048}>Up to 2048 px</option><option value={1080}>Up to 1080 px</option></select>{s.format !== "png" && <Range label="Quality" k="quality" min={0.5} max={1} step={0.01} />}</details>
         <button className={`go${exportBusy ? " is-loading" : ""}`} type="button" disabled={exportBusy} onClick={() => void download()}>{exportBusy ? <><span className="btn-spinner" aria-hidden="true" /> Preparing export…</> : "Export image ↗"}</button>
         <button className="chip" type="button" onClick={() => { setHistory((h) => [...h.slice(-19), s]); setFuture([]); setS(DEFAULTS); }}>Reset all edits</button>
         <div className="editor-shortcuts"><b>Keyboard shortcuts</b><span><kbd>Ctrl</kbd> + <kbd>Z</kbd> Undo</span><span><kbd>Ctrl</kbd> + <kbd>Y</kbd> Redo</span><span><kbd>Ctrl</kbd> + <kbd>S</kbd> Export</span><span><kbd>+</kbd> / <kbd>−</kbd> Zoom · <kbd>0</kbd> Reset zoom</span><span><kbd>Esc</kbd> Exit active tool</span></div>
