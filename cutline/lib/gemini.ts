@@ -31,7 +31,7 @@ export async function generateWithGemini(
         contents,
         generationConfig: {
           maxOutputTokens,
-          temperature: 0.55,
+          thinkingConfig: { thinkingLevel: "LOW" },
         },
       }),
       cache: "no-store",
