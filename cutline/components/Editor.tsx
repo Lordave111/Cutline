@@ -527,7 +527,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Online course": { aspect:"16:9", background:{kind:"gradient",color:"#1b2450",color2:"#6955a8"}, headline:"LEVEL UP YOUR SKILLS", sub:"LEARN SMARTER · GO FURTHER", color:"#ffffff", accent:"#f0cf70" },
       "Beauty sale": { aspect:"4:5", background:{kind:"gradient",color:"#e8b8c7",color2:"#96506d"}, headline:"A LITTLE SELF LOVE", sub:"YOUR FAVOURITES · NOW ON OFFER", color:"#fffaf5", accent:"#ffe2a5" },
       "LinkedIn banner": { aspect:"16:9", background:{kind:"gradient",color:"#102b42",color2:"#347c86"}, headline:"BUILD WHAT'S NEXT", sub:"IDEAS · PEOPLE · PROGRESS", color:"#ffffff", accent:"#8de4d0" },
-      "Instagram post": { aspect:"1:1", background:{kind:"gradient",color:"#4c245f",color2:"#e17e80"}, headline:"A MOMENT TO REMEMBER", sub:"LITTLE DETAILS · BIG FEELINGS", color:"#ffffff", accent:"#ffd58a" },
+      "Instagram post": { aspect:"1:1", background:{kind:"gradient",color:"#182a3a",color2:"#765267"}, headline:"A MOMENT TO REMEMBER", sub:"LITTLE DETAILS · BIG FEELINGS", color:"#ffffff", accent:"#f3c77a" },
       "Brand announcement": { aspect:"1:1", background:{kind:"gradient",color:"#17251e",color2:"#8b9b69"}, headline:"SOMETHING NEW IS HERE", sub:"A FRESH CHAPTER STARTS TODAY", color:"#ffffff", accent:"#d9e68d" },
       "Business card": { aspect:"16:9", background:{kind:"gradient",color:"#111a25",color2:"#566b72"}, headline:"YOUR NAME / YOUR WORK", sub:"DESIGN · STRATEGY · CONTACT", color:"#ffffff", accent:"#d4b77a" },
       "Property listing": { aspect:"16:9", background:{kind:"gradient",color:"#1b3736",color2:"#b7b8a1"}, headline:"FIND YOUR PLACE", sub:"SPACE · COMFORT · POSSIBILITY", color:"#ffffff", accent:"#e2cf9c" },
