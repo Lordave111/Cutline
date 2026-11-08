@@ -219,6 +219,22 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [showAllTemplates, setShowAllTemplates] = useState(false);
   const [templateCategory, setTemplateCategory] = useState("All");
   const [favoriteTemplates, setFavoriteTemplates] = useState<string[]>([]);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("cutline-template-favorites");
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) setFavoriteTemplates(parsed.filter((item): item is string => typeof item === "string"));
+      }
+    } catch { /* Ignore unavailable or invalid local preferences. */ }
+    setFavoritesLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!favoritesLoaded) return;
+    try { window.localStorage.setItem("cutline-template-favorites", JSON.stringify(favoriteTemplates)); }
+    catch { /* Favourites still work for this editing session if storage is unavailable. */ }
+  }, [favoriteTemplates, favoritesLoaded]);
   const [editorBg, setEditorBg] = useState<Bg>(bg);
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
