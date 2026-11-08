@@ -637,7 +637,17 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     if (template === "Property listing" || template === "Real estate") {
       addText("Property detail","3 BEDROOMS  ·  2 BATHS  ·  CITY VIEW",8,73,11,ink,"left","Arial, sans-serif",700);
     }
-    setHistory((h) => [...h.slice(-19), s]); setFuture([]);
+    if (template === "Ink portrait") {
+      layers.length = 0;
+      addText("Portrait title","PORTRAIT STUDY",50,9,8,"#111111","center","Arial, sans-serif",700);
+      addText("Portrait caption","LIGHT  /  FORM  /  IDENTITY",50,91,7,"#111111","center","Arial, sans-serif",600);
+    }
+    if (template === "Birthday collage") {
+      layers.length = 0;
+      addText("Birthday note","A DAY TO CELEBRATE",74,93,7,"#f6f0e9","center","Georgia, serif",700);
+      addShape("Birthday star",8,89,2,2,"#f6f0e9",90,"circle");
+    }
+        setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
     setS((old) => ({ ...old, aspect: chosen.aspect, photoTreatment: template === "Ink portrait" ? "ink-circle" : template === "Birthday collage" ? "photo-collage" : "normal", grayscale: template === "Ink portrait" ? 0 : old.grayscale }));
     setEditorBg(chosen.background);
@@ -838,7 +848,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <div className="template-category-filters" role="group" aria-label="Filter templates by category">
             {["All","Saved","Product","Social","Business","Editorial","Beauty","Fashion","Events","Food","Music","Travel","Sports","Technology","Portrait","Automotive","Education","Creative"].map((category) => <button type="button" key={category} className={templateCategory === category ? "active" : ""} onClick={() => { setTemplateCategory(category); setShowAllTemplates(true); }}>{category}</button>)}
           </div>
-          <div className="template-library-meta template-results-meta"><span>{templateSearch.trim() || templateCategory !== "All" ? "FILTERED RESULTS" : showAllTemplates ? "ALL TEMPLATES" : "POPULAR TEMPLATES"}</span><span>40 DESIGNS</span></div>
+          <div className="template-library-meta template-results-meta"><span>{templateSearch.trim() || templateCategory !== "All" ? "FILTERED RESULTS" : showAllTemplates ? "ALL TEMPLATES" : "POPULAR TEMPLATES"}</span><span>42 DESIGNS</span></div>
           <div className="design-template-grid">
             {(() => {
               const catalog = [["Product feature","Product feature","Product","01"],["Luxury product","Luxury product","Product","02"],["Social story","Social story","Social","03"],["Sale announcement","Sale announcement","Business","04"],["Editorial cover","Editorial cover","Editorial","05"],["Beauty campaign","Beauty campaign","Beauty","06"],["Fashion lookbook","Fashion lookbook","Fashion","07"],["Travel postcard","Travel postcard","Travel","08"],["Music poster","Music poster","Music","09"],["Food menu","Food menu","Food","10"],["Real estate","Real estate","Business","11"],["Event flyer","Event flyer","Events","12"],["Podcast cover","Podcast cover","Music","13"],["YouTube thumbnail","YouTube thumbnail","Social","14"],["Profile portrait","Profile portrait","Portrait","15"],["Graduation","Graduation","Events","16"],["Birthday","Birthday","Events","17"],["Minimal quote","Minimal quote","Editorial","18"],["Sports promo","Sports promo","Sports","19"],["Tech launch","Tech launch","Technology","20"],["Skincare drop","Skincare drop","Beauty","21"],["Sneaker campaign","Sneaker campaign","Fashion","22"],["Coffee brand","Coffee brand","Food","23"],["Wedding invitation","Wedding invitation","Events","24"],["Restaurant special","Restaurant special","Food","25"],["App promotion","App promotion","Technology","26"],["Fitness challenge","Fitness challenge","Sports","27"],["Summer collection","Summer collection","Fashion","28"],["Car showcase","Car showcase","Automotive","29"],["Online course","Online course","Education","30"],["Beauty sale","Beauty sale","Beauty","31"],["Creative portfolio","Creative portfolio","Creative","32"],["LinkedIn banner","LinkedIn banner","Business","33"],["Instagram post","Instagram post","Social","34"],["Brand announcement","Brand announcement","Business","35"],["Business card","Business card","Business","36"],["Property listing","Property listing","Business","37"],["Restaurant menu","Restaurant menu","Food","38"],["Product carousel","Product carousel","Product","39"],["Stream overlay","Stream overlay","Social","40"]];
