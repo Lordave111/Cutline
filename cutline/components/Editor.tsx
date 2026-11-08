@@ -20,7 +20,7 @@ type S = {
 type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
 type Selection = { kind: "rect" | "lasso"; points: { x: number; y: number }[] };
-type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean };
+type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean; align?: CanvasTextAlign; fontFamily?: string; fontWeight?: number };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
@@ -175,8 +175,8 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     if (!layer.visible) continue;
     x.save(); x.globalAlpha = Math.max(0, Math.min(1, layer.opacity / 100));
     if (layer.kind === "image" && layer.src) { try { const bitmap = await createImageBitmap(await (await fetch(layer.src)).blob()); const w = c.width * (layer.width ?? 30) / 100, h = w * bitmap.height / bitmap.width; x.drawImage(bitmap, c.width * layer.x / 100 - w / 2, c.height * layer.y / 100 - h / 2, w, h); bitmap.close(); } catch { /* skip an unavailable linked image */ } }
-    else if (layer.kind === "text") { x.font = "800 " + layer.size + "px system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = layer.color; x.fillText(layer.text.slice(0, 100), c.width * layer.x / 100, c.height * layer.y / 100, c.width * .9); }
-    else { x.fillStyle = layer.color; const w = c.width * .22, h = c.height * .14, px = c.width * layer.x / 100, py = c.height * layer.y / 100; if (layer.shape === "circle") { x.beginPath(); x.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); x.fill(); } else x.fillRect(px - w / 2, py - h / 2, w, h); }
+    else if (layer.kind === "text") { const fontSize = layer.size * (c.width / 500); x.font = (layer.fontWeight ?? 800) + " " + fontSize + "px " + (layer.fontFamily ?? "Arial, sans-serif"); x.textAlign = layer.align ?? "center"; x.textBaseline = "middle"; x.fillStyle = layer.color; x.fillText(layer.text.slice(0, 100), c.width * layer.x / 100, c.height * layer.y / 100, c.width * (layer.width ?? 88) / 100); }
+    else { x.fillStyle = layer.color; const w = c.width * (layer.width ?? 22) / 100, h = c.height * (layer.height ?? 14) / 100, px = c.width * layer.x / 100, py = c.height * layer.y / 100; if (layer.shape === "circle") { x.beginPath(); x.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); x.fill(); } else x.fillRect(px - w / 2, py - h / 2, w, h); }
     x.restore();
   }
   if (s.cropLeft || s.cropTop || s.cropWidth < 100 || s.cropHeight < 100) {
@@ -217,6 +217,24 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [templateSearch, setTemplateSearch] = useState("");
   const [exportFileName, setExportFileName] = useState("my-design");
   const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const [templateCategory, setTemplateCategory] = useState("All");
+  const [favoriteTemplates, setFavoriteTemplates] = useState<string[]>([]);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("cutline-template-favorites");
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) setFavoriteTemplates(parsed.filter((item): item is string => typeof item === "string"));
+      }
+    } catch { /* Ignore unavailable or invalid local preferences. */ }
+    setFavoritesLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!favoritesLoaded) return;
+    try { window.localStorage.setItem("cutline-template-favorites", JSON.stringify(favoriteTemplates)); }
+    catch { /* Favourites still work for this editing session if storage is unavailable. */ }
+  }, [favoriteTemplates, favoritesLoaded]);
   const [editorBg, setEditorBg] = useState<Bg>(bg);
   const [history, setHistory] = useState<S[]>([]);
   const [future, setFuture] = useState<S[]>([]);
@@ -508,21 +526,87 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Car showcase": { aspect:"16:9", background:{kind:"gradient",color:"#101923",color2:"#536879"}, headline:"ENGINEERED TO EXCITE", sub:"POWER · PRECISION · PRESENCE", color:"#ffffff", accent:"#8ed5ed" },
       "Online course": { aspect:"16:9", background:{kind:"gradient",color:"#1b2450",color2:"#6955a8"}, headline:"LEVEL UP YOUR SKILLS", sub:"LEARN SMARTER · GO FURTHER", color:"#ffffff", accent:"#f0cf70" },
       "Beauty sale": { aspect:"4:5", background:{kind:"gradient",color:"#e8b8c7",color2:"#96506d"}, headline:"A LITTLE SELF LOVE", sub:"YOUR FAVOURITES · NOW ON OFFER", color:"#fffaf5", accent:"#ffe2a5" },
-      "Creative portfolio": { aspect:"4:5", background:{kind:"gradient",color:"#202a32",color2:"#b66d4e"}, headline:"IDEAS MADE VISIBLE", sub:"SELECTED WORKS · CREATIVE STUDIO", color:"#ffffff", accent:"#e6bd8a" }
+      "LinkedIn banner": { aspect:"16:9", background:{kind:"gradient",color:"#102b42",color2:"#347c86"}, headline:"BUILD WHAT'S NEXT", sub:"IDEAS · PEOPLE · PROGRESS", color:"#ffffff", accent:"#8de4d0" },
+      "Instagram post": { aspect:"1:1", background:{kind:"gradient",color:"#4c245f",color2:"#e17e80"}, headline:"A MOMENT TO REMEMBER", sub:"LITTLE DETAILS · BIG FEELINGS", color:"#ffffff", accent:"#ffd58a" },
+      "Brand announcement": { aspect:"1:1", background:{kind:"gradient",color:"#17251e",color2:"#8b9b69"}, headline:"SOMETHING NEW IS HERE", sub:"A FRESH CHAPTER STARTS TODAY", color:"#ffffff", accent:"#d9e68d" },
+      "Business card": { aspect:"16:9", background:{kind:"gradient",color:"#111a25",color2:"#566b72"}, headline:"YOUR NAME / YOUR WORK", sub:"DESIGN · STRATEGY · CONTACT", color:"#ffffff", accent:"#d4b77a" },
+      "Property listing": { aspect:"16:9", background:{kind:"gradient",color:"#1b3736",color2:"#b7b8a1"}, headline:"FIND YOUR PLACE", sub:"SPACE · COMFORT · POSSIBILITY", color:"#ffffff", accent:"#e2cf9c" },
+      "Restaurant menu": { aspect:"4:5", background:{kind:"gradient",color:"#2e1b17",color2:"#a76b42"}, headline:"THE MENU", sub:"FRESH FLAVOURS · MADE WITH CARE", color:"#fff2df", accent:"#e8c17d" },
+      "Product carousel": { aspect:"1:1", background:{kind:"gradient",color:"#e9e4d9",color2:"#8eaaa0"}, headline:"THE DETAILS MATTER", sub:"DISCOVER THE COLLECTION", color:"#24352e", accent:"#b66d4e" },
+      "Stream overlay": { aspect:"16:9", background:{kind:"gradient",color:"#15152d",color2:"#7544a0"}, headline:"LIVE RIGHT NOW", sub:"JOIN THE COMMUNITY · LET'S GO", color:"#ffffff", accent:"#8ff0dc" },
+      "Creative portfolio": { aspect:"4:5", background:{kind:"gradient",color:"#202a32",color2:"#b66d4e"}, headline:"IDEAS MADE VISIBLE", sub:"SELECTED WORKS · CREATIVE STUDIO", color:"#ffffff", accent:"#e6bd8a" },
     };
-    const chosen = presets[template]; if (!chosen) return;
-    // Templates should be one-tap: never force users into a manual lasso workflow.
+    const chosen = presets[template];
+    if (!chosen) return;
+    const tall = chosen.aspect === "4:5" || chosen.aspect === "9:16";
+    const wide = chosen.aspect === "16:9";
+    const centered = ["Social story","Sale announcement","Podcast cover","Instagram post","Birthday","Wedding invitation","Minimal quote","Restaurant menu","Music poster"].includes(template);
+    const editorial = ["Editorial cover","Fashion lookbook","Creative portfolio","Profile portrait","Travel postcard","Beauty campaign"].includes(template);
+    const ink = chosen.color;
+    const accent = chosen.accent;
+    const layers: DesignLayer[] = [];
+    const addText = (name:string,text:string,x:number,y:number,size:number,color=ink,align:CanvasTextAlign="left",fontFamily="Arial, sans-serif",fontWeight=700) => {
+      layers.push({id:id(),name,kind:"text",text,color,x,y,size,opacity:100,visible:true,shape:"rect",align,fontFamily,fontWeight,width:82});
+    };
+    const addShape = (name:string,x:number,y:number,width:number,height:number,color:string,opacity=100,shape:"rect"|"circle"="rect") => {
+      layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
+    };
+    // A consistent slide grid: fine rules, a small identity line, a dominant headline and a clear footer.
+    addShape("Top rule",50,7.5,88,.35,accent,95);
+    addText("Brand / section label",template.toUpperCase()+"  /  CUTLINE STUDIO",7,12,10,ink,"left","Arial, sans-serif",700);
+    if (centered) {
+      addShape("Decorative accent",50,tall?25:22,18,18,accent,22,"circle");
+      addText("Template headline",chosen.headline,50,tall?67:61,tall?38:43,ink,"center","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,50,tall?76:70,13,ink,"center","Arial, sans-serif",600);
+      addShape("Headline underline",50,tall?81:77,16,.55,accent,100);
+    } else if (editorial) {
+      addText("Edition label","THE CREATIVE EDIT  /  2026",7,20,10,accent,"left","Arial, sans-serif",700);
+      addText("Template headline",chosen.headline,7,tall?69:65, tall?40:46,ink,"left","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,7,tall?79:75,13,ink,"left","Arial, sans-serif",600);
+      addShape("Side accent",92,52,1,58,accent,90);
+    } else if (wide) {
+      addShape("Text panel",27,56,49,70,"#07131c",42);
+      addText("Template headline",chosen.headline,8,48,43,ink,"left","Arial, sans-serif",800);
+      addText("Template subtitle",chosen.sub,8,61,14,ink,"left","Arial, sans-serif",600);
+      addShape("Side accent",8,76,10,.8,accent,100);
+      addText("Footer detail","YOUR BRAND  ·  YOUR NEXT CHAPTER",8,84,9,ink,"left","Arial, sans-serif",600);
+    } else {
+      addShape("Accent panel",86,49,17,54,accent,24);
+      addText("Template headline",chosen.headline,7,tall?68:64,tall?39:45,ink,"left","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,7,tall?77:74,13,ink,"left","Arial, sans-serif",600);
+      addShape("Headline underline",7,tall?84:81,15,.6,accent,100);
+    }
+    if (!wide) {
+      addText("Footer detail","CUTLINE  /  MADE TO BE SEEN",7,94,9,ink,"left","Arial, sans-serif",600);
+      addShape("Footer rule",50,97,88,.3,accent,75);
+    } else {
+      addText("Footer detail","CUTLINE STUDIO  /  DESIGN WITH INTENTION",92,91,9,ink,"right","Arial, sans-serif",600);
+    }
+    if (["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
+      addShape("Product frame",78,47,29,43,accent,16);
+      addShape("Product frame detail",78,47,23,34,ink,13);
+    }
+    if (["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster"].includes(template)) {
+      addShape("Campaign highlight",84,34,21,21,accent,24,"circle");
+      addText("Campaign kicker","LIMITED EDITION  /  NEW SEASON",7,25,10,accent,"left","Arial, sans-serif",700);
+    }
+    if (template === "Business card") {
+      addText("Contact detail","HELLO@YOURBRAND.COM  ·  +234 000 000 0000",8,72,10,ink,"left","Arial, sans-serif",600);
+      addShape("Card divider",8,66,72,.4,accent,100);
+    }
+    if (template === "Restaurant menu" || template === "Food menu") {
+      addText("Menu detail","STARTERS     MAINS     DESSERTS",50,85,10,ink,"center","Arial, sans-serif",600);
+    }
+    if (template === "Property listing" || template === "Real estate") {
+      addText("Property detail","3 BEDROOMS  ·  2 BATHS  ·  CITY VIEW",8,73,11,ink,"left","Arial, sans-serif",700);
+    }
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
     setS((old) => ({ ...old, aspect: chosen.aspect }));
     setEditorBg(chosen.background);
-    const next: DesignLayer[] = [
-      { id:id(), name:"Template accent", kind:"shape", text:"", color:chosen.accent, x:50, y:73, size:1, opacity:95, visible:true, shape:"rect" },
-      { id:id(), name:"Template headline", kind:"text", text:chosen.headline, color:chosen.color, x:50, y:82, size:48, opacity:100, visible:true, shape:"rect" },
-      { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:92, size:15, opacity:95, visible:true, shape:"rect" }
-    ];
-    setLayers((old) => [...old, ...next]); setSelectedLayer(next[0].id);
-    setProjectNotice(flat ? "Template added in one tap. Your photo and editable text are in place. To show the template backdrop behind your subject, remove the photo background first, then tap a template again." : "Template applied in one tap. Edit its headline and subtitle in Layers.");
+    setLayers((old) => [...old.filter((layer) => !layer.id.startsWith("template-")), ...layers]);
+    setSelectedLayer(layers.find((layer) => layer.name === "Template headline")?.id ?? layers[0]?.id ?? null);
+    setProjectNotice("Professional template applied. Replace the sample copy, adjust the layout in Layers, and export your finished design.");
   };
   const addSticker = (label: string, _emoji: string) => {
     const id = "sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6);
@@ -708,18 +792,34 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           </div>
         </section>
         <section className="design-template-panel">
-          <div className="design-template-heading"><div><span className="tool-kicker">STUDIO BACKDROPS</span><h3>32 professional templates</h3><p className="editor-hint">Using templates is easy — no tracing or selecting needed.</p><div className="template-howto"><span><b>1</b> Tap any template below.</span><span><b>2</b> It appears on your canvas instantly.</span><span><b>3</b> Open <strong>Layers</strong> to change the headline and text.</span><span><b>4</b> Export when you are happy with your design.</span></div><p className="editor-hint">Want the new backdrop to show behind your person or product? Remove the original photo background first.</p></div><span className="template-count">32 TEMPLATES</span></div>
+          <div className="design-template-heading"><div><span className="tool-kicker">DESIGN LIBRARY</span><h3>40 ready-to-customize templates</h3><p className="editor-hint">Start with a professional layout, then make every word, colour and layer your own.</p><div className="template-howto"><span><b>1</b> Choose a design and aspect ratio.</span><span><b>2</b> Replace the sample copy in Layers.</span><span><b>3</b> Add your own image, logo or shapes.</span><span><b>4</b> Save the project or export your design.</span></div></div><span className="template-count">40 DESIGNS</span></div>
           {projectNotice && <p className="editor-hint" role="status">{projectNotice}</p>}
           <div className="template-library-toolbar">
-            <label className="template-search-wrap"><span aria-hidden="true">⌕</span><input type="search" value={templateSearch} onChange={(event) => { setTemplateSearch(event.target.value); setShowAllTemplates(true); }} placeholder="Search templates, styles or categories…" aria-label="Search templates" /></label>
-            <div className="template-library-meta"><span>{templateSearch.trim() ? "SEARCH RESULTS" : showAllTemplates ? "ALL TEMPLATES" : "POPULAR TEMPLATES"}</span><span>{32} DESIGNS</span></div>
+            <label className="template-search-wrap"><span aria-hidden="true">⌕</span><input type="search" value={templateSearch} onChange={(event) => { setTemplateSearch(event.target.value); setShowAllTemplates(true); }} placeholder="Search by design, industry or style…" aria-label="Search templates" /></label>
+            <div className="template-library-meta"><span>{favoriteTemplates.length} FAVOURITES</span><span>{40} TOTAL DESIGNS</span></div>
           </div>
+          <div className="template-category-filters" role="group" aria-label="Filter templates by category">
+            {["All","Saved","Product","Social","Business","Editorial","Beauty","Fashion","Events","Food","Music","Travel","Sports","Technology","Portrait","Automotive","Education","Creative"].map((category) => <button type="button" key={category} className={templateCategory === category ? "active" : ""} onClick={() => { setTemplateCategory(category); setShowAllTemplates(true); }}>{category}</button>)}
+          </div>
+          <div className="template-library-meta template-results-meta"><span>{templateSearch.trim() || templateCategory !== "All" ? "FILTERED RESULTS" : showAllTemplates ? "ALL TEMPLATES" : "POPULAR TEMPLATES"}</span><span>40 DESIGNS</span></div>
           <div className="design-template-grid">
-            {[["Product feature","Product feature","Product","01"],["Luxury product","Luxury product","Product","02"],["Social story","Social story","Social","03"],["Sale announcement","Sale announcement","Business","04"],["Editorial cover","Editorial cover","Editorial","05"],["Beauty campaign","Beauty campaign","Beauty","06"],["Fashion lookbook","Fashion lookbook","Fashion","07"],["Travel postcard","Travel postcard","Travel","08"],["Music poster","Music poster","Music","09"],["Food menu","Food menu","Food","10"],["Real estate","Real estate","Business","11"],["Event flyer","Event flyer","Events","12"],["Podcast cover","Podcast cover","Music","13"],["YouTube thumbnail","YouTube thumbnail","Social","14"],["Profile portrait","Profile portrait","Portrait","15"],["Graduation","Graduation","Events","16"],["Birthday","Birthday","Events","17"],["Minimal quote","Minimal quote","Editorial","18"],["Sports promo","Sports promo","Sports","19"],["Tech launch","Tech launch","Technology","20"],["Skincare drop","Skincare drop","Beauty","21"],["Sneaker campaign","Sneaker campaign","Fashion","22"],["Coffee brand","Coffee brand","Food","23"],["Wedding invitation","Wedding invitation","Events","24"],["Restaurant special","Restaurant special","Food","25"],["App promotion","App promotion","Technology","26"],["Fitness challenge","Fitness challenge","Sports","27"],["Summer collection","Summer collection","Fashion","28"],["Car showcase","Car showcase","Automotive","29"],["Online course","Online course","Education","30"],["Beauty sale","Beauty sale","Beauty","31"],["Creative portfolio","Creative portfolio","Creative","32"]].filter(([key,label,category]) => !templateSearch.trim() || (key+" "+label+" "+category).toLowerCase().includes(templateSearch.trim().toLowerCase())).slice(0, showAllTemplates || templateSearch.trim() ? 32 : 12).map(([key,label,category,number]) => <button key={key} type="button" className="design-template-card" data-category={category} onClick={() => applyDesignTemplate(key)}><span className="template-preview"><b>{label.toUpperCase()}</b><small>{category.toUpperCase()} DESIGN · {number}</small></span><strong>{label}</strong><small>{category} · Editable text and layers</small></button>)}
-            {[["Product feature","Product feature","Product","01"],["Luxury product","Luxury product","Product","02"],["Social story","Social story","Social","03"],["Sale announcement","Sale announcement","Business","04"],["Editorial cover","Editorial cover","Editorial","05"],["Beauty campaign","Beauty campaign","Beauty","06"],["Fashion lookbook","Fashion lookbook","Fashion","07"],["Travel postcard","Travel postcard","Travel","08"],["Music poster","Music poster","Music","09"],["Food menu","Food menu","Food","10"],["Real estate","Real estate","Business","11"],["Event flyer","Event flyer","Events","12"],["Podcast cover","Podcast cover","Music","13"],["YouTube thumbnail","YouTube thumbnail","Social","14"],["Profile portrait","Profile portrait","Portrait","15"],["Graduation","Graduation","Events","16"],["Birthday","Birthday","Events","17"],["Minimal quote","Minimal quote","Editorial","18"],["Sports promo","Sports promo","Sports","19"],["Tech launch","Tech launch","Technology","20"],["Skincare drop","Skincare drop","Beauty","21"],["Sneaker campaign","Sneaker campaign","Fashion","22"],["Coffee brand","Coffee brand","Food","23"],["Wedding invitation","Wedding invitation","Events","24"],["Restaurant special","Restaurant special","Food","25"],["App promotion","App promotion","Technology","26"],["Fitness challenge","Fitness challenge","Sports","27"],["Summer collection","Summer collection","Fashion","28"],["Car showcase","Car showcase","Automotive","29"],["Online course","Online course","Education","30"],["Beauty sale","Beauty sale","Beauty","31"],["Creative portfolio","Creative portfolio","Creative","32"]].filter(([key,label,category]) => !templateSearch.trim() || (key+" "+label+" "+category).toLowerCase().includes(templateSearch.trim().toLowerCase())).length === 0 && <div className="template-empty-state"><strong>No templates found</strong><span>Try another keyword, such as fashion, food, beauty or social.</span></div>}
+            {(() => {
+              const catalog = [["Product feature","Product feature","Product","01"],["Luxury product","Luxury product","Product","02"],["Social story","Social story","Social","03"],["Sale announcement","Sale announcement","Business","04"],["Editorial cover","Editorial cover","Editorial","05"],["Beauty campaign","Beauty campaign","Beauty","06"],["Fashion lookbook","Fashion lookbook","Fashion","07"],["Travel postcard","Travel postcard","Travel","08"],["Music poster","Music poster","Music","09"],["Food menu","Food menu","Food","10"],["Real estate","Real estate","Business","11"],["Event flyer","Event flyer","Events","12"],["Podcast cover","Podcast cover","Music","13"],["YouTube thumbnail","YouTube thumbnail","Social","14"],["Profile portrait","Profile portrait","Portrait","15"],["Graduation","Graduation","Events","16"],["Birthday","Birthday","Events","17"],["Minimal quote","Minimal quote","Editorial","18"],["Sports promo","Sports promo","Sports","19"],["Tech launch","Tech launch","Technology","20"],["Skincare drop","Skincare drop","Beauty","21"],["Sneaker campaign","Sneaker campaign","Fashion","22"],["Coffee brand","Coffee brand","Food","23"],["Wedding invitation","Wedding invitation","Events","24"],["Restaurant special","Restaurant special","Food","25"],["App promotion","App promotion","Technology","26"],["Fitness challenge","Fitness challenge","Sports","27"],["Summer collection","Summer collection","Fashion","28"],["Car showcase","Car showcase","Automotive","29"],["Online course","Online course","Education","30"],["Beauty sale","Beauty sale","Beauty","31"],["Creative portfolio","Creative portfolio","Creative","32"],["LinkedIn banner","LinkedIn banner","Business","33"],["Instagram post","Instagram post","Social","34"],["Brand announcement","Brand announcement","Business","35"],["Business card","Business card","Business","36"],["Property listing","Property listing","Business","37"],["Restaurant menu","Restaurant menu","Food","38"],["Product carousel","Product carousel","Product","39"],["Stream overlay","Stream overlay","Social","40"]];
+              const filtered = catalog.filter(([key,label,category]) => (!templateSearch.trim() || (key+" "+label+" "+category).toLowerCase().includes(templateSearch.trim().toLowerCase())) && (templateCategory === "All" || (templateCategory === "Saved" ? favoriteTemplates.includes(key) : category === templateCategory)));
+              const visible = showAllTemplates || templateSearch.trim() || templateCategory !== "All" ? filtered : filtered.slice(0,12);
+              return visible.map(([key,label,category,number]) => <div className="template-card-wrap" key={key}>
+                <button type="button" className="template-favorite" aria-label={favoriteTemplates.includes(key) ? "Remove saved template" : "Save template"} aria-pressed={favoriteTemplates.includes(key)} onClick={() => setFavoriteTemplates((old) => old.includes(key) ? old.filter((item) => item !== key) : [...old,key])}>{favoriteTemplates.includes(key) ? "★" : "☆"}</button>
+                <button type="button" className="design-template-card" data-category={category} onClick={() => applyDesignTemplate(key)}><span className="template-preview"><b>{label.toUpperCase()}</b><small>{category.toUpperCase()} DESIGN · {number}</small></span><strong>{label}</strong><small>{category} · Editable text, colours &amp; layers</small><span className="template-use-label">USE TEMPLATE ↗</span></button>
+              </div>);
+            })()}
+            {(() => {
+              const catalog = [["Product feature","Product feature","Product"],["Luxury product","Luxury product","Product"],["Social story","Social story","Social"],["Sale announcement","Sale announcement","Business"],["Editorial cover","Editorial cover","Editorial"],["Beauty campaign","Beauty campaign","Beauty"],["Fashion lookbook","Fashion lookbook","Fashion"],["Travel postcard","Travel postcard","Travel"],["Music poster","Music poster","Music"],["Food menu","Food menu","Food"],["Real estate","Real estate","Business"],["Event flyer","Event flyer","Events"],["Podcast cover","Podcast cover","Music"],["YouTube thumbnail","YouTube thumbnail","Social"],["Profile portrait","Profile portrait","Portrait"],["Graduation","Graduation","Events"],["Birthday","Birthday","Events"],["Minimal quote","Minimal quote","Editorial"],["Sports promo","Sports promo","Sports"],["Tech launch","Tech launch","Technology"],["Skincare drop","Skincare drop","Beauty"],["Sneaker campaign","Sneaker campaign","Fashion"],["Coffee brand","Coffee brand","Food"],["Wedding invitation","Wedding invitation","Events"],["Restaurant special","Restaurant special","Food"],["App promotion","App promotion","Technology"],["Fitness challenge","Fitness challenge","Sports"],["Summer collection","Summer collection","Fashion"],["Car showcase","Car showcase","Automotive"],["Online course","Online course","Education"],["Beauty sale","Beauty sale","Beauty"],["Creative portfolio","Creative portfolio","Creative"],["LinkedIn banner","LinkedIn banner","Business"],["Instagram post","Instagram post","Social"],["Brand announcement","Brand announcement","Business"],["Business card","Business card","Business"],["Property listing","Property listing","Business"],["Restaurant menu","Restaurant menu","Food"],["Product carousel","Product carousel","Product"],["Stream overlay","Stream overlay","Social"]];
+              const hasMatches = catalog.some(([key,label,category]) => (!templateSearch.trim() || (key+" "+label+" "+category).toLowerCase().includes(templateSearch.trim().toLowerCase())) && (templateCategory === "All" || category === templateCategory));
+              return !hasMatches ? <div className="template-empty-state"><strong>No templates found</strong><span>Try another category or search for product, social, beauty or events.</span></div> : null;
+            })()}
           </div>
-          {!templateSearch.trim() && !showAllTemplates && <button type="button" className="template-find-more" onClick={() => setShowAllTemplates(true)}>Find more templates <span aria-hidden="true">→</span><small>Explore all 32 designs</small></button>}
-          {showAllTemplates && <button type="button" className="template-find-more template-show-less" onClick={() => { setShowAllTemplates(false); setTemplateSearch(""); }}>Show popular templates <span aria-hidden="true">↑</span></button>}
+          {!templateSearch.trim() && templateCategory === "All" && !showAllTemplates && <button type="button" className="template-find-more" onClick={() => setShowAllTemplates(true)}>Explore all templates <span aria-hidden="true">→</span><small>Browse all 40 designs</small></button>}
+          {showAllTemplates && <button type="button" className="template-find-more template-show-less" onClick={() => { setShowAllTemplates(false); setTemplateSearch(""); setTemplateCategory("All"); }}>Show popular templates <span aria-hidden="true">↑</span></button>}
         </section>
         <section className="design-template-panel face-sticker-panel">
           <div className="design-template-heading"><div><span className="tool-kicker">FACE ACCESSORIES</span><h3>Realistic facial overlays</h3><p className="editor-hint">Add a shaded moustache, beard or goatee as an image layer. Drag it into place and resize it to fit the face. These are realistic-style overlays, not automatic face tracking.</p></div></div>
