@@ -553,8 +553,10 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     };
     // Refined art direction: preserve the uploaded photo as the hero.
     // Use a fine editorial frame and restrained corner details instead of oversized overlays.
-    addShape("Fine outer frame",50,50,96,96,accent,42);
     addShape("Top accent rule",50,7.5,88,.22,accent,88);
+    addShape("Bottom accent rule",50,97,88,.18,accent,55);
+    addShape("Left corner detail",2.5,50,.18,88,accent,32);
+    addShape("Right corner detail",97.5,50,.18,88,accent,32);
     addShape("Small corner detail",91,10,1.2,1.2,accent,85,"circle");
     addShape("Small corner detail 2",88,10,0.55,0.55,ink,75,"circle");
 
