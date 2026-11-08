@@ -75,7 +75,7 @@ export default function Assistant({ embedded = false }: { embedded?: boolean }) 
       {!embedded && <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
         <span className="assistant-avatar-art" aria-hidden="true"><img src="/icon.svg" alt="" /></span><span className="assistant-edge-pulse" />
       </button>
-      {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
+      {panelOpen && <section className={embedded ? "ai-assistant assistant-embedded-panel" : "ai-assistant assistant-floating-panel"} id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
         <button type="button" className="assistant-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close Cutline AI">×</button>
         <div><p className="tag">YOUR CREATIVE COPILOT</p><h2 id="assistant-title">Cutline AI</h2><p className="mute">Ideas, editing advice and prompts — right inside your studio.</p></div>
