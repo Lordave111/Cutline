@@ -23,7 +23,7 @@ export default function Home() {
           <span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span>
         </a>
         <nav className="app-nav-links" aria-label="Main navigation">
-          <a className="active" href="#top">Home</a><a href="#studio">Workspace</a><a href="#toolkit">Tools</a><a href="#help-center">How it works</a>
+          <a className="active" href="#top">Home</a><a href="#studio">Photo editor</a><a className="nav-video-link" href="#motion">Video editor <span>NEW</span></a><a href="#studio">Templates</a><a href="#help-center">Help</a>
         </nav>
         <div className="app-nav-actions">
           <a className="nav-help-link" href="#help-center">Support</a>
@@ -56,12 +56,12 @@ export default function Home() {
         <a href="#studio">Enter the workspace <span>↗</span></a>
       </section>
 
+      <VideoStudioLauncher />
+
       <section className="workspace-intro" id="studio">
         <div className="section-heading"><div><div className="eyebrow"><span className="section-index">01</span> THE CREATIVE WORKSPACE</div><h2>Everything starts <span>on your canvas.</span></h2></div><p>Upload a photo to unlock the full editor, from background tools and precise adjustments to AI-assisted changes and export.</p></div>
         <Studio />
       </section>
-
-      <VideoStudioLauncher />
 
       <section className="toolkit-section" id="toolkit">
         <div className="section-heading"><div><div className="eyebrow"><span className="section-index">02</span> BUILT FOR YOUR IDEAS</div><h2>More than a quick <span>touch-up.</span></h2></div><p>A considered set of creative tools, brought together in one focused workflow.</p></div>
