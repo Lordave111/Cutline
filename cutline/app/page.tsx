@@ -1,86 +1,74 @@
 import Studio from "@/components/Studio";
 import AppShell from "@/components/AppShell";
 import VideoStudioLauncher from "@/components/VideoStudioLauncher";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import Assistant from "@/components/Assistant";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
-const tools = [
-  { icon: "✂", title: "Background studio", text: "Remove a background and create a cleaner scene.", tone: "mint", tag: "CUTOUTS" },
-  { icon: "✦", title: "AI image editing", text: "Describe the change. Paint exactly where it belongs.", tone: "violet", tag: "GENERATIVE" },
-  { icon: "◐", title: "Color lab", text: "Give every image its own tone, depth and mood.", tone: "blue", tag: "ADJUSTMENTS" },
-  { icon: "▧", title: "Design templates", text: "Build product visuals, social posts and campaigns.", tone: "orange", tag: "TEMPLATES" },
-  { icon: "T", title: "Type & composition", text: "Bring clarity and hierarchy to every design.", tone: "pink", tag: "DESIGN" },
-  { icon: "↗", title: "Export desk", text: "Polish the details and take your work anywhere.", tone: "lime", tag: "OUTPUT" },
+const projectTools = [
+  { icon: "◈", name: "Media", hint: "Import photos and video", target: "#media-tools" },
+  { icon: "✂", name: "Trim & split", hint: "Shape your clips", target: "#trim-tools" },
+  { icon: "♫", name: "Audio", hint: "Music and sound layers", target: "#audio-tools" },
+  { icon: "T", name: "Text & captions", hint: "Titles and subtitles", target: "#caption-tools" },
+  { icon: "◉", name: "Effects", hint: "Colour and visual looks", target: "#effect-tools" },
+  { icon: "✧", name: "AI tools", hint: "Generate captions and ideas", target: "#ai-tools" },
 ];
 
 export default function Home() {
   return (
-    <main className="site-shell cutline-app" id="top">
+    <main className="site-shell cutline-app reference-studio" id="top">
       <AppShell />
-      <div className="ambient ambient-one" /><div className="ambient ambient-two" />
-      <header className="app-navbar">
-        <a className="brand" href="#top" aria-label="Cutline home">
-          <span className="brand-mark"><i /><i /><i /><i /></span>
-          <span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span>
-        </a>
-        <nav className="app-nav-links" aria-label="Main navigation">
-          <a className="active" href="#top">Home</a><a href="#studio">Photo editor</a><a className="nav-video-link" href="#motion">Video editor <span>NEW</span></a><a href="#studio">Templates</a><a href="#help-center">Help</a>
+      <aside className="studio-rail" aria-label="Workspace navigation">
+        <a className="rail-brand" href="#top" aria-label="Cutline home"><span>c</span></a>
+        <nav>
+          <a href="#top" className="rail-link"><i>⌂</i><span>Home</span></a>
+          <a href="#project" className="rail-link selected"><i>▣</i><span>Projects</span></a>
+          <a href="#templates" className="rail-link"><i>✦</i><span>Templates</span></a>
+          <a href="#text-tools" className="rail-link"><i>T</i><span>Text</span></a>
+          <a href="#effect-tools" className="rail-link"><i>◉</i><span>Effects</span></a>
+          <a href="#audio-tools" className="rail-link"><i>♫</i><span>Audio</span></a>
         </nav>
-        <div className="app-nav-actions">
-          <a className="nav-help-link" href="#help-center">Support</a>
-          <SignedOut><SignInButton mode="modal"><button className="nav-signin">Sign in</button></SignInButton><a className="nav-cta" href="#studio">Open studio <span>↗</span></a></SignedOut>
-          <SignedIn><a className="nav-cta" href="#studio">Open studio <span>↗</span></a><UserButton /></SignedIn>
-        </div>
-      </header>
+        <a className="rail-help" href="#help-center" aria-label="Help">?</a>
+        <span className="rail-bottom-mark">✳</span>
+      </aside>
 
-      <section className="dashboard-welcome">
-        <div className="welcome-copy">
-          <div className="eyebrow"><span className="live-dot" /> YOUR CREATIVE SPACE, REIMAGINED</div>
-          <h1>Make every image<br/><span>feel intentional.</span></h1>
-          <p>From clean cutouts to thoughtful retouching and AI-powered edits, Cutline gives you the tools to turn a good photo into work worth sharing.</p>
-          <div className="welcome-actions"><a className="primary-action" href="#studio">＋ Start creating <span>↗</span></a><a className="secondary-action" href="#toolkit">Discover the tools <span>↓</span></a></div>
-          <div className="welcome-proof"><span>01 / UPLOAD</span><i/><span>02 / CREATE</span><i/><span>03 / EXPORT</span></div>
-        </div>
-        <div className="welcome-art" aria-label="Cutline creative workspace preview">
-          <div className="welcome-orb orb-a" /><div className="welcome-orb orb-b" />
-          <div className="welcome-art-card">
-            <div className="art-card-label"><span>✳ THE CUTLINE STUDIO</span><span>CREATIVE PREVIEW / 01</span></div>
-            <div className="art-collage"><i/><i/><i/><b>MAKE<br/>IT<br/>MATTER.</b><span className="art-corner">✦</span></div>
-            <div className="art-card-footer"><span>SUBJECT / REFINED</span><span>FINISH / YOURS</span></div>
+      <div className="studio-main">
+        <header className="studio-topbar" id="project">
+          <div className="project-identity"><span className="project-back">‹</span><div><small>PROJECT / VIDEO EDITOR</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
+          <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><a href="#export-tools" className="topbar-render">✦ Render</a><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
+        </header>
+
+        <section className="editor-workspace" aria-label="Video editing workspace">
+          <aside className="project-tools-panel">
+            <div className="panel-title-row"><b>Project tools</b><span>▦</span></div>
+            <label className="tool-search"><span>⌕</span><input placeholder="Search tools and filters" aria-label="Search tools"/></label>
+            <div className="tool-filter-tabs"><span>All</span><span>Video</span><span>Audio</span><span>AI</span></div>
+            <div className="project-tool-list">
+              {projectTools.map((tool) => <a href={tool.target} className="project-tool" key={tool.name}><i>{tool.icon}</i><span><b>{tool.name}</b><small>{tool.hint}</small></span><em>＋</em></a>)}
+            </div>
+            <div className="tool-panel-tip"><span>✦ QUICK TIP</span><p>Your media stays on your device while you edit. Add clips and audio to build your project.</p></div>
+          </aside>
+
+          <div className="editor-center-column">
+            <div className="canvas-toolbar"><span>33% <i>⌄</i></span><span>◉ &nbsp; Adjust</span><b>Preview canvas</b><span>HD <i>⌄</i></span></div>
+            <div id="preview"><VideoStudioLauncher/></div>
           </div>
-          <span className="welcome-float float-one">✦ AI-POWERED EDITING</span><span className="welcome-float float-two">◈ READY WHEN YOU ARE</span>
-        </div>
-      </section>
 
-      <section className="quick-start-strip">
-        <div><span className="quick-start-icon">↗</span><span><b>A better edit is one upload away</b><small>Bring in a photo and make the workspace your own.</small></span></div>
-        <a href="#studio">Enter the workspace <span>↗</span></a>
-      </section>
+          <aside className="ai-generator-panel" id="ai-tools">
+            <div className="ai-panel-heading"><span>✦</span><div><b>AI Content Assistant</b><small>Creative help, captions & ideas</small></div><i>●</i></div>
+            <Assistant embedded/>
+            <div className="ai-panel-foot"><span>✧</span><p>Describe your goal and get help with captions, hooks, prompts and editing ideas.</p></div>
+          </aside>
+        </section>
 
-      <VideoStudioLauncher />
+        <section className="photo-workspace-section" id="photo-editor">
+          <details>
+            <summary><span><small>ALSO INCLUDED</small><b>Photo editor & design workspace</b><em>Background removal · retouching · layers · templates</em></span><strong>Open photo studio　＋</strong></summary>
+            <div className="photo-workspace-inner"><Studio/></div>
+          </details>
+        </section>
 
-      <section className="workspace-intro" id="studio">
-        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">01</span> THE CREATIVE WORKSPACE</div><h2>Everything starts <span>on your canvas.</span></h2></div><p>Upload a photo to unlock the full editor, from background tools and precise adjustments to AI-assisted changes and export.</p></div>
-        <Studio />
-      </section>
-
-      <section className="toolkit-section" id="toolkit">
-        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">02</span> BUILT FOR YOUR IDEAS</div><h2>More than a quick <span>touch-up.</span></h2></div><p>A considered set of creative tools, brought together in one focused workflow.</p></div>
-        <div className="tool-launch-grid">
-          {tools.map((tool) => <a className={`tool-launch-card tone-${tool.tone}`} href={tool.title === "AI image editing" ? "#cutline-ai" : "#studio"} key={tool.title}><span className="tool-launch-icon">{tool.icon}</span><span className="tool-launch-arrow">↗</span><small className="tool-tag">{tool.tag}</small><h3>{tool.title}</h3><p>{tool.text}</p><span className="tool-open">EXPLORE TOOL <b>↗</b></span></a>)}
-        </div>
-      </section>
-
-      <section className="ai-promo-section" id="ai-help">
-        <div className="ai-promo-copy"><span className="ai-promo-icon">✦</span><div className="eyebrow">YOUR CREATIVE COPILOT</div><h2>When inspiration hits,<br/><span>make something of it.</span></h2><p>Talk through an idea, get help shaping an image prompt or find a new direction for your next edit with Cutline AI.</p><a className="primary-action" href="#cutline-ai">Meet Cutline AI <span>↗</span></a></div>
-        <div className="ai-promo-orbit"><span>✦</span><b>AI</b><i>✧</i><small>IDEAS / PROMPTS / GUIDANCE</small></div>
-      </section>
-
-      <section className="workflow-section" id="help-center">
-        <div className="workflow-heading"><div className="eyebrow"><span className="section-index">03</span> A CLEAR CREATIVE FLOW</div><h2>From first upload to <span>final finish.</span></h2><p>Powerful tools should feel simple. Cutline keeps the process clear, so you can focus on the image.</p></div>
-        <div className="workflow-grid"><article className="workflow-step"><span>01</span><div><h3>Start with a photo</h3><p>Upload a portrait, product shot or any image you want to improve.</p></div><b>↗</b></article><article className="workflow-step"><span>02</span><div><h3>Shape the details</h3><p>Refine the subject, change the scene and bring your idea to life.</p></div><b>↗</b></article><article className="workflow-step"><span>03</span><div><h3>Make it yours</h3><p>Review your work, export the result and share it with confidence.</p></div><b>↗</b></article></div>
-      </section>
-
-      <footer className="site-footer"><a className="brand footer-brand" href="#top"><span className="brand-mark"><i/><i/><i/><i/></span><span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span></a><p>© {new Date().getFullYear()} CUTLINE · MADE FOR THE DETAILS</p><a href="#top">BACK TO TOP ↑</a></footer>
+        <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline AI ↗</a></span></footer>
+      </div>
     </main>
   );
 }

@@ -11,14 +11,14 @@ const suggestions = [
   "Suggest settings for a warm, cinematic portrait",
 ];
 
-export default function Assistant() {
+export default function Assistant({ embedded = false }: { embedded?: boolean }) {
   const [messages, setMessages] = useState<Message[]>([
     { role: "model", text: "Hi! I'm Cutline AI. Tell me what you're editing and I'll help with settings, backgrounds, captions and creative ideas." },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(embedded);
   const [floatPos, setFloatPos] = useState<{ x: number; y: number } | null>(null);
   const dragStart = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const didDrag = useRef(false);
@@ -72,10 +72,10 @@ export default function Assistant() {
 
   return (
     <>
-      <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
+      {!embedded && <button className="assistant-edge-launcher" type="button" aria-label="Open Cutline AI assistant" onPointerDown={startFloatDrag} onPointerMove={moveFloat} onPointerUp={endFloatDrag} onPointerCancel={endFloatDrag} onClick={() => { if (!didDrag.current) setPanelOpen((open) => !open); }} style={floatPos ? { left: floatPos.x, top: floatPos.y, right: "auto", bottom: "auto" } : undefined} aria-expanded={panelOpen}>
         <span className="assistant-avatar-art" aria-hidden="true"><img src="/icon.svg" alt="" /></span><span className="assistant-edge-pulse" />
       </button>
-      {panelOpen && <section className="ai-assistant assistant-floating-panel" id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
+      {panelOpen && <section className={embedded ? "ai-assistant assistant-embedded-panel" : "ai-assistant assistant-floating-panel"} id="cutline-ai" aria-labelledby="assistant-title" role="dialog" aria-modal="false">
       <div className="assistant-heading">
         <button type="button" className="assistant-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close Cutline AI">×</button>
         <div><p className="tag">YOUR CREATIVE COPILOT</p><h2 id="assistant-title">Cutline AI</h2><p className="mute">Ideas, editing advice and prompts — right inside your studio.</p></div>
