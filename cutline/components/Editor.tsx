@@ -809,7 +809,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
               const visible = showAllTemplates || templateSearch.trim() || templateCategory !== "All" ? filtered : filtered.slice(0,12);
               return visible.map(([key,label,category,number]) => <div className="template-card-wrap" key={key}>
                 <button type="button" className="template-favorite" aria-label={favoriteTemplates.includes(key) ? "Remove saved template" : "Save template"} aria-pressed={favoriteTemplates.includes(key)} onClick={() => setFavoriteTemplates((old) => old.includes(key) ? old.filter((item) => item !== key) : [...old,key])}>{favoriteTemplates.includes(key) ? "★" : "☆"}</button>
-                <button type="button" className="design-template-card" data-category={category} onClick={() => applyDesignTemplate(key)}><span className="template-preview"><b>{label.toUpperCase()}</b><small>{category.toUpperCase()} DESIGN · {number}</small></span><strong>{label}</strong><small>{category} · Editable text, colours &amp; layers</small><span className="template-use-label">USE TEMPLATE ↗</span></button>
+                <button type="button" className="design-template-card" data-category={category} data-template={key.toLowerCase().replace(/[^a-z0-9]+/g, "-")} onClick={() => applyDesignTemplate(key)}><span className="template-preview"><b>{label.toUpperCase()}</b><small>{category.toUpperCase()} DESIGN · {number}</small></span><strong>{label}</strong><small>{category} · Editable text, colours &amp; layers</small><span className="template-use-label">USE TEMPLATE ↗</span></button>
               </div>);
             })()}
             {(() => {
