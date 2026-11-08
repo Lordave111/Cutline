@@ -551,7 +551,43 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const addShape = (name:string,x:number,y:number,width:number,height:number,color:string,opacity=100,shape:"rect"|"circle"="rect") => {
       layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
     };
-    // A consistent slide grid: fine rules, a small identity line, a dominant headline and a clear footer.
+    // Build a richer art-directed backdrop with soft ambient shapes, frames and fine details.
+    // These are native editable vector layers, so they stay crisp in export and remain editable.
+    const deep = "#07131b";
+    addShape("Ambient glow · upper corner",91,13,48,48,accent,12,"circle");
+    addShape("Ambient glow · lower corner",8,88,34,34,ink,9,"circle");
+    addShape("Outer frame",50,50,94,94,accent,32);
+    addShape("Inner frame",50,50,91,91,deep,16);
+    addShape("Backdrop accent bar",93,48,2.2,37,accent,58);
+    addShape("Backdrop accent dot",85,17,2.2,2.2,accent,92,"circle");
+    addShape("Backdrop accent dot 2",89,17,1,1,ink,70,"circle");
+    // Category-specific visual signatures add personality without covering the user's photograph.
+    if (["Luxury product","Fashion lookbook","Beauty campaign","Skincare drop","Beauty sale","Wedding invitation"].includes(template)) {
+      addShape("Editorial soft halo",78,34,43,43,accent,13,"circle");
+      addShape("Editorial vertical rule",12,47,.55,38,accent,76);
+      addShape("Editorial corner block",89,88,17,10,accent,22);
+    } else if (["Music poster","Event flyer","Birthday","Sale announcement","Sports promo","Fitness challenge"].includes(template)) {
+      addShape("Campaign burst",84,28,31,31,accent,20,"circle");
+      addShape("Campaign diagonal block",88,52,8,43,deep,26);
+      addShape("Campaign underline",18,84,25,.9,accent,100);
+    } else if (["Product feature","Product carousel","Sneaker campaign","Coffee brand","Restaurant special","Food menu","Restaurant menu"].includes(template)) {
+      addShape("Product spotlight",77,43,42,42,accent,17,"circle");
+      addShape("Product display plinth",76,76,43,7,deep,40);
+      addShape("Product highlight line",76,71,31,.7,accent,95);
+    } else if (["Real estate","Property listing","Travel postcard","Car showcase"].includes(template)) {
+      addShape("Landscape horizon",50,61,88,.6,accent,74);
+      addShape("Landscape sun",84,30,20,20,accent,24,"circle");
+      addShape("Landscape foreground",50,89,88,13,deep,18);
+    } else if (["Tech launch","App promotion","Stream overlay","Podcast cover","YouTube thumbnail","LinkedIn banner","Online course"].includes(template)) {
+      addShape("Tech halo",82,30,38,38,accent,17,"circle");
+      addShape("Tech panel",88,72,23,24,deep,26);
+      addShape("Tech signal 1",78,17,9,.5,accent,90);
+      addShape("Tech signal 2",78,20,6,.5,accent,58);
+    } else {
+      addShape("Creative halo",82,30,36,36,accent,15,"circle");
+      addShape("Creative side panel",91,70,10,28,deep,20);
+      addShape("Creative detail line",14,85,20,.6,accent,85);
+    }
     // A restrained translucent title panel keeps type readable over portrait and product photos.
     addShape("Headline contrast panel",50,tall?73:68,94,tall?37:40,"#07110f",58);
     addShape("Top rule",50,7.5,88,.35,accent,95);
