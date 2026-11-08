@@ -3,12 +3,12 @@ import AppShell from "@/components/AppShell";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const tools = [
-  { icon: "✂", title: "Background studio", text: "Cut out subjects and build a cleaner scene.", tone: "mint", tag: "CUTOUTS" },
+  { icon: "✂", title: "Background studio", text: "Remove a background and create a cleaner scene.", tone: "mint", tag: "CUTOUTS" },
   { icon: "✦", title: "AI image editing", text: "Describe the change. Paint exactly where it belongs.", tone: "violet", tag: "GENERATIVE" },
-  { icon: "◐", title: "Color lab", text: "Shape the mood with precise color controls.", tone: "blue", tag: "ADJUSTMENTS" },
-  { icon: "▧", title: "Ready-made designs", text: "Start a social post, product visual or campaign.", tone: "orange", tag: "TEMPLATES" },
-  { icon: "T", title: "Type & composition", text: "Give your image a clear visual hierarchy.", tone: "pink", tag: "DESIGN" },
-  { icon: "↗", title: "Export desk", text: "Finish your image and download your result.", tone: "lime", tag: "OUTPUT" },
+  { icon: "◐", title: "Color lab", text: "Give every image its own tone, depth and mood.", tone: "blue", tag: "ADJUSTMENTS" },
+  { icon: "▧", title: "Design templates", text: "Build product visuals, social posts and campaigns.", tone: "orange", tag: "TEMPLATES" },
+  { icon: "T", title: "Type & composition", text: "Bring clarity and hierarchy to every design.", tone: "pink", tag: "DESIGN" },
+  { icon: "↗", title: "Export desk", text: "Polish the details and take your work anywhere.", tone: "lime", tag: "OUTPUT" },
 ];
 
 export default function Home() {
@@ -19,61 +19,65 @@ export default function Home() {
       <header className="app-navbar">
         <a className="brand" href="#top" aria-label="Cutline home">
           <span className="brand-mark"><i /><i /><i /><i /></span>
-          <span>CUTLINE<span className="brand-period">.</span><small>IMAGE WORKSPACE</small></span>
+          <span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span>
         </a>
         <nav className="app-nav-links" aria-label="Main navigation">
-          <a className="active" href="#top">Overview</a><a href="#studio">Editor</a><a href="#toolkit">Explore tools</a><a href="#cutline-ai">AI assistant</a>
+          <a className="active" href="#top">Home</a><a href="#studio">Workspace</a><a href="#toolkit">Tools</a><a href="#help-center">How it works</a>
         </nav>
         <div className="app-nav-actions">
-          <a className="nav-help-link" href="#help-center">Help</a>
-          <SignedOut><SignInButton mode="modal"><button className="nav-signin">Sign in</button></SignInButton><a className="nav-cta" href="#studio">Open workspace <span>↗</span></a></SignedOut>
-          <SignedIn><a className="nav-cta" href="#studio">Open workspace <span>↗</span></a><UserButton /></SignedIn>
+          <a className="nav-help-link" href="#help-center">Support</a>
+          <SignedOut><SignInButton mode="modal"><button className="nav-signin">Sign in</button></SignInButton><a className="nav-cta" href="#studio">Open studio <span>↗</span></a></SignedOut>
+          <SignedIn><a className="nav-cta" href="#studio">Open studio <span>↗</span></a><UserButton /></SignedIn>
         </div>
       </header>
 
       <section className="dashboard-welcome">
         <div className="welcome-copy">
-          <div className="eyebrow"><span className="live-dot" /> THE CREATIVE WORKSPACE</div>
-          <h1>Make the image<br/><span>you imagined.</span></h1>
-          <p>Cut out, retouch, rework and redesign your photos in one focused studio. Start with an image — then take it wherever your idea leads.</p>
-          <div className="welcome-actions"><a className="primary-action" href="#studio">＋ Start creating <span>↗</span></a><a className="secondary-action" href="#toolkit">Explore the tools <span>↓</span></a></div>
+          <div className="eyebrow"><span className="live-dot" /> YOUR CREATIVE SPACE, REIMAGINED</div>
+          <h1>Make every image<br/><span>feel intentional.</span></h1>
+          <p>From clean cutouts to thoughtful retouching and AI-powered edits, Cutline gives you the tools to turn a good photo into work worth sharing.</p>
+          <div className="welcome-actions"><a className="primary-action" href="#studio">＋ Start creating <span>↗</span></a><a className="secondary-action" href="#toolkit">Discover the tools <span>↓</span></a></div>
           <div className="welcome-proof"><span>01 / UPLOAD</span><i/><span>02 / CREATE</span><i/><span>03 / EXPORT</span></div>
         </div>
-        <div className="welcome-art" aria-label="Abstract Cutline editing preview">
+        <div className="welcome-art" aria-label="Cutline creative workspace preview">
           <div className="welcome-orb orb-a" /><div className="welcome-orb orb-b" />
-          <div className="welcome-art-card"><div className="art-card-label"><span>✳ CUTLINE CANVAS</span><span>LIVE CONCEPT / 01</span></div><div className="art-collage"><i/><i/><i/><b>FORM<br/>MEETS<br/>FEELING.</b><span className="art-corner">✦</span></div><div className="art-card-footer"><span>SUBJECT / ISOLATED</span><span>COLOR / GRADED</span></div></div>
-          <span className="welcome-float float-one">✦ CREATIVE CONTROL</span><span className="welcome-float float-two">◈ READY TO EXPORT</span>
+          <div className="welcome-art-card">
+            <div className="art-card-label"><span>✳ THE CUTLINE STUDIO</span><span>CREATIVE PREVIEW / 01</span></div>
+            <div className="art-collage"><i/><i/><i/><b>MAKE<br/>IT<br/>MATTER.</b><span className="art-corner">✦</span></div>
+            <div className="art-card-footer"><span>SUBJECT / REFINED</span><span>FINISH / YOURS</span></div>
+          </div>
+          <span className="welcome-float float-one">✦ AI-POWERED EDITING</span><span className="welcome-float float-two">◈ READY WHEN YOU ARE</span>
         </div>
       </section>
 
       <section className="quick-start-strip">
-        <div><span className="quick-start-icon">↗</span><span><b>Your next idea starts here</b><small>Upload a photo to open the full editing workspace.</small></span></div>
-        <a href="#studio">Go to editor <span>↗</span></a>
+        <div><span className="quick-start-icon">↗</span><span><b>A better edit is one upload away</b><small>Bring in a photo and make the workspace your own.</small></span></div>
+        <a href="#studio">Enter the workspace <span>↗</span></a>
       </section>
 
       <section className="workspace-intro" id="studio">
-        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">01</span> THE EDITOR</div><h2>Your canvas. <span>Your rules.</span></h2></div><p>Bring in a photo to unlock the editing canvas, background controls, templates and AI-assisted edits.</p></div>
+        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">01</span> THE CREATIVE WORKSPACE</div><h2>Everything starts <span>on your canvas.</span></h2></div><p>Upload a photo to unlock the full editor, from background tools and precise adjustments to AI-assisted changes and export.</p></div>
         <Studio />
       </section>
 
       <section className="toolkit-section" id="toolkit">
-        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">02</span> EXPLORE THE WORKSPACE</div><h2>A tool for every <span>idea.</span></h2></div><p>Choose a starting point. Every tool leads into the same creative workflow.</p></div>
+        <div className="section-heading"><div><div className="eyebrow"><span className="section-index">02</span> BUILT FOR YOUR IDEAS</div><h2>More than a quick <span>touch-up.</span></h2></div><p>A considered set of creative tools, brought together in one focused workflow.</p></div>
         <div className="tool-launch-grid">
           {tools.map((tool) => <a className={`tool-launch-card tone-${tool.tone}`} href={tool.title === "AI image editing" ? "#cutline-ai" : "#studio"} key={tool.title}><span className="tool-launch-icon">{tool.icon}</span><span className="tool-launch-arrow">↗</span><small className="tool-tag">{tool.tag}</small><h3>{tool.title}</h3><p>{tool.text}</p><span className="tool-open">EXPLORE TOOL <b>↗</b></span></a>)}
         </div>
       </section>
 
       <section className="ai-promo-section" id="ai-help">
-        <div className="ai-promo-copy"><span className="ai-promo-icon">✦</span><div className="eyebrow">CREATIVE COPILOT</div><h2>Good ideas deserve<br/><span>a great starting point.</span></h2><p>Ask Cutline AI for editing advice, image prompts, product-photo concepts or help choosing the right creative direction.</p><a className="primary-action" href="#cutline-ai">Talk to Cutline AI <span>↗</span></a></div>
+        <div className="ai-promo-copy"><span className="ai-promo-icon">✦</span><div className="eyebrow">YOUR CREATIVE COPILOT</div><h2>When inspiration hits,<br/><span>make something of it.</span></h2><p>Talk through an idea, get help shaping an image prompt or find a new direction for your next edit with Cutline AI.</p><a className="primary-action" href="#cutline-ai">Meet Cutline AI <span>↗</span></a></div>
         <div className="ai-promo-orbit"><span>✦</span><b>AI</b><i>✧</i><small>IDEAS / PROMPTS / GUIDANCE</small></div>
       </section>
 
       <section className="workflow-section" id="help-center">
-        <div className="workflow-heading"><div className="eyebrow"><span className="section-index">03</span> A SIMPLE WORKFLOW</div><h2>From raw photo to <span>finished work.</span></h2><p>No complicated setup. Just a clear path from upload to export.</p></div>
-        <div className="workflow-grid"><article className="workflow-step"><span>01</span><div><h3>Bring your image</h3><p>Upload a portrait, product shot or any photo you want to transform.</p></div><b>↗</b></article><article className="workflow-step"><span>02</span><div><h3>Make it yours</h3><p>Adjust the background, refine the image and explore creative tools.</p></div><b>↗</b></article><article className="workflow-step"><span>03</span><div><h3>Take it with you</h3><p>Review your result and download your finished creative.</p></div><b>↗</b></article></div>
+        <div className="workflow-heading"><div className="eyebrow"><span className="section-index">03</span> A CLEAR CREATIVE FLOW</div><h2>From first upload to <span>final finish.</span></h2><p>Powerful tools should feel simple. Cutline keeps the process clear, so you can focus on the image.</p></div>
+        <div className="workflow-grid"><article className="workflow-step"><span>01</span><div><h3>Start with a photo</h3><p>Upload a portrait, product shot or any image you want to improve.</p></div><b>↗</b></article><article className="workflow-step"><span>02</span><div><h3>Shape the details</h3><p>Refine the subject, change the scene and bring your idea to life.</p></div><b>↗</b></article><article className="workflow-step"><span>03</span><div><h3>Make it yours</h3><p>Review your work, export the result and share it with confidence.</p></div><b>↗</b></article></div>
       </section>
 
-      <footer className="site-footer"><a className="brand footer-brand" href="#top"><span className="brand-mark"><i/><i/><i/><i/></span><span>CUTLINE<span className="brand-period">.</span><small>IMAGE WORKSPACE</small></span></a><p>© {new Date().getFullYear()} CUTLINE · MADE FOR THE DETAILS</p><a href="#top">BACK TO TOP ↑</a></footer>
+      <footer className="site-footer"><a className="brand footer-brand" href="#top"><span className="brand-mark"><i/><i/><i/><i/></span><span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span></a><p>© {new Date().getFullYear()} CUTLINE · MADE FOR THE DETAILS</p><a href="#top">BACK TO TOP ↑</a></footer>
     </main>
   );
 }
