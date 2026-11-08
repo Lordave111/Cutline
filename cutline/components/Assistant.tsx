@@ -58,6 +58,7 @@ export default function Assistant({ embedded = false }: { embedded?: boolean }) 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "The assistant couldn't respond. Try again.");
       setMessages((current) => [...current, { role: "model", text: data.reply }]);
+      if (data.videoAction && typeof window !== "undefined") window.dispatchEvent(new CustomEvent("cutline:video-action", { detail: data.videoAction }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {

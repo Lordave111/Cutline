@@ -5,7 +5,7 @@ import { generateWithGemini } from "@/lib/gemini";
 export const maxDuration = 30;
 
 type ChatMessage = { role: "user" | "model"; text: string };
-const SYSTEM_PROMPT = "You are Cutline AI, a friendly, warm, capable creative director and photo-editing copilot. Speak naturally and conversationally, not like a stiff manual. Help users with photo editing, portraits, product photography, ecommerce images, social graphics, lighting, composition, retouching workflows, colour grading, background prompts, typography and export settings. Give clear practical steps and ready-to-copy prompts. Recommend only controls that exist in Cutline when giving editor instructions: framing/aspect ratios, rotate, flip, subject scale and position, drop shadow, background blur, brightness, contrast, saturation, warmth, tint, fade, soft focus, vignette and text overlays. Never claim to have edited or inspected an image unless image data was actually supplied. Be honest about limitations, protect the person's identity and facial features in photo-editing advice unless the user explicitly requests a facial change, and never request passwords, API keys or sensitive personal information.";
+const SYSTEM_PROMPT = "You are Cutline AI, the creative copilot inside Cutline photo and video editor. Be warm, concise and practical. Help with photo editing, design, video editing, captions, pacing, colour, audio and export. Always return one valid JSON object only: {\"reply\":\"short natural response\",\"videoAction\":null}. For supported video edits requested by the user, set videoAction to an object containing only relevant fields. Allowed fields: look (none, vivid, bw, warm, soft, cinematic, dream, neon), speed (0.5, 0.75, 1, 1.25, 1.5, 2), caption (up to 90 characters), transition (fade, slide, zoom, wipe, cut), keyStart (0.5-2), keyEnd (0.5-2), keyOpacity (0-100), resolution (720 or 1080). Never invent unsupported settings or claim to edit a file unless an action is actually applied. Use null when no supported video action is requested. Ask a short clarifying question if needed. Do not trigger video actions for photo-only requests. Protect identity and facial features unless the user explicitly asks for a change. Never request passwords, API keys or sensitive personal information.";
 const json = (error: string, status: number) =>
   new Response(JSON.stringify({ error }), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
@@ -41,8 +41,22 @@ export async function POST(req: Request) {
   }
 
   try {
-    const reply = await generateWithGemini(messages, SYSTEM_PROMPT, 900);
-    return new Response(JSON.stringify({ reply }), {
+    const raw = await generateWithGemini(messages, SYSTEM_PROMPT, 900);
+    let parsed: { reply?: string; videoAction?: Record<string, unknown> | null } = {};
+    try { parsed = JSON.parse(raw.replace(/```json|```/gi, "").trim()); } catch { parsed = { reply: raw, videoAction: null }; }
+    const candidate = parsed.videoAction && typeof parsed.videoAction === "object" ? parsed.videoAction : null;
+    const action: Record<string, string | number> = {};
+    if (candidate) {
+      if (["none","vivid","bw","warm","soft","cinematic","dream","neon"].includes(String(candidate.look))) action.look = String(candidate.look);
+      if ([0.5,0.75,1,1.25,1.5,2].includes(Number(candidate.speed))) action.speed = Number(candidate.speed);
+      if (typeof candidate.caption === "string") action.caption = candidate.caption.slice(0,90);
+      if (["fade","slide","zoom","wipe","cut"].includes(String(candidate.transition))) action.transition = String(candidate.transition);
+      for (const key of ["keyStart","keyEnd"] as const) if (typeof candidate[key] === "number" && candidate[key] >= 0.5 && candidate[key] <= 2) action[key] = candidate[key];
+      if (typeof candidate.keyOpacity === "number" && candidate.keyOpacity >= 0 && candidate.keyOpacity <= 100) action.keyOpacity = candidate.keyOpacity;
+      if (candidate.resolution === "720" || candidate.resolution === "1080") action.resolution = candidate.resolution;
+    }
+    const reply = typeof parsed.reply === "string" && parsed.reply.trim() ? parsed.reply.slice(0,1200) : raw;
+    return new Response(JSON.stringify({ reply, videoAction: Object.keys(action).length ? action : null }), {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (error) {

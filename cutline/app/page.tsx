@@ -4,6 +4,7 @@ import Studio from "@/components/Studio";
 import AppShell from "@/components/AppShell";
 import VideoStudioLauncher from "@/components/VideoStudioLauncher";
 import Assistant from "@/components/Assistant";
+import CreditStore from "@/components/CreditStore";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 const projectTools = [
@@ -35,10 +36,12 @@ export default function Home() {
 
       <div className="studio-main">
         <header className="studio-topbar" id="project">
-          <div className="project-identity"><span className="project-back">‹</span><div><small>PROJECT / VIDEO EDITOR</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
+          <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
+          <nav className="studio-editor-nav" aria-label="Main editor navigation"><a href="#motion">Video editor</a><a href="#photo-editor">Photo editor</a><a href="#points">Points store</a><a href="#templates">Templates</a></nav>
           <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><a href="#export-tools" className="topbar-render">✦ Render</a><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
         </header>
 
+        <CreditStore />
         <section className="editor-workspace" aria-label="Video editing workspace">
           <aside className="project-tools-panel">
             <div className="panel-title-row"><b>Project tools</b><span>▦</span></div>
@@ -62,11 +65,9 @@ export default function Home() {
           </aside>
         </section>
 
-        <section className="photo-workspace-section" id="photo-editor">
-          <details>
-            <summary><span><small>ALSO INCLUDED</small><b>Photo editor & design workspace</b><em>Background removal · retouching · layers · templates</em></span><strong>Open photo studio　＋</strong></summary>
-            <div className="photo-workspace-inner"><Studio/></div>
-          </details>
+        <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
+          <div className="photo-workspace-heading"><div><small>PHOTO & DESIGN STUDIO</small><h2>Photo editor</h2><p>Retouch photos, remove backgrounds, build designs and export your work.</p></div><span>✦ PHOTO STUDIO</span></div>
+          <div className="photo-workspace-inner"><Studio/></div>
         </section>
 
         <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline AI ↗</a></span></footer>
