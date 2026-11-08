@@ -20,7 +20,7 @@ type S = {
 type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
 type Selection = { kind: "rect" | "lasso"; points: { x: number; y: number }[] };
-type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean };
+type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean; align?: CanvasTextAlign; fontFamily?: string; fontWeight?: number };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
@@ -175,8 +175,8 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     if (!layer.visible) continue;
     x.save(); x.globalAlpha = Math.max(0, Math.min(1, layer.opacity / 100));
     if (layer.kind === "image" && layer.src) { try { const bitmap = await createImageBitmap(await (await fetch(layer.src)).blob()); const w = c.width * (layer.width ?? 30) / 100, h = w * bitmap.height / bitmap.width; x.drawImage(bitmap, c.width * layer.x / 100 - w / 2, c.height * layer.y / 100 - h / 2, w, h); bitmap.close(); } catch { /* skip an unavailable linked image */ } }
-    else if (layer.kind === "text") { x.font = "800 " + layer.size + "px system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = layer.color; x.fillText(layer.text.slice(0, 100), c.width * layer.x / 100, c.height * layer.y / 100, c.width * .9); }
-    else { x.fillStyle = layer.color; const w = c.width * .22, h = c.height * .14, px = c.width * layer.x / 100, py = c.height * layer.y / 100; if (layer.shape === "circle") { x.beginPath(); x.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); x.fill(); } else x.fillRect(px - w / 2, py - h / 2, w, h); }
+    else if (layer.kind === "text") { const fontSize = layer.size * (c.width / 500); x.font = (layer.fontWeight ?? 800) + " " + fontSize + "px " + (layer.fontFamily ?? "Arial, sans-serif"); x.textAlign = layer.align ?? "center"; x.textBaseline = "middle"; x.fillStyle = layer.color; x.fillText(layer.text.slice(0, 100), c.width * layer.x / 100, c.height * layer.y / 100, c.width * (layer.width ?? 88) / 100); }
+    else { x.fillStyle = layer.color; const w = c.width * (layer.width ?? 22) / 100, h = c.height * (layer.height ?? 14) / 100, px = c.width * layer.x / 100, py = c.height * layer.y / 100; if (layer.shape === "circle") { x.beginPath(); x.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); x.fill(); } else x.fillRect(px - w / 2, py - h / 2, w, h); }
     x.restore();
   }
   if (s.cropLeft || s.cropTop || s.cropWidth < 100 || s.cropHeight < 100) {
@@ -536,19 +536,77 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Stream overlay": { aspect:"16:9", background:{kind:"gradient",color:"#15152d",color2:"#7544a0"}, headline:"LIVE RIGHT NOW", sub:"JOIN THE COMMUNITY · LET'S GO", color:"#ffffff", accent:"#8ff0dc" },
       "Creative portfolio": { aspect:"4:5", background:{kind:"gradient",color:"#202a32",color2:"#b66d4e"}, headline:"IDEAS MADE VISIBLE", sub:"SELECTED WORKS · CREATIVE STUDIO", color:"#ffffff", accent:"#e6bd8a" },
     };
-    const chosen = presets[template]; if (!chosen) return;
-    // Templates should be one-tap: never force users into a manual lasso workflow.
+    const chosen = presets[template];
+    if (!chosen) return;
+    const tall = chosen.aspect === "4:5" || chosen.aspect === "9:16";
+    const wide = chosen.aspect === "16:9";
+    const centered = ["Social story","Sale announcement","Podcast cover","Instagram post","Birthday","Wedding invitation","Minimal quote","Restaurant menu","Music poster"].includes(template);
+    const editorial = ["Editorial cover","Fashion lookbook","Creative portfolio","Profile portrait","Travel postcard","Beauty campaign"].includes(template);
+    const ink = chosen.color;
+    const accent = chosen.accent;
+    const layers: DesignLayer[] = [];
+    const addText = (name:string,text:string,x:number,y:number,size:number,color=ink,align:CanvasTextAlign="left",fontFamily="Arial, sans-serif",fontWeight=700) => {
+      layers.push({id:id(),name,kind:"text",text,color,x,y,size,opacity:100,visible:true,shape:"rect",align,fontFamily,fontWeight,width:82});
+    };
+    const addShape = (name:string,x:number,y:number,width:number,height:number,color:string,opacity=100,shape:"rect"|"circle"="rect") => {
+      layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
+    };
+    // A consistent slide grid: fine rules, a small identity line, a dominant headline and a clear footer.
+    addShape("Top rule",50,7.5,88,.35,accent,95);
+    addText("Brand / section label",template.toUpperCase()+"  /  CUTLINE STUDIO",7,12,10,ink,"left","Arial, sans-serif",700);
+    if (centered) {
+      addShape("Decorative accent",50,tall?25:22,18,18,accent,22,"circle");
+      addText("Template headline",chosen.headline,50,tall?67:61,tall?38:43,ink,"center","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,50,tall?76:70,13,ink,"center","Arial, sans-serif",600);
+      addShape("Headline underline",50,tall?81:77,16,.55,accent,100);
+    } else if (editorial) {
+      addText("Edition label","THE CREATIVE EDIT  /  2026",7,20,10,accent,"left","Arial, sans-serif",700);
+      addText("Template headline",chosen.headline,7,tall?69:65, tall?40:46,ink,"left","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,7,tall?79:75,13,ink,"left","Arial, sans-serif",600);
+      addShape("Side accent",92,52,1,58,accent,90);
+    } else if (wide) {
+      addShape("Text panel",27,56,49,70,"#07131c",42);
+      addText("Template headline",chosen.headline,8,48,43,ink,"left","Arial, sans-serif",800);
+      addText("Template subtitle",chosen.sub,8,61,14,ink,"left","Arial, sans-serif",600);
+      addShape("Side accent",8,76,10,.8,accent,100);
+      addText("Footer detail","YOUR BRAND  ·  YOUR NEXT CHAPTER",8,84,9,ink,"left","Arial, sans-serif",600);
+    } else {
+      addShape("Accent panel",86,49,17,54,accent,24);
+      addText("Template headline",chosen.headline,7,tall?68:64,tall?39:45,ink,"left","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,7,tall?77:74,13,ink,"left","Arial, sans-serif",600);
+      addShape("Headline underline",7,tall?84:81,15,.6,accent,100);
+    }
+    if (!wide) {
+      addText("Footer detail","CUTLINE  /  MADE TO BE SEEN",7,94,9,ink,"left","Arial, sans-serif",600);
+      addShape("Footer rule",50,97,88,.3,accent,75);
+    } else {
+      addText("Footer detail","CUTLINE STUDIO  /  DESIGN WITH INTENTION",92,91,9,ink,"right","Arial, sans-serif",600);
+    }
+    if (["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
+      addShape("Product frame",78,47,29,43,accent,16);
+      addShape("Product frame detail",78,47,23,34,ink,13);
+    }
+    if (["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster"].includes(template)) {
+      addShape("Campaign highlight",84,34,21,21,accent,24,"circle");
+      addText("Campaign kicker","LIMITED EDITION  /  NEW SEASON",7,25,10,accent,"left","Arial, sans-serif",700);
+    }
+    if (template === "Business card") {
+      addText("Contact detail","HELLO@YOURBRAND.COM  ·  +234 000 000 0000",8,72,10,ink,"left","Arial, sans-serif",600);
+      addShape("Card divider",8,66,72,.4,accent,100);
+    }
+    if (template === "Restaurant menu" || template === "Food menu") {
+      addText("Menu detail","STARTERS     MAINS     DESSERTS",50,85,10,ink,"center","Arial, sans-serif",600);
+    }
+    if (template === "Property listing" || template === "Real estate") {
+      addText("Property detail","3 BEDROOMS  ·  2 BATHS  ·  CITY VIEW",8,73,11,ink,"left","Arial, sans-serif",700);
+    }
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
     setS((old) => ({ ...old, aspect: chosen.aspect }));
     setEditorBg(chosen.background);
-    const next: DesignLayer[] = [
-      { id:id(), name:"Template accent", kind:"shape", text:"", color:chosen.accent, x:50, y:73, size:1, opacity:95, visible:true, shape:"rect" },
-      { id:id(), name:"Template headline", kind:"text", text:chosen.headline, color:chosen.color, x:50, y:82, size:48, opacity:100, visible:true, shape:"rect" },
-      { id:id(), name:"Template subtitle", kind:"text", text:chosen.sub, color:chosen.color, x:50, y:92, size:15, opacity:95, visible:true, shape:"rect" }
-    ];
-    setLayers((old) => [...old, ...next]); setSelectedLayer(next[0].id);
-    setProjectNotice(flat ? "Template added in one tap. Your photo and editable text are in place. To show the template backdrop behind your subject, remove the photo background first, then tap a template again." : "Template applied in one tap. Edit its headline and subtitle in Layers.");
+    setLayers((old) => [...old.filter((layer) => !layer.id.startsWith("template-")), ...layers]);
+    setSelectedLayer(layers.find((layer) => layer.name === "Template headline")?.id ?? layers[0]?.id ?? null);
+    setProjectNotice("Professional template applied. Replace the sample copy, adjust the layout in Layers, and export your finished design.");
   };
   const addSticker = (label: string, _emoji: string) => {
     const id = "sticker-"+Date.now()+"-"+Math.random().toString(36).slice(2,6);
