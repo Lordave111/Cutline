@@ -552,6 +552,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
     };
     // A consistent slide grid: fine rules, a small identity line, a dominant headline and a clear footer.
+    // A restrained translucent title panel keeps type readable over portrait and product photos.
+    addShape("Headline contrast panel",50,tall?73:68,94,tall?37:40,"#07110f",58);
     addShape("Top rule",50,7.5,88,.35,accent,95);
     addText("Brand / section label",template.toUpperCase()+"  /  CUTLINE STUDIO",7,12,10,ink,"left","Arial, sans-serif",700);
     if (centered) {
@@ -561,7 +563,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       addShape("Headline underline",50,tall?81:77,16,.55,accent,100);
     } else if (editorial) {
       addText("Edition label","THE CREATIVE EDIT  /  2026",7,20,10,accent,"left","Arial, sans-serif",700);
-      addText("Template headline",chosen.headline,7,tall?69:65, tall?40:46,ink,"left","Georgia, serif",700);
+      addText("Template headline",chosen.headline,7,tall?68:64, tall?34:40,ink,"left","Georgia, serif",700);
       addText("Template subtitle",chosen.sub,7,tall?79:75,13,ink,"left","Arial, sans-serif",600);
       addShape("Side accent",92,52,1,58,accent,90);
     } else if (wide) {
@@ -572,7 +574,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       addText("Footer detail","YOUR BRAND  ·  YOUR NEXT CHAPTER",8,84,9,ink,"left","Arial, sans-serif",600);
     } else {
       addShape("Accent panel",86,49,17,54,accent,24);
-      addText("Template headline",chosen.headline,7,tall?68:64,tall?39:45,ink,"left","Georgia, serif",700);
+      addText("Template headline",chosen.headline,7,tall?68:64,tall?34:40,ink,"left","Georgia, serif",700);
       addText("Template subtitle",chosen.sub,7,tall?77:74,13,ink,"left","Arial, sans-serif",600);
       addShape("Headline underline",7,tall?84:81,15,.6,accent,100);
     }
