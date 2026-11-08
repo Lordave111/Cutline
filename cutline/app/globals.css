@@ -680,7 +680,7 @@ body{background:#080b0a;color:var(--ink);background-image:radial-gradient(ellips
 
 /* Expanded template library */
 .template-category-filters{display:flex;gap:8px;overflow-x:auto;padding:4px 1px 12px;margin:10px 0 6px;scrollbar-width:thin}
-.template-category-filters button{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.035);color:#aab6aa;padding:8px 13px;font:600 10px inherit;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.template-category-filters button{flex:0 0 auto;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.035);color:#aab6aa;padding:8px 13px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
 .template-category-filters button:hover,.template-category-filters button.active{border-color:rgba(213,255,98,.45);background:rgba(213,255,98,.12);color:#eaffc5}
 .template-results-meta{display:flex;justify-content:space-between;margin:8px 0 12px}
 .template-card-wrap{position:relative;min-width:0}
