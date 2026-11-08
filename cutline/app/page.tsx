@@ -1,3 +1,5 @@
+"use client";
+
 import Studio from "@/components/Studio";
 import AppShell from "@/components/AppShell";
 import VideoStudioLauncher from "@/components/VideoStudioLauncher";
