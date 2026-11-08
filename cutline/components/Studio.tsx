@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SignInButton, useAuth } from "@clerk/nextjs";
-import { COST, CURRENCY, PACKS } from "@/lib/pricing";
+import { COST } from "@/lib/pricing";
 import Editor, { type Bg } from "./Editor";
 import Assistant from "./Assistant";
 
@@ -67,7 +67,6 @@ export default function Studio() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [credits, setCredits] = useState<number | null>(null);
-  const [buying, setBuying] = useState<string | null>(null);
   const cutSrc = useRef<File | null>(null);
   const previewUrl = useRef("");
 
@@ -85,20 +84,6 @@ export default function Studio() {
     };
     load();
   }, [isSignedIn]);
-
-  async function buy(pack: string) {
-    if (buying) return;
-    setError(""); setBuying(pack);
-    try {
-      const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pack }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.url) throw new Error(j.error || "Paystack checkout could not be started. Please try again.");
-      window.location.assign(j.url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not connect to Paystack. Check your internet and try again.");
-      setBuying(null);
-    }
-  }
 
   async function pick(f?: File) {
     if (!f) return;
@@ -161,26 +146,13 @@ export default function Studio() {
       <div className="bar">
         {isSignedIn ? (
           <>
-            <span>CREDITS <b>{credits ?? "…"}</b></span>
+            <span>POINTS <b>{credits ?? "…"}</b></span>
             <span className="mute">Cut-out {COST.cutout} · Cloudflare AI edits use a separate daily allowance</span>
           </>
         ) : (
           <SignInButton mode="modal"><button className="go">Sign in for free credits</button></SignInButton>
         )}
       </div>
-      {isSignedIn && (
-        <div className="credit-store">
-          <div className="credit-store-heading"><b>Get more credits</b><small>Choose a pack to continue to secure Paystack checkout.</small></div>
-          <div className="packs">
-          {Object.entries(PACKS).map(([id, p]) => (
-            <button type="button" key={id} disabled={!!buying} aria-busy={buying === id} onClick={() => void buy(id)}>
-              <b>{buying === id ? "Connecting to Paystack…" : buying ? "Please wait…" : p.label}</b><span>{p.credits} credits</span><span>{CURRENCY === "NGN" ? "₦" : "$"}{p.price[CURRENCY].toLocaleString()}</span><small>{buying === id ? "Opening secure checkout" : "Tap to purchase →"}</small>
-            </button>
-          ))}
-          </div>
-        </div>
-      )}
-
       <div className="studio-intake-grid">
       <label
         className="drop"
