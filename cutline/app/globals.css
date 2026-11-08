@@ -781,3 +781,20 @@ body{background:#080b0a;color:var(--ink);background-image:radial-gradient(ellips
 .video-caption-actions{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}
 .video-caption-actions .video-upload{cursor:pointer}
 .video-caption-actions .video-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.video-quick-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 20px;padding:0;list-style:none}
+.video-quick-steps li{display:flex;align-items:center;gap:8px;min-width:0;padding:9px;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:rgba(255,255,255,.025);color:#b9c3bc;font-size:11px}
+.video-quick-steps li b{display:grid;place-items:center;flex:0 0 23px;height:23px;border-radius:50%;background:rgba(213,255,98,.13);color:var(--accent);font-size:10px}
+.video-advanced{margin-top:12px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#0c1113}
+.video-advanced summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;color:#edf2eb;font-size:12px;font-weight:700;cursor:pointer;list-style:none}
+.video-advanced summary::-webkit-details-marker{display:none}
+.video-advanced summary:after{content:"＋";color:var(--accent);font-size:17px}
+.video-advanced[open] summary:after{content:"−"}
+.video-advanced summary span{margin-left:auto;color:#929d96;font-size:10px;font-weight:400;text-align:right}
+.video-advanced .video-pro-tools,.video-advanced .video-caption-lane{margin:0;border:0;border-top:1px solid rgba(255,255,255,.07);border-radius:0}
+.video-export-row{display:block;margin-top:18px}
+.video-step-heading{display:flex;flex-direction:column;gap:3px;margin:0 0 10px}
+.video-step-heading b{color:var(--accent);font:9px var(--mono),monospace;letter-spacing:.13em}
+.video-step-heading span{color:#929d96;font-size:10px}
+.video-export-row>button{margin:4px 0}
+@media(max-width:480px){.video-quick-steps{gap:5px}.video-quick-steps li{flex-direction:column;align-items:flex-start;padding:8px 6px;font-size:9px}.video-advanced summary{align-items:flex-start;flex-wrap:wrap}.video-advanced summary span{width:100%;margin:0;text-align:left}}
