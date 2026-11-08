@@ -23,7 +23,7 @@ export default function Home() {
           <span>CUTLINE<span className="brand-period">.</span><small>CREATIVE IMAGE STUDIO</small></span>
         </a>
         <nav className="app-nav-links" aria-label="Main navigation">
-          <a className="active" href="#top">Home</a><a href="#studio">Photo editor</a><a className="nav-video-link" href="#motion">Video editor <span>NEW</span></a><a href="#templates">Templates</a><a href="#help-center">Help</a>
+          <a className="active" href="#top">Home</a><a href="#studio">Photo editor</a><a className="nav-video-link" href="#motion">Video editor <span>NEW</span></a><a href="#studio">Templates</a><a href="#help-center">Help</a>
         </nav>
         <div className="app-nav-actions">
           <a className="nav-help-link" href="#help-center">Support</a>
