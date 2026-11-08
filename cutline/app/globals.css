@@ -1010,3 +1010,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .site-footer{flex-wrap:wrap;margin-top:65px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Match the actual motion editor component structure. */
+.video-studio{padding:clamp(14px,2.5vw,28px);margin-top:22px}
+.video-quick-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.video-quick-steps li{display:flex;align-items:center;gap:9px;padding:11px;border:1px solid var(--studio-border);border-radius:9px;background:#ffffff05;color:#c8d2ca}
+.video-quick-steps li b{display:grid;place-items:center;width:27px;height:27px;border-radius:8px;background:rgba(213,255,98,.12);color:var(--accent)}
+.video-studio-head{border-bottom:1px solid var(--studio-border)}
+.video-eyebrow,.video-performance-note{color:#9ca99f}
+.video-multitrack{padding:15px}
+.video-timeline,.video-transport,.video-tools-grid,.video-advanced{padding:14px;margin-top:13px}
+.video-tools-grid{gap:12px}
+.video-tools-grid label,.video-trim-grid label{color:#bfcac2}
+.video-tools-grid input,.video-tools-grid select,.video-trim-grid input{min-height:40px;border:1px solid var(--studio-border);border-radius:7px;background:#0a1015;color:#eef4ec;padding:8px}
+.video-advanced summary{color:#e9f2e9}
+@media(max-width:620px){.video-quick-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
