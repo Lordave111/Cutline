@@ -777,3 +777,7 @@ body{background:#080b0a;color:var(--ink);background-image:radial-gradient(ellips
 .video-track-footer,.video-pro-tools p,.video-caption-lane p{color:#929d96;font-size:10px;line-height:1.6}
 .video-caption-lane span{color:var(--accent);font-size:11px}
 @media(max-width:600px){.video-import-actions{display:grid;grid-template-columns:1fr 1fr}.video-upload{justify-content:center;font-size:10px;padding:10px}.video-audio-track audio{max-width:100%!important}}
+
+.video-caption-actions{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}
+.video-caption-actions .video-upload{cursor:pointer}
+.video-caption-actions .video-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
