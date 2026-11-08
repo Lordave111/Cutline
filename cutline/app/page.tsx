@@ -1,5 +1,6 @@
 import Studio from "@/components/Studio";
 import AppShell from "@/components/AppShell";
+import VideoStudioLauncher from "@/components/VideoStudioLauncher";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const tools = [
@@ -59,6 +60,8 @@ export default function Home() {
         <div className="section-heading"><div><div className="eyebrow"><span className="section-index">01</span> THE CREATIVE WORKSPACE</div><h2>Everything starts <span>on your canvas.</span></h2></div><p>Upload a photo to unlock the full editor, from background tools and precise adjustments to AI-assisted changes and export.</p></div>
         <Studio />
       </section>
+
+      <VideoStudioLauncher />
 
       <section className="toolkit-section" id="toolkit">
         <div className="section-heading"><div><div className="eyebrow"><span className="section-index">02</span> BUILT FOR YOUR IDEAS</div><h2>More than a quick <span>touch-up.</span></h2></div><p>A considered set of creative tools, brought together in one focused workflow.</p></div>
