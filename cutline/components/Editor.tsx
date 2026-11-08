@@ -15,7 +15,7 @@ type S = {
   warmth: number; tint: number; fade: number; blur: number;
   cropLeft: number; cropTop: number; cropWidth: number; cropHeight: number;
   hue: number; grain: number; grayscale: number; sepia: number; invert: number;
-  borderWidth: number; borderColor: string; flipY: boolean;
+  borderWidth: number; borderColor: string; flipY: boolean; photoTreatment: "normal" | "ink-circle" | "photo-collage";
 };
 type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
@@ -31,7 +31,7 @@ const DEFAULTS: S = {
   warmth: 0, tint: 0, fade: 0, blur: 0,
   cropLeft: 0, cropTop: 0, cropWidth: 100, cropHeight: 100,
   hue: 0, grain: 0, grayscale: 0, sepia: 0, invert: 0,
-  borderWidth: 0, borderColor: "#ffffff", flipY: false,
+  borderWidth: 0, borderColor: "#ffffff", flipY: false, photoTreatment: "normal",
 };
 
 const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> }[] = [
@@ -80,7 +80,26 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     x.fillStyle = g; x.fillRect(0, 0, W, H);
   }
   if (bi) { if (canFilter) x.filter = `blur(${s.bgBlur}px)`; cover(bi, s.bgBlur * 2); x.filter = "none"; }
-  if (flat) cover(fg);
+  if (s.photoTreatment === "ink-circle") {
+    x.fillStyle = "#f7f7f4"; x.fillRect(0,0,W,H);
+    const d = Math.min(W,H)*.69, cx=W*.5, cy=H*.49;
+    x.save(); x.beginPath(); x.arc(cx,cy,d/2,0,Math.PI*2); x.clip();
+    const k=Math.max(d/fg.width,d/fg.height)*(s.scale/100);
+    const w=fg.width*k,h=fg.height*k;
+    x.filter="grayscale(1) contrast(1.12)";
+    x.drawImage(fg,cx-w/2+(s.offX/100)*d,cy-h/2+(s.offY/100)*d,w,h);
+    x.restore(); x.filter="none";
+    x.save(); x.strokeStyle="#111"; x.lineWidth=Math.max(2,W*.006); x.lineCap="round";
+    for(let j=0;j<4;j++){x.beginPath();x.ellipse(cx,cy,d/2+j*W*.009,d/2+j*W*.009,(j-1.5)*.018,-.12+j*.025,Math.PI*1.93+j*.04);x.stroke();}
+    x.restore();
+  } else if (s.photoTreatment === "photo-collage") {
+    x.fillStyle="#171615"; x.fillRect(0,0,W,H);
+    const gap=Math.max(8,W*.012), left=gap, right=W*.49, colW=(W-gap*3)/2;
+    const tiles=[{x:left,y:gap,w:colW,h:H*.22},{x:right,y:gap,w:colW,h:H*.30},{x:left,y:H*.235,w:colW,h:H*.31},{x:right,y:H*.315,w:colW,h:H*.29},{x:left,y:H*.555,w:colW,h:H*.28},{x:right,y:H*.62,w:colW,h:H*.34}];
+    for(let n=0;n<tiles.length;n++){const t=tiles[n];x.save();x.beginPath();x.rect(t.x,t.y,t.w,t.h);x.clip();const scale=Math.max(t.w/fg.width,t.h/fg.height);const sw=t.w/scale,sh=t.h/scale;const sx=(fg.width-sw)*((n%3)*.28+.08),sy=(fg.height-sh)*((n%2)*.22+.18);x.drawImage(fg,sx,sy,sw,sh,t.x,t.y,t.w,t.h);if(n===1||n===4){x.filter="grayscale(1)";x.drawImage(fg,sx,sy,sw,sh,t.x,t.y,t.w,t.h);x.filter="none";}x.restore();}
+    x.fillStyle="#f6f0e9";x.font="italic 800 "+Math.round(W*.052)+"px Georgia,serif";x.textAlign="center";x.fillText("HAPPY",W*.25,H*.72);x.fillText("BIRTHDAY",W*.25,H*.77);
+    x.strokeStyle="#f6f0e9";x.lineWidth=Math.max(2,W*.003);x.beginPath();x.moveTo(W*.12,H*.795);x.quadraticCurveTo(W*.25,H*.82,W*.39,H*.79);x.stroke();
+  } else if (flat) cover(fg);
   else {
     const k = Math.min(W / fg.width, H / fg.height) * (s.scale / 100);
     const w = fg.width * k, h = fg.height * k;
@@ -528,6 +547,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       "Beauty sale": { aspect:"4:5", background:{kind:"gradient",color:"#e8b8c7",color2:"#96506d"}, headline:"A LITTLE SELF LOVE", sub:"YOUR FAVOURITES · NOW ON OFFER", color:"#fffaf5", accent:"#ffe2a5" },
       "LinkedIn banner": { aspect:"16:9", background:{kind:"gradient",color:"#102b42",color2:"#347c86"}, headline:"BUILD WHAT'S NEXT", sub:"IDEAS · PEOPLE · PROGRESS", color:"#ffffff", accent:"#8de4d0" },
       "Instagram post": { aspect:"1:1", background:{kind:"gradient",color:"#182a3a",color2:"#765267"}, headline:"A MOMENT TO REMEMBER", sub:"LITTLE DETAILS · BIG FEELINGS", color:"#ffffff", accent:"#f3c77a" },
+      "Ink portrait": { aspect:"1:1", background:{kind:"color",color:"#f7f7f4"}, headline:"PORTRAIT", sub:"A STUDY IN LIGHT & FORM", color:"#111111", accent:"#111111" },
+      "Birthday collage": { aspect:"4:5", background:{kind:"color",color:"#171615"}, headline:"HAPPY BIRTHDAY", sub:"A LITTLE MORE MAGIC EVERY YEAR", color:"#f6f0e9", accent:"#e7c5a0" },
       "Brand announcement": { aspect:"1:1", background:{kind:"gradient",color:"#17251e",color2:"#8b9b69"}, headline:"SOMETHING NEW IS HERE", sub:"A FRESH CHAPTER STARTS TODAY", color:"#ffffff", accent:"#d9e68d" },
       "Business card": { aspect:"16:9", background:{kind:"gradient",color:"#111a25",color2:"#566b72"}, headline:"YOUR NAME / YOUR WORK", sub:"DESIGN · STRATEGY · CONTACT", color:"#ffffff", accent:"#d4b77a" },
       "Property listing": { aspect:"16:9", background:{kind:"gradient",color:"#1b3736",color2:"#b7b8a1"}, headline:"FIND YOUR PLACE", sub:"SPACE · COMFORT · POSSIBILITY", color:"#ffffff", accent:"#e2cf9c" },
@@ -618,7 +639,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     }
     setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
-    setS((old) => ({ ...old, aspect: chosen.aspect }));
+    setS((old) => ({ ...old, aspect: chosen.aspect, photoTreatment: template === "Ink portrait" ? "ink-circle" : template === "Birthday collage" ? "photo-collage" : "normal", grayscale: template === "Ink portrait" ? 0 : old.grayscale }));
     setEditorBg(chosen.background);
     setLayers((old) => [...old.filter((layer) => !layer.id.startsWith("template-")), ...layers]);
     setSelectedLayer(layers.find((layer) => layer.name === "Template headline")?.id ?? layers[0]?.id ?? null);
