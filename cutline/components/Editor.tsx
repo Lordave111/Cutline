@@ -551,52 +551,24 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     const addShape = (name:string,x:number,y:number,width:number,height:number,color:string,opacity=100,shape:"rect"|"circle"="rect") => {
       layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
     };
-    // Build a richer art-directed backdrop with soft ambient shapes, frames and fine details.
-    // These are native editable vector layers, so they stay crisp in export and remain editable.
-    const deep = "#07131b";
-    addShape("Ambient glow · upper corner",91,13,48,48,accent,12,"circle");
-    addShape("Ambient glow · lower corner",8,88,34,34,ink,9,"circle");
-    addShape("Outer frame",50,50,94,94,accent,32);
-    addShape("Inner frame",50,50,91,91,deep,16);
-    addShape("Backdrop accent bar",93,48,2.2,37,accent,58);
-    addShape("Backdrop accent dot",85,17,2.2,2.2,accent,92,"circle");
-    addShape("Backdrop accent dot 2",89,17,1,1,ink,70,"circle");
-    // Category-specific visual signatures add personality without covering the user's photograph.
-    if (["Luxury product","Fashion lookbook","Beauty campaign","Skincare drop","Beauty sale","Wedding invitation"].includes(template)) {
-      addShape("Editorial soft halo",78,34,43,43,accent,13,"circle");
-      addShape("Editorial vertical rule",12,47,.55,38,accent,76);
-      addShape("Editorial corner block",89,88,17,10,accent,22);
-    } else if (["Music poster","Event flyer","Birthday","Sale announcement","Sports promo","Fitness challenge"].includes(template)) {
-      addShape("Campaign burst",84,28,31,31,accent,20,"circle");
-      addShape("Campaign diagonal block",88,52,8,43,deep,26);
-      addShape("Campaign underline",18,84,25,.9,accent,100);
-    } else if (["Product feature","Product carousel","Sneaker campaign","Coffee brand","Restaurant special","Food menu","Restaurant menu"].includes(template)) {
-      addShape("Product spotlight",77,43,42,42,accent,17,"circle");
-      addShape("Product display plinth",76,76,43,7,deep,40);
-      addShape("Product highlight line",76,71,31,.7,accent,95);
-    } else if (["Real estate","Property listing","Travel postcard","Car showcase"].includes(template)) {
-      addShape("Landscape horizon",50,61,88,.6,accent,74);
-      addShape("Landscape sun",84,30,20,20,accent,24,"circle");
-      addShape("Landscape foreground",50,89,88,13,deep,18);
-    } else if (["Tech launch","App promotion","Stream overlay","Podcast cover","YouTube thumbnail","LinkedIn banner","Online course"].includes(template)) {
-      addShape("Tech halo",82,30,38,38,accent,17,"circle");
-      addShape("Tech panel",88,72,23,24,deep,26);
-      addShape("Tech signal 1",78,17,9,.5,accent,90);
-      addShape("Tech signal 2",78,20,6,.5,accent,58);
-    } else {
-      addShape("Creative halo",82,30,36,36,accent,15,"circle");
-      addShape("Creative side panel",91,70,10,28,deep,20);
-      addShape("Creative detail line",14,85,20,.6,accent,85);
-    }
-    // A restrained translucent title panel keeps type readable over portrait and product photos.
-    addShape("Headline contrast panel",50,tall?73:68,94,tall?37:40,"#07110f",58);
-    addShape("Top rule",50,7.5,88,.35,accent,95);
-    addText("Brand / section label",template.toUpperCase()+"  /  CUTLINE STUDIO",7,12,10,ink,"left","Arial, sans-serif",700);
-    if (centered) {
-      addShape("Decorative accent",50,tall?25:22,18,18,accent,22,"circle");
-      addText("Template headline",chosen.headline,50,tall?67:61,tall?38:43,ink,"center","Georgia, serif",700);
-      addText("Template subtitle",chosen.sub,50,tall?76:70,13,ink,"center","Arial, sans-serif",600);
-      addShape("Headline underline",50,tall?81:77,16,.55,accent,100);
+    // Refined art direction: preserve the uploaded photo as the hero.
+    // Use a fine editorial frame and restrained corner details instead of oversized overlays.
+    addShape("Fine outer frame",50,50,96,96,accent,42);
+    addShape("Top accent rule",50,7.5,88,.22,accent,88);
+    addShape("Small corner detail",91,10,1.2,1.2,accent,85,"circle");
+    addShape("Small corner detail 2",88,10,0.55,0.55,ink,75,"circle");
+
+    addText("Template category",template.toUpperCase(),7,12,9,ink,"left","Arial, sans-serif",700);
+    if (template === "Instagram post") {
+      addShape("Tiny editorial accent",84,17,2.4,2.4,accent,92,"circle");
+      addText("Template headline",chosen.headline,50,29,29,ink,"center","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,50,81,12,ink,"center","Arial, sans-serif",700);
+      addShape("Headline underline",50,85,12,.45,accent,95);
+    } else if (centered) {
+      addShape("Decorative accent",50,tall?25:22,8,8,accent,14,"circle");
+      addText("Template headline",chosen.headline,50,tall?64:59,tall?32:35,ink,"center","Georgia, serif",700);
+      addText("Template subtitle",chosen.sub,50,tall?78:72,12,ink,"center","Arial, sans-serif",600);
+      addShape("Headline underline",50,tall?83:79,13,.45,accent,95);
     } else if (editorial) {
       addText("Edition label","THE CREATIVE EDIT  /  2026",7,20,10,accent,"left","Arial, sans-serif",700);
       addText("Template headline",chosen.headline,7,tall?68:64, tall?34:40,ink,"left","Georgia, serif",700);
@@ -615,16 +587,20 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       addShape("Headline underline",7,tall?84:81,15,.6,accent,100);
     }
     if (!wide) {
-      addText("Footer detail","CUTLINE  /  MADE TO BE SEEN",7,94,9,ink,"left","Arial, sans-serif",600);
-      addShape("Footer rule",50,97,88,.3,accent,75);
+      addShape("Cutline logo mark",8,94,3.2,3.2,accent,100,"circle");
+      addText("Cutline logo initial","C",8,94,5,"#14211d","center","Arial, sans-serif",800);
+      addText("Cutline logo wordmark","CUTLINE",13,94,6,ink,"left","Arial, sans-serif",700);
+      addShape("Footer rule",50,97,88,.2,accent,55);
     } else {
-      addText("Footer detail","CUTLINE STUDIO  /  DESIGN WITH INTENTION",92,91,9,ink,"right","Arial, sans-serif",600);
+      addShape("Cutline logo mark",91,91,2.6,2.6,accent,100,"circle");
+      addText("Cutline logo initial","C",91,91,4,"#14211d","center","Arial, sans-serif",800);
+      addText("Cutline logo wordmark","CUTLINE",87,91,5,ink,"right","Arial, sans-serif",700);
     }
-    if (["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
+    if (template !== "Instagram post" && ["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
       addShape("Product frame",78,47,29,43,accent,16);
       addShape("Product frame detail",78,47,23,34,ink,13);
     }
-    if (["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster"].includes(template)) {
+    if (template !== "Instagram post" && ["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster"].includes(template)) {
       addShape("Campaign highlight",84,34,21,21,accent,24,"circle");
       addText("Campaign kicker","LIMITED EDITION  /  NEW SEASON",7,25,10,accent,"left","Arial, sans-serif",700);
     }
