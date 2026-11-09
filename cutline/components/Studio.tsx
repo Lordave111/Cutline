@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
-import { COST } from "@/lib/pricing";
+import { SignInButton, useAuth } from "@clerk/nextjs";
+import { COST } from "../lib/pricing";
 import Editor, { type Bg } from "./Editor";
 import Assistant from "./Assistant";
 
