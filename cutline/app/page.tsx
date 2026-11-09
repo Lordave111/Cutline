@@ -13,7 +13,7 @@ const projectTools = [
   { icon: "♫", name: "Audio", hint: "Music and sound layers", target: "#audio-tools" },
   { icon: "T", name: "Text & captions", hint: "Titles and subtitles", target: "#caption-tools" },
   { icon: "◉", name: "Effects", hint: "Colour and visual looks", target: "#effect-tools" },
-  { icon: "✧", name: "AI tools", hint: "Generate captions and ideas", target: "#ai-tools" },
+  { icon: "✧", name: "Creative", hint: "Captions and ideas", target: "#ai-tools" },
 ];
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
         <header className="studio-topbar" id="project">
           <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
           <nav className="studio-editor-nav" aria-label="Main editor navigation"><a href="#motion">Video editor</a><a href="#photo-editor">Photo editor</a><a href="#points">Points store</a><a href="#templates">Templates</a></nav>
-          <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><a href="#export-tools" className="topbar-render">✦ Render</a><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
+          <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
         </header>
 
         <CreditStore />
@@ -46,7 +46,7 @@ export default function Home() {
           <aside className="project-tools-panel">
             <div className="panel-title-row"><b>Project tools</b><span>▦</span></div>
             <label className="tool-search"><span>⌕</span><input placeholder="Search tools and filters" aria-label="Search tools"/></label>
-            <div className="tool-filter-tabs"><span>All</span><span>Video</span><span>Audio</span><span>AI</span></div>
+            <div className="tool-filter-tabs"><span>All</span><span>Video</span><span>Audio</span><span>Creative</span></div>
             <div className="project-tool-list">
               {projectTools.map((tool) => <a href={tool.target} className="project-tool" key={tool.name}><i>{tool.icon}</i><span><b>{tool.name}</b><small>{tool.hint}</small></span><em>＋</em></a>)}
             </div>
@@ -59,7 +59,7 @@ export default function Home() {
           </div>
 
           <aside className="ai-generator-panel" id="ai-tools">
-            <div className="ai-panel-heading"><span>✦</span><div><b>AI Content Assistant</b><small>Creative help, captions & ideas</small></div><i>●</i></div>
+            <div className="ai-panel-heading"><span>✦</span><div><b>Creative Assistant</b><small>Captions, ideas & editing help</small></div><i>●</i></div>
             <Assistant embedded/>
             <div className="ai-panel-foot"><span>✧</span><p>Describe your goal and get help with captions, hooks, prompts and editing ideas.</p></div>
           </aside>
@@ -70,7 +70,7 @@ export default function Home() {
           <div className="photo-workspace-inner"><Studio/></div>
         </section>
 
-        <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline AI ↗</a></span></footer>
+        <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline ↗</a></span></footer>
       </div>
     </main>
   );
