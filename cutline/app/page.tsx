@@ -67,7 +67,7 @@ export default function Home() {
 
         <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
           <div className="photo-workspace-heading"><div><small>PHOTO & DESIGN STUDIO</small><h2>Photo editor</h2><p>Retouch photos, remove backgrounds, build designs and export your work.</p></div><span>✦ PHOTO STUDIO</span></div>
-          <div className="photo-workspace-inner"><Studio/></div>
+          <div className="photo-workspace-inner" id="studio"><Studio/></div>
         </section>
 
         <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline ↗</a></span></footer>
