@@ -561,93 +561,127 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     if (!chosen) return;
     const tall = chosen.aspect === "4:5" || chosen.aspect === "9:16";
     const wide = chosen.aspect === "16:9";
-    const centered = ["Social story","Sale announcement","Podcast cover","Instagram post","Birthday","Wedding invitation","Minimal quote","Restaurant menu","Music poster"].includes(template);
-    const editorial = ["Editorial cover","Fashion lookbook","Creative portfolio","Profile portrait","Travel postcard","Beauty campaign"].includes(template);
+    const square = chosen.aspect === "1:1";
     const ink = chosen.color;
     const accent = chosen.accent;
+    const deep = "#101827";
+    const pale = "#f5f1e8";
     const layers: DesignLayer[] = [];
-    const addText = (name:string,text:string,x:number,y:number,size:number,color=ink,align:CanvasTextAlign="left",fontFamily="Arial, sans-serif",fontWeight=700) => {
-      layers.push({id:id(),name,kind:"text",text,color,x,y,size,opacity:100,visible:true,shape:"rect",align,fontFamily,fontWeight,width:82});
+    const addText = (name:string,text:string,x:number,y:number,size:number,color=ink,align:CanvasTextAlign="left",fontFamily="Arial, sans-serif",fontWeight=700,width=84) => {
+      layers.push({id:id(),name,kind:"text",text,color,x,y,size,opacity:100,visible:true,shape:"rect",align,fontFamily,fontWeight,width});
     };
     const addShape = (name:string,x:number,y:number,width:number,height:number,color:string,opacity=100,shape:"rect"|"circle"="rect") => {
       layers.push({id:id(),name,kind:"shape",text:"",color,x,y,size:1,opacity,visible:true,shape,width,height});
     };
-    // Refined art direction: preserve the uploaded photo as the hero.
-    // Use a fine editorial frame and restrained corner details instead of oversized overlays.
-    addShape("Top accent rule",50,7.5,88,.22,accent,88);
-    addShape("Bottom accent rule",50,97,88,.18,accent,55);
-    addShape("Left corner detail",2.5,50,.18,88,accent,32);
-    addShape("Right corner detail",97.5,50,.18,88,accent,32);
-    addShape("Small corner detail",91,10,1.2,1.2,accent,85,"circle");
-    addShape("Small corner detail 2",88,10,0.55,0.55,ink,75,"circle");
+    const isWarm = ["Luxury product","Food menu","Restaurant menu","Restaurant special","Coffee brand","Wedding invitation","Beauty campaign","Skincare drop","Beauty sale","Fashion lookbook"].includes(template);
+    const isEnergetic = ["Sale announcement","Music poster","Event flyer","Sports promo","Fitness challenge","Birthday","Birthday collage","Sneaker campaign","YouTube thumbnail"].includes(template);
+    const isTech = ["Tech launch","App promotion","Stream overlay","Podcast cover","Online course","LinkedIn banner"].includes(template);
+    const serif = isWarm || ["Editorial cover","Creative portfolio","Minimal quote","Travel postcard"].includes(template);
+    const kicker = isTech ? "IDEAS • INNOVATION • WHAT'S NEXT" : isEnergetic ? "THE NEW SEASON / LIMITED EDITION" : "A CURATED CREATIVE PRESENTATION";
+    const headlineFont = serif ? "Georgia, serif" : "Arial, sans-serif";
+    const headlineWeight = serif ? 700 : 800;
 
-    addText("Template category",template.toUpperCase(),7,12,9,ink,"left","Arial, sans-serif",700);
-    if (template === "Instagram post") {
-      addShape("Tiny editorial accent",84,17,2.4,2.4,accent,92,"circle");
-      addText("Template headline",chosen.headline,50,29,29,ink,"center","Georgia, serif",700);
-      addText("Template subtitle",chosen.sub,50,81,12,ink,"center","Arial, sans-serif",700);
-      addShape("Headline underline",50,85,12,.45,accent,95);
-    } else if (centered) {
-      addShape("Decorative accent",50,tall?25:22,8,8,accent,14,"circle");
-      addText("Template headline",chosen.headline,50,tall?64:59,tall?32:35,ink,"center","Georgia, serif",700);
-      addText("Template subtitle",chosen.sub,50,tall?78:72,12,ink,"center","Arial, sans-serif",600);
-      addShape("Headline underline",50,tall?83:79,13,.45,accent,95);
-    } else if (editorial) {
-      addText("Edition label","THE CREATIVE EDIT  /  2026",7,20,10,accent,"left","Arial, sans-serif",700);
-      addText("Template headline",chosen.headline,7,tall?68:64, tall?34:40,ink,"left","Georgia, serif",700);
-      addText("Template subtitle",chosen.sub,7,tall?79:75,13,ink,"left","Arial, sans-serif",600);
-      addShape("Side accent",92,52,1,58,accent,90);
-    } else if (wide) {
-      addShape("Text panel",27,56,49,70,"#07131c",42);
-      addText("Template headline",chosen.headline,8,48,43,ink,"left","Arial, sans-serif",800);
-      addText("Template subtitle",chosen.sub,8,61,14,ink,"left","Arial, sans-serif",600);
-      addShape("Side accent",8,76,10,.8,accent,100);
-      addText("Footer detail","YOUR BRAND  ·  YOUR NEXT CHAPTER",8,84,9,ink,"left","Arial, sans-serif",600);
+    // A real slide system: consistent grid, generous safe margins, hierarchy and
+    // supporting information blocks. All elements remain native editable layers.
+    addShape("Slide outer frame",50,50,96,96,accent,34);
+    addShape("Slide inner canvas",50,50,94.8,94.8,deep,10);
+    addShape("Top navigation rule",50,8,88,.28,accent,90);
+    addShape("Top section marker",7.5,13,2.1,2.1,accent,100,"circle");
+    addText("Section label",template.toUpperCase(),11,13,7.5,ink,"left","Arial, sans-serif",800,70);
+    addText("Slide number","01  /  04",92,13,7,ink,"right","Arial, sans-serif",600,18);
+
+    if (wide) {
+      // Presentation-cover composition: strong left text column and a framed
+      // visual field on the right, with a proper footer and supporting facts.
+      addShape("Main content panel",27,52,49,70,deep,70);
+      addShape("Right image frame",75,48,37,65,accent,20);
+      addShape("Right image inner frame",75,48,34,62,deep,24);
+      addShape("Eyebrow rule",10,25,12,.65,accent,100);
+      addText("Presentation kicker",kicker,10,31,8,accent,"left","Arial, sans-serif",800,68);
+      addText("Template headline",chosen.headline,10,43,34,ink,"left",headlineFont,headlineWeight,66);
+      addText("Template subtitle",chosen.sub,10,56,11,ink,"left","Arial, sans-serif",600,65);
+      addShape("Headline divider",10,66,30,.45,accent,90);
+      addText("Supporting statement","A CLEAR POINT OF VIEW. A STORY WORTH REMEMBERING.",10,72,7,ink,"left","Arial, sans-serif",600,68);
+      addShape("Feature tile one",19,84,19,12,accent,18);
+      addShape("Feature tile two",43,84,19,12,accent,18);
+      addShape("Feature tile three",67,84,19,12,accent,18);
+      addText("Feature one","01  /  PURPOSE",19,84,6,ink,"center","Arial, sans-serif",700,17);
+      addText("Feature two","02  /  DETAIL",43,84,6,ink,"center","Arial, sans-serif",700,17);
+      addText("Feature three","03  /  IMPACT",67,84,6,ink,"center","Arial, sans-serif",700,17);
+      addText("Footer brand","CUTLINE STUDIO  •  YOUR BRAND",8,95,6.5,ink,"left","Arial, sans-serif",700,60);
+      addText("Footer edition","CREATIVE SERIES  /  2026",92,95,6,ink,"right","Arial, sans-serif",600,40);
+    } else if (tall) {
+      // Poster/story composition: preserve the upper photo, then create a
+      // deliberate lower information panel instead of floating text.
+      addShape("Lower title panel",50,78,94,40,deep,76);
+      addShape("Panel top accent",50,58,88,.6,accent,100);
+      addText("Campaign kicker",kicker,8,64,7.5,accent,"left","Arial, sans-serif",800,82);
+      addText("Template headline",chosen.headline,8,72,29,ink,"left",headlineFont,headlineWeight,84);
+      addText("Template subtitle",chosen.sub,8,81,10,ink,"left","Arial, sans-serif",600,82);
+      addShape("Information divider",8,87,84,.35,accent,75);
+      addText("Supporting detail","DISCOVER THE STORY  •  MADE TO INSPIRE",8,91,6.5,ink,"left","Arial, sans-serif",700,75);
+      addShape("Call to action panel",80,91,22,8,accent,94);
+      addText("Call to action","EXPLORE",80,91,6.5,deep,"center","Arial, sans-serif",800,20);
+      addText("Footer brand","CUTLINE  /  CREATIVE STUDIO",8,97,5.5,ink,"left","Arial, sans-serif",600,65);
     } else {
-      addShape("Accent panel",86,49,17,54,accent,24);
-      addText("Template headline",chosen.headline,7,tall?68:64,tall?34:40,ink,"left","Georgia, serif",700);
-      addText("Template subtitle",chosen.sub,7,tall?77:74,13,ink,"left","Arial, sans-serif",600);
-      addShape("Headline underline",7,tall?84:81,15,.6,accent,100);
+      // Square/social and editorial layouts use a title zone, two structured
+      // content cards, and a clear closing line like a polished presentation.
+      addShape("Headline backing panel",50,39,88,43,deep,24);
+      addText("Campaign kicker",kicker,8,22,7.5,accent,"left","Arial, sans-serif",800,82);
+      addText("Template headline",chosen.headline,8,36,30,ink,"left",headlineFont,headlineWeight,84);
+      addText("Template subtitle",chosen.sub,8,47,10,ink,"left","Arial, sans-serif",600,82);
+      addShape("Headline underline",8,54,17,.6,accent,100);
+      addShape("Content card one",27,69,37,19,accent,16);
+      addShape("Content card two",72,69,37,19,accent,16);
+      addText("Card one label","01  /  THE IDEA",11,65,6.5,accent,"left","Arial, sans-serif",800,35);
+      addText("Card one detail","THOUGHTFULLY MADE",27,70,7,ink,"center","Arial, sans-serif",700,34);
+      addText("Card two label","02  /  THE EXPERIENCE",56,65,6.5,accent,"left","Arial, sans-serif",800,42);
+      addText("Card two detail","MADE TO STAND OUT",72,70,7,ink,"center","Arial, sans-serif",700,34);
+      addShape("Closing rule",50,84,84,.35,accent,70);
+      addText("Closing statement","YOUR STORY. YOUR STYLE. YOUR MOMENT.",8,90,7,ink,"left","Arial, sans-serif",700,78);
+      addText("Footer edition","CUTLINE  /  2026",92,96,5.5,ink,"right","Arial, sans-serif",600,30);
     }
-    if (!wide) {
-      addShape("Cutline logo mark",8,94,3.2,3.2,accent,100,"circle");
-      addText("Cutline logo initial","C",8,94,5,"#14211d","center","Arial, sans-serif",800);
-      addText("Cutline logo wordmark","CUTLINE",13,94,6,ink,"left","Arial, sans-serif",700);
-      addShape("Footer rule",50,97,88,.2,accent,55);
-    } else {
-      addShape("Cutline logo mark",91,91,2.6,2.6,accent,100,"circle");
-      addText("Cutline logo initial","C",91,91,4,"#14211d","center","Arial, sans-serif",800);
-      addText("Cutline logo wordmark","CUTLINE",87,91,5,ink,"right","Arial, sans-serif",700);
+
+    // Purpose-built details turn common template categories into recognizable
+    // finished layouts rather than giving every design the same generic text stack.
+    if (["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
+      addShape("Product spotlight halo",78,37,28,28,accent,18,"circle");
+      addShape("Product plinth",78,61,36,5,deep,62);
+      addText("Product detail","NEW COLLECTION",78,68,6.5,ink,"center","Arial, sans-serif",800,35);
     }
-    if (template !== "Instagram post" && ["Product feature","Luxury product","Skincare drop","Sneaker campaign","Coffee brand","Product carousel"].includes(template)) {
-      addShape("Product frame",78,47,29,43,accent,16);
-      addShape("Product frame detail",78,47,23,34,ink,13);
+    if (["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster","Sports promo","Fitness challenge"].includes(template)) {
+      addShape("Campaign badge",84,25,19,19,accent,96,"circle");
+      addText("Campaign badge text",template === "Sale announcement" || template === "Beauty sale" ? "50%" : "NEW",84,25,10,deep,"center","Arial, sans-serif",900,17);
+      addText("Campaign kicker","DON'T MISS WHAT'S NEXT",8,29,7,accent,"left","Arial, sans-serif",800,68);
     }
-    if (template !== "Instagram post" && ["Sale announcement","Beauty sale","Birthday","Event flyer","Music poster"].includes(template)) {
-      addShape("Campaign highlight",84,34,21,21,accent,24,"circle");
-      addText("Campaign kicker","LIMITED EDITION  /  NEW SEASON",7,25,10,accent,"left","Arial, sans-serif",700);
+    if (["Business card","LinkedIn banner","Creative portfolio"].includes(template)) {
+      addShape("Contact divider",8,75,84,.4,accent,90);
+      addText("Contact detail","HELLO@YOURBRAND.COM  •  +234 000 000 0000",8,81,7,ink,"left","Arial, sans-serif",600,82);
     }
-    if (template === "Business card") {
-      addText("Contact detail","HELLO@YOURBRAND.COM  ·  +234 000 000 0000",8,72,10,ink,"left","Arial, sans-serif",600);
-      addShape("Card divider",8,66,72,.4,accent,100);
+    if (["Restaurant menu","Food menu","Restaurant special"].includes(template)) {
+      addText("Menu section one","STARTERS     MAINS     DESSERTS",50,87,7,ink,"center","Arial, sans-serif",700,80);
     }
-    if (template === "Restaurant menu" || template === "Food menu") {
-      addText("Menu detail","STARTERS     MAINS     DESSERTS",50,85,10,ink,"center","Arial, sans-serif",600);
-    }
-    if (template === "Property listing" || template === "Real estate") {
-      addText("Property detail","3 BEDROOMS  ·  2 BATHS  ·  CITY VIEW",8,73,11,ink,"left","Arial, sans-serif",700);
+    if (["Property listing","Real estate","Car showcase","Travel postcard"].includes(template)) {
+      addShape("Specification strip",50,86,84,10,deep,58);
+      addText("Specification detail",template === "Car showcase" ? "POWER  •  DESIGN  •  PERFORMANCE" : "SPACE  •  LIGHT  •  LIFESTYLE",50,86,7,ink,"center","Arial, sans-serif",700,80);
     }
     if (template === "Ink portrait") {
       layers.length = 0;
-      addText("Portrait title","PORTRAIT STUDY",50,9,8,"#111111","center","Arial, sans-serif",700);
-      addText("Portrait caption","LIGHT  /  FORM  /  IDENTITY",50,91,7,"#111111","center","Arial, sans-serif",600);
+      addShape("Portrait frame",50,50,82,82,"#111111",10);
+      addText("Portrait title","PORTRAIT STUDY",50,10,9,"#111111","center","Georgia, serif",700,80);
+      addShape("Portrait title rule",50,16,18,.5,"#111111",90);
+      addText("Portrait caption","LIGHT  /  FORM  /  IDENTITY",50,91,7,"#111111","center","Arial, sans-serif",600,80);
     }
     if (template === "Birthday collage") {
       layers.length = 0;
-      addText("Birthday note","A DAY TO CELEBRATE",74,93,7,"#f6f0e9","center","Georgia, serif",700);
-      addShape("Birthday star",8,89,2,2,"#f6f0e9",90,"circle");
+      addShape("Collage top label",50,8,84,.5,"#e7c5a0",90);
+      addText("Collage headline","HAPPY BIRTHDAY",50,12,9,"#f6f0e9","center","Georgia, serif",700,80);
+      addShape("Collage photo frame one",27,40,40,47,"#e7c5a0",22);
+      addShape("Collage photo frame two",73,40,40,47,"#e7c5a0",22);
+      addShape("Collage photo frame three",50,72,86,25,"#e7c5a0",18);
+      addText("Birthday note","A DAY TO CELEBRATE",50,91,7,"#f6f0e9","center","Georgia, serif",700,80);
     }
-        setHistory((h) => [...h.slice(-19), s]); setFuture([]);
+    setHistory((h) => [...h.slice(-19), s]); setFuture([]);
     setPendingBackdrop(null); setSelectionTool("off"); setSelection(null);
     setS((old) => ({ ...old, aspect: chosen.aspect, photoTreatment: template === "Ink portrait" ? "ink-circle" : template === "Birthday collage" ? "photo-collage" : "normal", grayscale: template === "Ink portrait" ? 0 : old.grayscale }));
     setEditorBg(chosen.background);
