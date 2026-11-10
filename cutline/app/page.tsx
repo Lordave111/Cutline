@@ -63,7 +63,20 @@ export default function Home() {
           </aside>
         </section>
 
-        <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
+
+        <section className="creative-discovery" id="templates">
+          <div className="creative-discovery-head"><div><small>THE CUTLINE TOOLKIT</small><h2>Make something <span>stand out.</span></h2><p>Jump into the tools you need, from quick social edits to layered video projects.</p></div><span className="discovery-live"><i/> CREATIVE MODE</span></div>
+          <div className="creative-tool-grid">
+            <a href="#photo-editor"><i>✧</i><b>Photo retouch</b><small>Backgrounds, colour, cleanup and image adjustments</small><em>Open photo studio ↗</em></a>
+            <a href="#motion"><i>▣</i><b>Video studio</b><small>Build a sequence with clips, titles and transitions</small><em>Open video studio ↗</em></a>
+            <a href="#audio-tools"><i>♫</i><b>Audio & sound</b><small>Add music, voice and sound layers to your edit</small><em>Explore audio ↗</em></a>
+            <a href="#caption-tools"><i>T</i><b>Captions & titles</b><small>Give your videos a clear, polished finish</small><em>Explore text tools ↗</em></a>
+            <a href="#effect-tools"><i>◉</i><b>Looks & effects</b><small>Shape the mood with visual treatments</small><em>Explore effects ↗</em></a>
+            <a href="#ai-tools"><i>✦</i><b>AI creative assistant</b><small>Get ideas, prompts and help with your next edit</small><em>Ask Cutline ↗</em></a>
+          </div>
+          <div className="creative-template-row"><div><small>QUICK START IDEAS</small><b>Choose a format to start creating</b></div><a href="#photo-editor"><span className="template-tile template-story">9:16</span><b>Social story</b><small>Portrait layout</small></a><a href="#photo-editor"><span className="template-tile template-cover">1:1</span><b>Post & cover</b><small>Square layout</small></a><a href="#motion"><span className="template-tile template-video">16:9</span><b>Video project</b><small>Wide layout</small></a></div>
+        </section>
+\n        <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
           <div className="photo-workspace-heading"><div><small>PHOTO & DESIGN STUDIO</small><h2>Photo editor</h2><p>Retouch photos, remove backgrounds, build designs and export your work.</p></div><span>✦ PHOTO STUDIO</span></div>
           <div className="photo-workspace-inner" id="studio"><Studio/></div>
         </section>
