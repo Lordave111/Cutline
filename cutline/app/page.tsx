@@ -4,7 +4,6 @@ import Studio from "@/components/Studio";
 import AppShell from "@/components/AppShell";
 import VideoStudioLauncher from "@/components/VideoStudioLauncher";
 import Assistant from "@/components/Assistant";
-import CreditStore from "@/components/CreditStore";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 const projectTools = [
@@ -41,7 +40,6 @@ export default function Home() {
           <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
         </header>
 
-        <CreditStore />
         <section className="editor-workspace" aria-label="Video editing workspace">
           <aside className="project-tools-panel">
             <div className="panel-title-row"><b>Project tools</b><span>▦</span></div>
