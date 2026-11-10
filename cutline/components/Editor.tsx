@@ -561,11 +561,9 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     if (!chosen) return;
     const tall = chosen.aspect === "4:5" || chosen.aspect === "9:16";
     const wide = chosen.aspect === "16:9";
-    const square = chosen.aspect === "1:1";
     const ink = chosen.color;
     const accent = chosen.accent;
     const deep = "#101827";
-    const pale = "#f5f1e8";
     const layers: DesignLayer[] = [];
     const addText = (name:string,text:string,x:number,y:number,size:number,color=ink,align:CanvasTextAlign="left",fontFamily="Arial, sans-serif",fontWeight=700,width=84) => {
       layers.push({id:id(),name,kind:"text",text,color,x,y,size,opacity:100,visible:true,shape:"rect",align,fontFamily,fontWeight,width});
