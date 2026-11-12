@@ -43,6 +43,7 @@ export async function POST(req: Request) {
   }
 
   return paid(COST.ai, async () => {
+    let dailyUsageKey: string | null = null;
     // Signed-in accounts retain the existing daily safety limit. Guest use is
     // controlled by the same server-side three-credit wallet as background removal.
     if (userId) {
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
       const usageKey = "cutline-image-ai:" + userId + ":" + day;
       try {
         const usage = await redis.incr(usageKey);
+        dailyUsageKey = usageKey;
         if (usage === 1) await redis.expire(usageKey, 86400);
         if (usage > 5) {
           await redis.decr(usageKey).catch(() => undefined);
@@ -60,17 +62,22 @@ export async function POST(req: Request) {
       }
     }
 
-    const refinedPrompt = (await generateWithGemini(
-      [{ role: "user", text: prompt }],
-      "You are Cutline's professional photo-editing prompt engineer. Rewrite the user's request as one concise, precise positive inpainting instruction for Stable Diffusion 1.5. The model can edit ONLY the white masked pixels; do not ask it to change anything outside the mask. Preserve the original person's identity, face shape, eyes, nose, mouth, expression, skin tone, hairstyle and all unselected pixels. If the requested edit is on the background, explicitly keep the person untouched. Do not add extra creative changes the user did not request. Do not include explanations, headings, quotes, markdown, or negative prompts. Return only the final image-editing instruction. If the request is unclear, make the safest minimal interpretation.",
-      220,
-    )).slice(0, 700);
-    if (!refinedPrompt) throw new Error("Gemini could not prepare your image-editing prompt.");
+    try {
+      const refinedPrompt = (await generateWithGemini(
+        [{ role: "user", text: prompt }],
+        "You are Cutline's professional photo-editing prompt engineer. Rewrite the user's request as one concise, precise positive inpainting instruction for Stable Diffusion 1.5. The model can edit ONLY the white masked pixels; do not ask it to change anything outside the mask. Preserve the original person's identity, face shape, eyes, nose, mouth, expression, skin tone, hairstyle and all unselected pixels. If the requested edit is on the background, explicitly keep the person untouched. Do not add extra creative changes the user did not request. Do not include explanations, headings, quotes, markdown, or negative prompts. Return only the final image-editing instruction. If the request is unclear, make the safest minimal interpretation.",
+        220,
+      )).slice(0, 700);
+      if (!refinedPrompt) throw new Error("Gemini could not prepare your image-editing prompt.");
 
-    const output = await inpaintWithCloudflare(imageData, mask, width, height, refinedPrompt);
-    const bytes = Buffer.from(await output.arrayBuffer());
-    return new Response(JSON.stringify({ image: "data:image/png;base64," + bytes.toString("base64") }), {
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-    });
+      const output = await inpaintWithCloudflare(imageData, mask, width, height, refinedPrompt);
+      const bytes = Buffer.from(await output.arrayBuffer());
+      return new Response(JSON.stringify({ image: "data:image/png;base64," + bytes.toString("base64") }), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      });
+    } catch (error) {
+      if (dailyUsageKey) await redis.decr(dailyUsageKey).catch(() => undefined);
+      throw error;
+    }
   });
 }
