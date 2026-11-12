@@ -56,6 +56,27 @@ async function call(url: string, body: FormData): Promise<Blob> {
 
 export default function Studio() {
   const { isSignedIn } = useAuth();
+  const [guestCredits, setGuestCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const response = await fetch("/api/credits", { cache: "no-store" });
+        if (response.ok) {
+          const data = await response.json();
+          if (active && data.guest) setGuestCredits(Number(data.credits));
+        }
+      } catch { /* Guest balance will be refreshed on the next visit. */ }
+    };
+    void load();
+    const update = (event: Event) => {
+      const value = (event as CustomEvent<number>).detail;
+      if (typeof value === "number" && Number.isFinite(value)) setGuestCredits(value);
+    };
+    window.addEventListener("cutline:credits-updated", update);
+    return () => { active = false; window.removeEventListener("cutline:credits-updated", update); };
+  }, [isSignedIn]);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [mode, setMode] = useState<Mode>("cutout");
@@ -195,7 +216,8 @@ export default function Studio() {
         }} /></label>}
         {mode === "ai" && <p className="editor-hint">Open the editor, activate the AI mask brush, paint over the background area you want to replace, then describe the new background in the AI image editor.</p>}
   
-        <button className="go" onClick={run} disabled={!file || busy || !isSignedIn || ready}>
+        {!isSignedIn && <p className="editor-hint">{guestCredits === null ? "3 free guest credits included" : `${guestCredits} free guest credit${guestCredits === 1 ? "" : "s"} remaining`} · No account needed</p>}
+        <button className="go" onClick={run} disabled={!file || busy || ready || (!isSignedIn && guestCredits === 0)}>
           {busy ? "Opening editor…" : mode === "ai" ? "Open AI background editor" : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
         </button>
   
