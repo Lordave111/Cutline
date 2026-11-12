@@ -220,6 +220,9 @@ export default function Studio() {
         <button className="go" onClick={run} disabled={!file || busy || ready || (!isSignedIn && guestCredits === 0)}>
           {busy ? "Opening editor…" : mode === "ai" ? "Open AI background editor" : ready ? "Cut-out ready: edit below" : `Remove background (${COST.cutout} credit)`}
         </button>
+        {!isSignedIn && guestCredits === 0 && <div className="editor-hint"><strong>Your free trial is complete.</strong> Sign in to keep using Cutline.
+          <SignInButton mode="modal"><button className="go" type="button">Sign in to continue</button></SignInButton>
+        </div>}
   
         </>
       )}
