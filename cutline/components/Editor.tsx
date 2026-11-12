@@ -496,6 +496,8 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       setAiProgress(88); setAiStage("AI finished. Applying your edit…");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI inpainting failed.");
+      const creditsLeft = response.headers.get("X-Credits-Left");
+      if (creditsLeft) window.dispatchEvent(new CustomEvent("cutline:credits-updated", { detail: Number(creditsLeft) }));
       const edited = await fetch(data.image).then((r) => r.blob());
       setAiProgress(98); setAiStage("Finishing your image…");
       setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
