@@ -3,6 +3,7 @@ export const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY === "USD" ? "USD" : "N
 // Credits each action costs the customer.
 export const COST = { cutout: 1, ai: 3 } as const;
 export const FREE_CREDITS = 10; // given once per new account
+export const GUEST_CREDITS = 3; // one-time trial for visitors before sign-in
 
 // YOUR COMMISSION lives here: pack prices vs. what the image provider charges you.
 // Edit prices freely (NGN amounts assume roughly N1,500 per $1; update as the rate moves).
