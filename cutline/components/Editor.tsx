@@ -21,7 +21,7 @@ type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
 type Selection = { kind: "rect" | "lasso"; points: { x: number; y: number }[] };
 type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean; align?: CanvasTextAlign; fontFamily?: string; fontWeight?: number };
-type AdjustmentLayer = { id: string; name: string; enabled: boolean; opacity: number; brightness: number; contrast: number; saturation: number; hue: number; blur: number; blend: "normal" | "multiply" | "screen" | "overlay" };
+type AdjustmentLayer = { id: string; name: string; enabled: boolean; opacity: number; brightness: number; contrast: number; saturation: number; hue: number; blur: number; blend: "source-over" | "multiply" | "screen" | "overlay" };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
@@ -892,7 +892,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <summary>Non-destructive adjustments <span className="history-count">{adjustments.length} layers</span></summary>
           <p className="editor-hint">Stack editable colour and blur passes above your photo. Toggle, reorder, blend or remove them without baking changes into the source.</p>
           <div className="layer-actions">
-            <button type="button" onClick={() => setAdjustments(old => [...old,{id:"adj-"+Date.now(),name:"Colour grade",enabled:true,opacity:100,brightness:100,contrast:112,saturation:110,hue:0,blur:0,blend:"normal"}])}>＋ Colour grade</button>
+            <button type="button" onClick={() => setAdjustments(old => [...old,{id:"adj-"+Date.now(),name:"Colour grade",enabled:true,opacity:100,brightness:100,contrast:112,saturation:110,hue:0,blur:0,blend:"source-over"}])}>＋ Colour grade</button>
             <button type="button" onClick={() => setAdjustments(old => [...old,{id:"adj-"+Date.now(),name:"Soft focus",enabled:true,opacity:45,brightness:104,contrast:100,saturation:100,hue:0,blur:2,blend:"screen"}])}>＋ Soft focus</button>
           </div>
           <div className="adjustment-layer-list">
@@ -904,7 +904,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
               <label className="rng">Saturation <input type="range" min="0" max="200" value={layer.saturation} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,saturation:+e.target.value}:a))}/></label>
               <label className="rng">Hue <input type="range" min="-180" max="180" value={layer.hue} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,hue:+e.target.value}:a))}/></label>
               <label className="rng">Blur <input type="range" min="0" max="12" step=".5" value={layer.blur} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,blur:+e.target.value}:a))}/></label>
-              <label className="rng">Blend mode <select value={layer.blend} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,blend:e.target.value as AdjustmentLayer["blend"]}:a))}><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option></select></label>
+              <label className="rng">Blend mode <select value={layer.blend} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,blend:e.target.value as AdjustmentLayer["blend"]}:a))}><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option></select></label>
             </div>)}
             {!adjustments.length&&<p className="editor-hint">No adjustment layers yet. Add a colour grade or soft-focus layer above.</p>}
           </div>
