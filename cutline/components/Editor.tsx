@@ -232,6 +232,7 @@ async function exportImage(c: HTMLCanvasElement, s: S): Promise<Blob> {
 export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; bg: Bg }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const magicPreviewRef = useRef<HTMLCanvasElement>(null);
+  const renderVersion = useRef(0);
   const [s, setS] = useState<S>(DEFAULTS);
   const [templateSearch, setTemplateSearch] = useState("");
   const [exportFileName, setExportFileName] = useState("my-design");
@@ -324,10 +325,42 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   }, [base]);
 
   useEffect(() => {
-    if (!ref.current) return;
-    if (showOriginal) { void render(ref.current, base, flat, { kind: "none" }, DEFAULTS, [], [], [], []); }
-    else if (hasAiResult) { void render(ref.current, sourceBlob, true, editorBg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
-    else { void render(ref.current, base, flat, editorBg, s, layers, maskStrokes, paintStrokes, cloneStrokes); }
+    const target = ref.current;
+    if (!target) return;
+    // Coalesce rapid slider/drag updates into one paint per animation frame.
+    // Render off-screen so the visible canvas never flashes partially drawn frames.
+    const version = ++renderVersion.current;
+    let frame = 0;
+    frame = window.requestAnimationFrame(() => {
+      const output = document.createElement("canvas");
+      const source = showOriginal ? base : hasAiResult ? sourceBlob : base;
+      const isFlat = showOriginal ? flat : hasAiResult ? true : flat;
+      const background = showOriginal ? { kind: "none" as const } : editorBg;
+      const settings = showOriginal ? DEFAULTS : s;
+      const activeLayers = showOriginal ? [] : layers;
+      const activeMasks = showOriginal ? [] : maskStrokes;
+      const activePaint = showOriginal ? [] : paintStrokes;
+      const activeClone = showOriginal ? [] : cloneStrokes;
+      void render(output, source, isFlat, background, settings, activeLayers, activeMasks, activePaint, activeClone)
+        .then(() => {
+          if (renderVersion.current !== version || !ref.current) return;
+          const visible = ref.current;
+          visible.width = output.width;
+          visible.height = output.height;
+          const context = visible.getContext("2d");
+          if (context) {
+            context.clearRect(0, 0, visible.width, visible.height);
+            context.drawImage(output, 0, 0);
+          }
+        })
+        .catch(() => {
+          // Keep the last complete frame visible if a browser cannot render an update.
+        });
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (renderVersion.current === version) renderVersion.current += 1;
+    };
   }, [base, sourceBlob, hasAiResult, flat, editorBg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
   useEffect(() => {
