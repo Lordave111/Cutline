@@ -21,6 +21,7 @@ type MaskStroke = { points: { x: number; y: number }[]; size: number };
 type PaintStroke = { points: { x: number; y: number }[]; size: number; color: string; hardness?: number };
 type Selection = { kind: "rect" | "lasso"; points: { x: number; y: number }[] };
 type DesignLayer = { id: string; name: string; kind: "text" | "shape" | "image"; text: string; color: string; x: number; y: number; size: number; opacity: number; visible: boolean; shape: "rect" | "circle"; src?: string; width?: number; height?: number; locked?: boolean; align?: CanvasTextAlign; fontFamily?: string; fontWeight?: number };
+type AdjustmentLayer = { id: string; name: string; enabled: boolean; opacity: number; brightness: number; contrast: number; saturation: number; hue: number; blur: number; blend: "normal" | "multiply" | "screen" | "overlay" };
 type NumKey = "scale" | "rotate" | "offX" | "offY" | "shadow" | "bgBlur" | "brightness" | "contrast" | "saturation" | "quality" | "captionSize" | "captionY" | "vignette" | "warmth" | "tint" | "fade" | "blur" | "cropLeft" | "cropTop" | "cropWidth" | "cropHeight" | "hue" | "grain" | "grayscale" | "sepia" | "invert" | "borderWidth";
 
 const DEFAULTS: S = {
@@ -50,7 +51,7 @@ const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> 
   { name: "Mocha", note: "Understated warm luxury", swatch: "linear-gradient(135deg,#d7b99a,#4e3932)", values: { brightness: 101, contrast: 112, saturation: 82, warmth: 28, sepia: 12, vignette: 16 } },
 ];
 
-async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = [], maskStrokes: MaskStroke[] = [], paintStrokes: PaintStroke[] = [], cloneStrokes: { points: { x: number; y: number }[]; source: { x: number; y: number }; size: number; healing?: boolean }[] = []) {
+async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = [], maskStrokes: MaskStroke[] = [], paintStrokes: PaintStroke[] = [], cloneStrokes: { points: { x: number; y: number }[]; source: { x: number; y: number }; size: number; healing?: boolean }[] = [], adjustments: AdjustmentLayer[] = []) {
   const fg = await createImageBitmap(base);
   const bi = bg.kind === "image" ? await createImageBitmap(bg.image) : null;
   let W = fg.width, H = fg.height;
@@ -114,6 +115,19 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
     x.clearRect(0, 0, c.width, c.height);
     x.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%) sepia(${Math.max(0, s.warmth) / 100 + s.sepia / 100}) hue-rotate(${s.hue + s.tint * 1.2 + Math.min(0, s.warmth) * 0.8}deg) grayscale(${s.grayscale}%) invert(${s.invert}%) blur(${s.blur}px)`;
     x.drawImage(t, 0, 0); x.filter = "none";
+  }
+  // Non-destructive adjustment layers: each pass is retained as editable project data.
+  for (const adjustment of adjustments) {
+    if (!adjustment.enabled || adjustment.opacity <= 0) continue;
+    const pass = document.createElement("canvas"); pass.width = c.width; pass.height = c.height;
+    pass.getContext("2d")!.drawImage(c, 0, 0);
+    x.save();
+    x.globalAlpha = Math.max(0, Math.min(1, adjustment.opacity / 100));
+    x.globalCompositeOperation = adjustment.blend;
+    x.filter = `brightness(${adjustment.brightness}%) contrast(${adjustment.contrast}%) saturate(${adjustment.saturation}%) hue-rotate(${adjustment.hue}deg) blur(${adjustment.blur}px)`;
+    x.drawImage(pass, 0, 0);
+    x.restore();
+    x.filter = "none";
   }
   if (s.fade > 0) { x.fillStyle = `rgba(235,225,205,${s.fade / 250})`; x.fillRect(0, 0, c.width, c.height); }
   if (s.vignette > 0) {
@@ -268,6 +282,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   const [exportBusy, setExportBusy] = useState(false);
   const [aiError, setAiError] = useState("");
   const [layers, setLayers] = useState<DesignLayer[]>([]);
+  const [adjustments, setAdjustments] = useState<AdjustmentLayer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<string | null>(null);
   const [draggingLayer, setDraggingLayer] = useState(false);
   const [maskMode, setMaskMode] = useState(false);
@@ -321,7 +336,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   });
 
   useEffect(() => {
-    setEditorBg(bg); setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setMaskStrokes([]); setPaintStrokes([]); setSelection(null); setCloneStrokes([]);
+    setEditorBg(bg); setSourceBlob(base); setHasAiResult(false); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setAdjustments([]); setSelectedLayer(null); setMaskStrokes([]); setPaintStrokes([]); setSelection(null); setCloneStrokes([]);
   }, [base]);
 
   useEffect(() => {
@@ -341,7 +356,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       const activeMasks = showOriginal ? [] : maskStrokes;
       const activePaint = showOriginal ? [] : paintStrokes;
       const activeClone = showOriginal ? [] : cloneStrokes;
-      void render(output, source, isFlat, background, settings, activeLayers, activeMasks, activePaint, activeClone)
+      void render(output, source, isFlat, background, settings, activeLayers, activeMasks, activePaint, activeClone, showOriginal ? [] : adjustments)
         .then(() => {
           if (renderVersion.current !== version || !ref.current) return;
           const visible = ref.current;
@@ -361,7 +376,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       window.cancelAnimationFrame(frame);
       if (renderVersion.current === version) renderVersion.current += 1;
     };
-  }, [base, sourceBlob, hasAiResult, flat, editorBg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
+  }, [base, sourceBlob, hasAiResult, flat, editorBg, s, showOriginal, layers, adjustments, maskStrokes, paintStrokes, cloneStrokes]);
 
   useEffect(() => {
     const source = ref.current;
@@ -402,7 +417,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
   }, [magicSeed, magicTolerance, base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
   function saveProject() {
-    const payload = { app: "Cutline", version: 3, settings: s, layers, maskStrokes, paintStrokes, selection, cloneStrokes };
+    const payload = { app: "Cutline", version: 4, settings: s, layers, adjustments, maskStrokes, paintStrokes, selection, cloneStrokes };
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
     const a = document.createElement("a"); a.href = url; a.download = "cutline-project.json"; a.click(); URL.revokeObjectURL(url);
     setProjectNotice("Project settings saved. Keep the original image separately; it is not embedded in this file.");
@@ -411,7 +426,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     try {
       const data = JSON.parse(await file.text());
       if (data.app !== "Cutline" || !data.settings || !Array.isArray(data.layers) || !Array.isArray(data.maskStrokes)) throw new Error("Invalid Cutline project file.");
-      setS({ ...DEFAULTS, ...data.settings }); setLayers(data.layers); setMaskStrokes(data.maskStrokes); setPaintStrokes(Array.isArray(data.paintStrokes) ? data.paintStrokes : []); setSelection(data.selection ?? null); setCloneStrokes(Array.isArray(data.cloneStrokes) ? data.cloneStrokes : []); setSelectedLayer(data.layers[0]?.id ?? null); setHistory([]); setFuture([]); setShowOriginal(false);
+      setS({ ...DEFAULTS, ...data.settings }); setLayers(data.layers); setAdjustments(Array.isArray(data.adjustments) ? data.adjustments : []); setMaskStrokes(data.maskStrokes); setPaintStrokes(Array.isArray(data.paintStrokes) ? data.paintStrokes : []); setSelection(data.selection ?? null); setCloneStrokes(Array.isArray(data.cloneStrokes) ? data.cloneStrokes : []); setSelectedLayer(data.layers[0]?.id ?? null); setHistory([]); setFuture([]); setShowOriginal(false);
       setProjectNotice("Project loaded. Open the matching original image to restore the full design.");
     } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Could not open project."); }
   }
@@ -477,7 +492,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     setAiBusy(true); setAiProgress(4); setAiStage("Preparing your image…"); setAiError("");
     try {
       const sourceCanvas = document.createElement("canvas");
-      await render(sourceCanvas, hasAiResult ? sourceBlob : base, hasAiResult ? true : flat, hasAiResult ? { kind: "none" } : bg, s, layers, [], paintStrokes, cloneStrokes);
+      await render(sourceCanvas, hasAiResult ? sourceBlob : base, hasAiResult ? true : flat, hasAiResult ? { kind: "none" } : bg, s, layers, [], paintStrokes, cloneStrokes, adjustments);
       setAiProgress(15); setAiStage("Preparing image and selection…");
       const resize = Math.min(1, 768 / sourceCanvas.width, 768 / sourceCanvas.height);
       // Stable Diffusion's VAE requires both dimensions to be divisible by 8.
@@ -533,7 +548,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
       if (creditsLeft) window.dispatchEvent(new CustomEvent("cutline:credits-updated", { detail: Number(creditsLeft) }));
       const edited = await fetch(data.image).then((r) => r.blob());
       setAiProgress(98); setAiStage("Finishing your image…");
-      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
+      setSourceBlob(edited); setHasAiResult(true); setS(DEFAULTS); setHistory([]); setFuture([]); setShowOriginal(false); setLayers([]); setAdjustments([]); setSelectedLayer(null); setAiPrompt(""); setMaskStrokes([]); setMagicSeed(null);
     } catch (error) { setAiError(error instanceof Error ? error.message : "AI inpainting failed."); }
     finally { setAiBusy(false); setAiProgress(0); setAiStage(""); }
   }
@@ -873,6 +888,27 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
         <details className="retouch-panel"><summary>Clone stamp setup</summary><label className="rng">Retouch brush size <input type="range" min="5" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => { setCloneSource(null); setCloneStrokes([]); }}>Reset clone source &amp; strokes</button></details>
         <details className="paint-panel"><summary>Paint &amp; retouch brush</summary><p className="editor-hint">Paint directly onto the image. Brush strokes are included in exports and saved project files.</p><button type="button" className={paintMode ? "go" : "chip"} onClick={() => { setPaintMode((v) => !v); setMaskMode(false); setSelectedLayer(null); }}>{paintMode ? "Paint brush active · tap to stop" : "Activate paint brush"}</button><label className="rng">Brush colour <input type="color" value={paintColor} onChange={(e) => setPaintColor(e.target.value)} /></label><label className="rng">Brush size <input type="range" min="2" max="120" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} /></label><label className="rng">Brush hardness <b>{brushHardness}%</b><input type="range" min="0" max="100" value={brushHardness} onChange={(e) => setBrushHardness(Number(e.target.value))} /></label><button type="button" className="chip" onClick={() => setPaintStrokes((old) => old.slice(0, -1))} disabled={!paintStrokes.length}>Undo last paint stroke</button><button type="button" className="chip" onClick={() => setPaintStrokes([])} disabled={!paintStrokes.length}>Clear paint</button></details>
         <details className="mask-panel"><summary>Selection, masks &amp; retouch</summary><p className="editor-hint">Make a rectangular or freehand lasso selection, then crop to its bounds. The brush marks the area AI is allowed to replace.</p><div className="layer-actions"><button type="button" className={selectionTool === "rect" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "rect" ? "off" : "rect"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>▣ Rectangle select</button><button type="button" className={selectionTool === "lasso" ? "go" : "chip"} onClick={() => { setSelectionTool(selectionTool === "lasso" ? "off" : "lasso"); setMaskMode(false); setPaintMode(false); setCloneMode(false); }}>〰 Lasso select</button>{pendingBackdrop && <><p className="editor-hint">Template: <b>{pendingBackdrop}</b>. Trace around the subject, then soften the edge for a natural blend.</p><label className="rng"><span>Edge softness <b>{edgeFeather}px</b></span><input type="range" min="0" max="24" step="1" value={edgeFeather} onChange={(e)=>setEdgeFeather(Number(e.target.value))}/></label><button type="button" className="go" disabled={!selection || selection.points.length<3} onClick={() => void applySelectionCrop()}>Apply subject &amp; template</button><button type="button" className="chip" onClick={() => {setPendingBackdrop(null);clearSelection();}}>Cancel</button></>}</div>{selection && <><p className="editor-hint">Selection ready. Crop uses the selection bounding box.</p><button type="button" className="go" onClick={applySelectionCrop}>Crop to selection</button><button type="button" className="chip" onClick={clearSelection}>Clear selection</button></>}<button type="button" className={cloneMode ? "go" : "chip"} onClick={() => { setCloneMode(v => !v); setCloneSource(null); setSelectionTool("off"); setMaskMode(false); setPaintMode(false); }}>{cloneMode ? "Clone stamp active · tap source then paint" : "Clone stamp"}</button>{cloneMode && <p className="editor-hint">{cloneSource ? "Source selected. Tap or drag to stamp from that point." : "Tap the image to choose the source point."}</p>}<p className="editor-hint">AI masking is managed in the dedicated AI image editor below, so the brush controls stay in one place.</p></details>
+        <details className="layer-panel adjustment-stack-panel" open>
+          <summary>Non-destructive adjustments <span className="history-count">{adjustments.length} layers</span></summary>
+          <p className="editor-hint">Stack editable colour and blur passes above your photo. Toggle, reorder, blend or remove them without baking changes into the source.</p>
+          <div className="layer-actions">
+            <button type="button" onClick={() => setAdjustments(old => [...old,{id:"adj-"+Date.now(),name:"Colour grade",enabled:true,opacity:100,brightness:100,contrast:112,saturation:110,hue:0,blur:0,blend:"normal"}])}>＋ Colour grade</button>
+            <button type="button" onClick={() => setAdjustments(old => [...old,{id:"adj-"+Date.now(),name:"Soft focus",enabled:true,opacity:45,brightness:104,contrast:100,saturation:100,hue:0,blur:2,blend:"screen"}])}>＋ Soft focus</button>
+          </div>
+          <div className="adjustment-layer-list">
+            {[...adjustments].reverse().map((layer) => <div className="adjustment-layer" key={layer.id}>
+              <div className="adjustment-layer-head"><button type="button" onClick={() => setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,enabled:!a.enabled}:a))}>{layer.enabled?"◉":"○"}</button><b>{layer.name}</b><button type="button" aria-label="Move adjustment up" onClick={() => setAdjustments(old=>{const i=old.findIndex(a=>a.id===layer.id);if(i<=0)return old;const n=[...old];[n[i-1],n[i]]=[n[i],n[i-1]];return n})}>↑</button><button type="button" aria-label="Move adjustment down" onClick={() => setAdjustments(old=>{const i=old.findIndex(a=>a.id===layer.id);if(i<0||i>=old.length-1)return old;const n=[...old];[n[i+1],n[i]]=[n[i],n[i+1]];return n})}>↓</button><button type="button" aria-label="Delete adjustment" onClick={() => setAdjustments(old=>old.filter(a=>a.id!==layer.id))}>×</button></div>
+              <label className="rng">Opacity <input type="range" min="0" max="100" value={layer.opacity} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,opacity:+e.target.value}:a))}/></label>
+              <label className="rng">Brightness <input type="range" min="50" max="150" value={layer.brightness} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,brightness:+e.target.value}:a))}/></label>
+              <label className="rng">Contrast <input type="range" min="50" max="160" value={layer.contrast} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,contrast:+e.target.value}:a))}/></label>
+              <label className="rng">Saturation <input type="range" min="0" max="200" value={layer.saturation} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,saturation:+e.target.value}:a))}/></label>
+              <label className="rng">Hue <input type="range" min="-180" max="180" value={layer.hue} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,hue:+e.target.value}:a))}/></label>
+              <label className="rng">Blur <input type="range" min="0" max="12" step=".5" value={layer.blur} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,blur:+e.target.value}:a))}/></label>
+              <label className="rng">Blend mode <select value={layer.blend} onChange={e=>setAdjustments(old=>old.map(a=>a.id===layer.id?{...a,blend:e.target.value as AdjustmentLayer["blend"]}:a))}><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option></select></label>
+            </div>)}
+            {!adjustments.length&&<p className="editor-hint">No adjustment layers yet. Add a colour grade or soft-focus layer above.</p>}
+          </div>
+        </details>
         <details className="layer-panel"><summary>Layers <span className="history-count">{layers.length} added</span></summary>
           <div className="layer-actions"><button type="button" onClick={() => imageLayerInput.current?.click()}>＋ Image</button><input ref={imageLayerInput} type="file" accept="image/*" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void addImageLayer(file); e.currentTarget.value = ""; }} /><button type="button" onClick={() => addLayer("text")}>＋ Text</button><button type="button" onClick={() => addLayer("shape", "rect")}>＋ Rectangle</button><button type="button" onClick={() => addLayer("shape", "circle")}>＋ Circle</button></div>
           <div className="layer-list"><button type="button" className="layer-row base-layer" onClick={() => setSelectedLayer(null)}><span>▧</span><b>Photo / base image</b><small>BASE</small></button>
