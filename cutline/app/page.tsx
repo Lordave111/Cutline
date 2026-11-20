@@ -23,7 +23,7 @@ export default function Home() {
         <a className="rail-brand" href="#top" aria-label="Cutline home"><span>c</span></a>
         <nav>
           <a href="#top" className="rail-link"><i>⌂</i><span>Home</span></a>
-          <a href="#project" className="rail-link selected"><i>▣</i><span>Projects</span></a>
+          <a href="#photo-editor" className="rail-link selected"><i>▧</i><span>Photo</span></a>
           <a href="#templates" className="rail-link"><i>✦</i><span>Templates</span></a>
           <a href="#text-tools" className="rail-link"><i>T</i><span>Text</span></a>
           <a href="#effect-tools" className="rail-link"><i>◉</i><span>Effects</span></a>
@@ -35,10 +35,16 @@ export default function Home() {
 
       <div className="studio-main">
         <header className="studio-topbar" id="project">
-          <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
-          <nav className="studio-editor-nav" aria-label="Main editor navigation"><a href="#motion">Video editor</a><a href="#photo-editor">Photo editor</a><a href="#points">Points store</a><a href="#templates">Templates</a></nav>
+          <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Photo design workspace</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
+          <nav className="studio-editor-nav" aria-label="Main editor navigation"><a href="#photo-editor" className="active">Photo studio</a><a href="#motion">Video editor</a><a href="#points">Points store</a><a href="#templates">Templates</a></nav>
           <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
         </header>
+
+        <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
+          <div className="photo-workspace-heading"><div><small>PHOTO & DESIGN STUDIO</small><h2>Photo editor</h2><p>Retouch photos, remove backgrounds, build designs and export your work.</p></div><span>✦ PHOTO STUDIO</span></div>
+          <div className="photo-workspace-inner" id="studio"><Studio/></div>
+        </section>
+
 
         <section className="editor-workspace" aria-label="Video editing workspace">
           <aside className="project-tools-panel">
@@ -76,12 +82,7 @@ export default function Home() {
           </div>
           <div className="creative-template-row"><div><small>QUICK START IDEAS</small><b>Choose a format to start creating</b></div><a href="#photo-editor"><span className="template-tile template-story">9:16</span><b>Social story</b><small>Portrait layout</small></a><a href="#photo-editor"><span className="template-tile template-cover">1:1</span><b>Post & cover</b><small>Square layout</small></a><a href="#motion"><span className="template-tile template-video">16:9</span><b>Video project</b><small>Wide layout</small></a></div>
         </section>
-\n        <section className="photo-workspace-section photo-workspace-open" id="photo-editor">
-          <div className="photo-workspace-heading"><div><small>PHOTO & DESIGN STUDIO</small><h2>Photo editor</h2><p>Retouch photos, remove backgrounds, build designs and export your work.</p></div><span>✦ PHOTO STUDIO</span></div>
-          <div className="photo-workspace-inner" id="studio"><Studio/></div>
-        </section>
-
-        <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline ↗</a></span></footer>
+\n        <footer className="studio-footer" id="help-center"><span>CUTLINE STUDIO <i>●</i> YOUR CREATIVE WORKSPACE</span><span>Need a hand? <a href="#ai-tools">Ask Cutline ↗</a></span></footer>
       </div>
     </main>
   );

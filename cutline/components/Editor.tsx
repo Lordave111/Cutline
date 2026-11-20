@@ -227,6 +227,24 @@ async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s
   }
 }
 
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Could not read image data."));
+    reader.onerror = () => reject(new Error("Could not read image data."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function dataUrlToBlob(value: unknown): Promise<Blob> {
+  if (typeof value !== "string" || !/^data:image\\/(png|jpeg|webp|gif);base64,/i.test(value)) {
+    throw new Error("This project does not contain a supported embedded image.");
+  }
+  const response = await fetch(value);
+  if (!response.ok) throw new Error("Could not restore the embedded image.");
+  return response.blob();
+}
+
 async function exportImage(c: HTMLCanvasElement, s: S): Promise<Blob> {
   const maxSide = Math.max(0, Number(s.maxSide) || 0);
   const k = maxSide ? Math.min(1, maxSide / Math.max(c.width, c.height)) : 1;
@@ -416,18 +434,40 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
     } catch { /* Canvas may be temporarily unavailable while the image is rendering. */ }
   }, [magicSeed, magicTolerance, base, sourceBlob, hasAiResult, flat, bg, s, showOriginal, layers, maskStrokes, paintStrokes, cloneStrokes]);
 
-  function saveProject() {
-    const payload = { app: "Cutline", version: 4, settings: s, layers, adjustments, maskStrokes, paintStrokes, selection, cloneStrokes };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
-    const a = document.createElement("a"); a.href = url; a.download = "cutline-project.json"; a.click(); URL.revokeObjectURL(url);
-    setProjectNotice("Project settings saved. Keep the original image separately; it is not embedded in this file.");
+  async function saveProject() {
+    try {
+      setProjectNotice("Packaging your editable project…");
+      const source = hasAiResult ? sourceBlob : base;
+      const sourceData = await blobToDataUrl(source);
+      const background = editorBg.kind === "image"
+        ? { kind: "image" as const, data: await blobToDataUrl(editorBg.image) }
+        : editorBg;
+      const payload = {
+        app: "Cutline", version: 5, createdAt: new Date().toISOString(),
+        sourceData, sourceType: source.type || "image/png", sourceWasAiResult: hasAiResult,
+        background, settings: s, layers, adjustments, maskStrokes, paintStrokes, selection, cloneStrokes,
+      };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: "application/vnd.cutline.project+json" }));
+      const a = document.createElement("a"); a.href = url; a.download = (exportFileName.trim() || "cutline-project") + ".cutline"; a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setProjectNotice("Portable project saved with its image, background, editable layers and adjustments.");
+    } catch (error) {
+      setProjectNotice(error instanceof Error ? error.message : "Could not package this project. Try a smaller source image.");
+    }
   }
   async function loadProject(file: File) {
     try {
       const data = JSON.parse(await file.text());
       if (data.app !== "Cutline" || !data.settings || !Array.isArray(data.layers) || !Array.isArray(data.maskStrokes)) throw new Error("Invalid Cutline project file.");
+      const embeddedSource = data.sourceData ? await dataUrlToBlob(data.sourceData) : null;
+      let restoredBackground: Bg = { kind: "none" };
+      if (data.background?.kind === "color" && typeof data.background.color === "string") restoredBackground = { kind: "color", color: data.background.color };
+      else if (data.background?.kind === "gradient" && typeof data.background.color === "string" && typeof data.background.color2 === "string") restoredBackground = { kind: "gradient", color: data.background.color, color2: data.background.color2 };
+      else if (data.background?.kind === "image" && data.background.data) restoredBackground = { kind: "image", image: await dataUrlToBlob(data.background.data) };
+      if (embeddedSource) { setSourceBlob(embeddedSource); setHasAiResult(true); }
+      setEditorBg(restoredBackground);
       setS({ ...DEFAULTS, ...data.settings }); setLayers(data.layers); setAdjustments(Array.isArray(data.adjustments) ? data.adjustments : []); setMaskStrokes(data.maskStrokes); setPaintStrokes(Array.isArray(data.paintStrokes) ? data.paintStrokes : []); setSelection(data.selection ?? null); setCloneStrokes(Array.isArray(data.cloneStrokes) ? data.cloneStrokes : []); setSelectedLayer(data.layers[0]?.id ?? null); setHistory([]); setFuture([]); setShowOriginal(false);
-      setProjectNotice("Project loaded. Open the matching original image to restore the full design.");
+      setProjectNotice(embeddedSource ? "Portable project restored — its source image and editable layers are ready." : "Legacy project settings loaded. This older file needs its original image separately.");
     } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Could not open project."); }
   }
 
@@ -837,7 +877,7 @@ export default function Editor({ base, flat, bg }: { base: Blob; flat: boolean; 
           <button type="button" className="chip" onClick={undo} disabled={!history.length}>↶ Undo</button>
           <button type="button" className="chip" onClick={redo} disabled={!future.length}>↷ Redo</button>
           <button type="button" className="chip" onClick={() => setShowOriginal((v) => !v)}>{showOriginal ? "Show edit" : "Compare"}</button>
-          <button type="button" className="chip" onClick={saveProject}>Save project</button><button type="button" className="chip" onClick={() => projectInput.current?.click()}>Open project</button><input ref={projectInput} type="file" accept="application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void loadProject(file); e.currentTarget.value = ""; }} /><button type="button" className={`pro-export${exportBusy ? " is-loading" : ""}`} onClick={() => void download()} disabled={exportBusy}>{exportBusy ? <><span className="btn-spinner" aria-hidden="true" /> Preparing export…</> : "Export ↗"}</button>
+          <button type="button" className="chip" onClick={saveProject}>Save project</button><button type="button" className="chip" onClick={() => projectInput.current?.click()}>Open project</button><input ref={projectInput} type="file" accept="application/vnd.cutline.project+json,.cutline,application/json,.json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void loadProject(file); e.currentTarget.value = ""; }} /><button type="button" className={`pro-export${exportBusy ? " is-loading" : ""}`} onClick={() => void download()} disabled={exportBusy}>{exportBusy ? <><span className="btn-spinner" aria-hidden="true" /> Preparing export…</> : "Export ↗"}</button>
         </div>
       </div>
       <aside className="pro-tool-rail" aria-label="Editing tools">
