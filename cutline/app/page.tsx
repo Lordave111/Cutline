@@ -23,7 +23,7 @@ export default function Home() {
         <a className="rail-brand" href="#top" aria-label="Cutline home"><span>c</span></a>
         <nav>
           <a href="#top" className="rail-link"><i>⌂</i><span>Home</span></a>
-          <a href="#project" className="rail-link selected"><i>▣</i><span>Projects</span></a>
+          <a href="#photo-editor" className="rail-link selected"><i>▧</i><span>Photo</span></a>
           <a href="#templates" className="rail-link"><i>✦</i><span>Templates</span></a>
           <a href="#text-tools" className="rail-link"><i>T</i><span>Text</span></a>
           <a href="#effect-tools" className="rail-link"><i>◉</i><span>Effects</span></a>
@@ -35,7 +35,7 @@ export default function Home() {
 
       <div className="studio-main">
         <header className="studio-topbar" id="project">
-          <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Untitled project</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
+          <div className="project-identity"><span className="project-back">‹</span><div><small>CUTLINE CREATIVE STUDIO</small><b>Photo design workspace</b></div><button type="button" className="project-rename" aria-label="Project options">⌄</button></div>
           <nav className="studio-editor-nav" aria-label="Main editor navigation"><a href="#photo-editor" className="active">Photo studio</a><a href="#motion">Video editor</a><a href="#points">Points store</a><a href="#templates">Templates</a></nav>
           <div className="topbar-status"><span className="save-indicator"><i/> Local editing</span><a href="#preview" className="topbar-quiet">▷ Preview</a><button type="button" className="topbar-quiet" onClick={() => { if (navigator.share) void navigator.share({ title: "Cutline Studio", url: location.href }); else void navigator.clipboard?.writeText(location.href); }}>♧ Share</button><SignedOut><SignInButton mode="modal"><button className="topbar-signin">Sign in</button></SignInButton></SignedOut><SignedIn><UserButton/></SignedIn></div>
         </header>
