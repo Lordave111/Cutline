@@ -49,6 +49,12 @@ const PRESETS: { name: string; note: string; swatch: string; values: Partial<S> 
   { name: "Dream", note: "Airy pastel softness", swatch: "linear-gradient(135deg,#f4d8e8,#9abed1)", values: { brightness: 114, contrast: 88, saturation: 105, warmth: 12, fade: 16, blur: 0.5 } },
   { name: "Emerald", note: "Rich cinematic greens", swatch: "linear-gradient(135deg,#9fc8a7,#163d38)", values: { brightness: 98, contrast: 124, saturation: 126, tint: -14, warmth: -8, vignette: 22 } },
   { name: "Mocha", note: "Understated warm luxury", swatch: "linear-gradient(135deg,#d7b99a,#4e3932)", values: { brightness: 101, contrast: 112, saturation: 82, warmth: 28, sepia: 12, vignette: 16 } },
+  { name: "Teal & Tangerine", note: "Bold editorial colour contrast", swatch: "linear-gradient(135deg,#35c6bd,#f59e62)", values: { brightness: 101, contrast: 128, saturation: 132, warmth: 12, tint: -18, vignette: 24 } },
+  { name: "Blue Hour", note: "Cool twilight atmosphere", swatch: "linear-gradient(135deg,#9db9ed,#202b61)", values: { brightness: 96, contrast: 118, saturation: 108, warmth: -34, tint: 14, fade: 5, vignette: 20 } },
+  { name: "Candy Pop", note: "Playful vivid social colour", swatch: "linear-gradient(135deg,#f9a8d4,#818cf8)", values: { brightness: 108, contrast: 114, saturation: 178, warmth: 8, tint: 20 } },
+  { name: "Soft Luxe", note: "Creamy highlights and gentle contrast", swatch: "linear-gradient(135deg,#f3e5c8,#b7a4a0)", values: { brightness: 112, contrast: 92, saturation: 88, warmth: 18, fade: 12, vignette: 8 } },
+  { name: "Summer Glow", note: "Sunny, warm outdoor finish", swatch: "linear-gradient(135deg,#ffe08a,#ff8c69)", values: { brightness: 112, contrast: 108, saturation: 142, warmth: 34, tint: 4, fade: 3 } },
+  { name: "Chrome", note: "Cool metallic high-contrast finish", swatch: "linear-gradient(135deg,#e2e8f0,#475569)", values: { brightness: 100, contrast: 142, saturation: 66, warmth: -18, tint: -5, vignette: 18 } },
 ];
 
 async function render(c: HTMLCanvasElement, base: Blob, flat: boolean, bg: Bg, s: S, layers: DesignLayer[] = [], maskStrokes: MaskStroke[] = [], paintStrokes: PaintStroke[] = [], cloneStrokes: { points: { x: number; y: number }[]; source: { x: number; y: number }; size: number; healing?: boolean }[] = [], adjustments: AdjustmentLayer[] = []) {
