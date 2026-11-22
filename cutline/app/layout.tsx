@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./premium-glass.css";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
